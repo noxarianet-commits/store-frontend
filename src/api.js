@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: '/api'
+    baseURL: 'https://api.jualbelimusang.my.id/api'
 });
 
 // Add a request interceptor to include the admin token
