@@ -165,6 +165,7 @@ const AdminDashboard = () => {
         badge: '',
         badge_color: 'blue',
         icon: 'smartphone',
+        status: 'available',
         features: [],
         variants: []
     });
@@ -319,6 +320,7 @@ const AdminDashboard = () => {
                 badge: '',
                 badge_color: 'blue',
                 icon: defaultCategory.toLowerCase().includes('game') ? 'gamepad' : defaultCategory.toLowerCase().includes('jasa') ? 'globe' : 'smartphone',
+                status: 'available',
                 features: [],
                 variants: [{ name: '', price: 0 }]
             });
@@ -694,6 +696,7 @@ const AdminDashboard = () => {
                                             <div className="flex items-center gap-2">
                                                 <h3 className="font-bold text-white">{p.name}</h3>
                                                 {p.badge && <span className="text-[9px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-1.5 py-0.5 rounded uppercase font-bold">{p.badge}</span>}
+                                                {p.status === 'sold_out' && <span className="text-[9px] bg-red-500/15 text-red-400 border border-red-500/20 px-1.5 py-0.5 rounded uppercase font-bold">Habis</span>}
                                             </div>
                                             <p className="text-xs text-gray-500">{p.category} • Rp {p.price?.toLocaleString('id-ID')}</p>
                                         </div>
@@ -1233,6 +1236,22 @@ const AdminDashboard = () => {
                                             >
                                                 {iconOptions.map(opt => <option key={opt.value} value={opt.value} className="bg-[#0E0E0E]">{opt.label}</option>)}
                                             </select>
+                                        </div>
+                                    </div>
+                                    {/* Status Produk */}
+                                    <div className="mt-2">
+                                        <label className="block text-xs text-gray-500 mb-2">Status Produk</label>
+                                        <div className="flex items-center gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setProductForm({...productForm, status: productForm.status === 'available' ? 'sold_out' : 'available'})}
+                                                className={`relative w-12 h-6 rounded-full transition-all duration-300 ${productForm.status === 'available' ? 'bg-green-500' : 'bg-red-500'}`}
+                                            >
+                                                <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-all duration-300 ${productForm.status === 'available' ? 'left-[26px]' : 'left-0.5'}`} />
+                                            </button>
+                                            <span className={`text-sm font-bold ${productForm.status === 'available' ? 'text-green-400' : 'text-red-400'}`}>
+                                                {productForm.status === 'available' ? '✓ Tersedia' : '✗ Habis'}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>

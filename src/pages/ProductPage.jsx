@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, CheckCircle2, Copy, Upload, Star, ChevronRight, Shield, Download, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Copy, Upload, Star, ChevronRight, Shield, Download, AlertTriangle, AlertCircle } from 'lucide-react';
 import api from '../api';
 import Swal from 'sweetalert2';
 
@@ -239,6 +239,21 @@ const ProductPage = () => {
                     <h1 className="text-2xl font-extrabold text-white mt-1">{product.name}</h1>
                 </div>
 
+                {/* Sold Out Banner */}
+                {product.status === 'sold_out' && (
+                    <div className="mb-6 bg-red-500/10 border border-red-500/20 rounded-2xl p-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-red-500/15 rounded-xl flex items-center justify-center shrink-0">
+                                <AlertCircle className="text-red-400" size={22} />
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-red-400">Stok Habis</p>
+                                <p className="text-xs text-gray-400">Produk ini sedang tidak tersedia untuk saat ini. Silakan cek kembali nanti.</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Step Progress */}
                 <div className="flex items-center gap-2 mb-8">
                     {steps.map((s, i) => (
@@ -334,9 +349,14 @@ const ProductPage = () => {
                                             setStep(2);
                                             window.scrollTo({ top: 100, behavior: 'smooth' });
                                         }}
-                                        className="w-2/3 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3.5 rounded-xl transition flex items-center justify-center gap-2 text-sm"
+                                        disabled={product.status === 'sold_out'}
+                                        className={`w-2/3 font-semibold py-3.5 rounded-xl transition flex items-center justify-center gap-2 text-sm ${
+                                            product.status === 'sold_out'
+                                                ? 'bg-white/5 text-gray-600 cursor-not-allowed border border-white/5'
+                                                : 'bg-purple-600 hover:bg-purple-700 text-white'
+                                        }`}
                                     >
-                                        Lanjutkan <ChevronRight size={16} />
+                                        {product.status === 'sold_out' ? 'Stok Habis' : <>Lanjutkan <ChevronRight size={16} /></>}
                                     </button>
                                 </div>
                             </div>

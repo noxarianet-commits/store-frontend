@@ -462,9 +462,12 @@ const LandingPage = () => {
                 <Link
                   key={product.id}
                   to={`/product/${product.id}`}
-                  className="group relative bg-[#0E0E0E] hover:bg-[#151515] border border-white/5 hover:border-white/10 rounded-2xl p-5 transition-all duration-200 flex flex-col items-center text-center"
+                  className={`group relative bg-[#0E0E0E] hover:bg-[#151515] border border-white/5 hover:border-white/10 rounded-2xl p-5 transition-all duration-200 flex flex-col items-center text-center ${product.status === 'sold_out' ? 'opacity-60' : ''}`}
                 >
-                  {product.badge && (
+                  {product.status === 'sold_out' && (
+                    <span className="absolute top-3 left-3 text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider border bg-red-500/20 text-red-400 border-red-500/30 z-10">Habis</span>
+                  )}
+                  {product.badge && product.status !== 'sold_out' && (
                     <span className={`absolute top-3 right-3 text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider border ${badgeStyle.bg} ${badgeStyle.text} ${badgeStyle.border}`}>
                       {product.badge}
                     </span>
@@ -503,9 +506,12 @@ const LandingPage = () => {
                   <Link
                     key={product.id}
                     to={`/product/${product.id}`}
-                    className="group relative bg-[#0E0E0E] hover:bg-[#151515] border border-white/5 hover:border-white/10 rounded-2xl p-5 transition-all duration-200 flex flex-col items-center text-center"
+                    className={`group relative bg-[#0E0E0E] hover:bg-[#151515] border border-white/5 hover:border-white/10 rounded-2xl p-5 transition-all duration-200 flex flex-col items-center text-center ${product.status === 'sold_out' ? 'opacity-60' : ''}`}
                   >
-                    {product.badge && (
+                    {product.status === 'sold_out' && (
+                      <span className="absolute top-3 left-3 text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider border bg-red-500/20 text-red-400 border-red-500/30 z-10">Habis</span>
+                    )}
+                    {product.badge && product.status !== 'sold_out' && (
                       <span className={`absolute top-3 right-3 text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider border ${badgeStyle.bg} ${badgeStyle.text} ${badgeStyle.border}`}>
                         {product.badge}
                       </span>
@@ -558,9 +564,12 @@ const LandingPage = () => {
                 <CardEl
                   key={product.id}
                   {...cardProps}
-                  className="group relative bg-[#0E0E0E] hover:bg-[#151515] border border-white/5 hover:border-white/10 rounded-2xl p-5 transition-all flex flex-col items-center text-center"
+                  className={`group relative bg-[#0E0E0E] hover:bg-[#151515] border border-white/5 hover:border-white/10 rounded-2xl p-5 transition-all flex flex-col items-center text-center ${product.status === 'sold_out' ? 'opacity-60' : ''}`}
                 >
-                  {serviceBadge && (
+                  {product.status === 'sold_out' && (
+                    <span className="absolute top-3 left-3 text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider border bg-red-500/20 text-red-400 border-red-500/30 z-10">Habis</span>
+                  )}
+                  {serviceBadge && product.status !== 'sold_out' && (
                     <span className={`absolute top-3 right-3 text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider border ${serviceBadge.class}`}>{serviceBadge.text}</span>
                   )}
                   <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-white transition-colors mb-4 mt-1">
