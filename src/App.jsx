@@ -124,6 +124,7 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/product/:id" element={<ProductPage />} />
+        <Route path="/service/:id" element={<ProductPage />} />
         <Route path="/garansi" element={<Garansi />} />
         <Route path="/tos" element={<TOS />} />
         <Route path="/cara" element={<CaraOrder />} />

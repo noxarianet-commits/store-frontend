@@ -153,21 +153,25 @@ const AdminDashboard = () => {
         initial_capital: 0
     });
 
+    // Sekalipay states
+    const [sekalipayProducts, setSekalipayProducts] = useState([]);
+    const [sekalipayBalance, setSekalipayBalance] = useState(null);
+    const [sekalipaySync, setSekalipaySync] = useState(null);
+    const [sekalipayLoading, setSekalipayLoading] = useState(false);
+    const [sekalipaySearch, setSekalipaySearch] = useState('');
+    const [syncInProgress, setSyncInProgress] = useState(false);
+    const [globalMarkupValue, setGlobalMarkupValue] = useState(0);
+    const [expandedProduct, setExpandedProduct] = useState(null);
+
     // Form states
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [productForm, setProductForm] = useState({
-        id: '',
         name: '',
         category: '',
-        subtitle: '',
-        price: 0,
-        badge: '',
-        badge_color: 'blue',
         icon: 'smartphone',
-        status: 'available',
-        features: [],
-        variants: []
+        is_active: true,
+        variants: [{ name: '', price: 0 }]
     });
 
     const fileInputRef = useRef(null);
@@ -192,9 +196,112 @@ const AdminDashboard = () => {
     useEffect(() => {
         if (isAuthenticated) {
             localStorage.setItem('adminActiveTab', activeTab);
-            fetchData();
+            if (activeTab === 'sekalipay') {
+                fetchSekalipayData();
+            } else {
+                fetchData();
+            }
         }
     }, [isAuthenticated, activeTab]);
+
+    const fetchSekalipayData = async () => {
+        setSekalipayLoading(true);
+        try {
+            const [itemsRes, statusRes, balanceRes] = await Promise.all([
+                api.get('/admin/sekalipay/admin/items'),
+                api.get('/admin/sekalipay/admin/sync-status'),
+                api.get('/admin/sekalipay/admin/balance').catch(() => ({ data: null })),
+            ]);
+            setSekalipayProducts(itemsRes.data || []);
+            setSekalipaySync(statusRes.data?.lastSync || null);
+            if (balanceRes.data) setSekalipayBalance(balanceRes.data);
+        } catch (err) {
+            console.error('Sekalipay fetch error:', err);
+            if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+                handleLogout();
+            }
+        } finally {
+            setSekalipayLoading(false);
+        }
+    };
+
+    const handleSync = async (type = 'full') => {
+        setSyncInProgress(true);
+        try {
+            const res = await api.post('/admin/sekalipay/admin/sync', { type });
+            if (res.data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Sinkronisasi Berhasil!',
+                    text: `${res.data.productCount} produk berhasil disinkronkan`,
+                    toast: true, position: 'top-end', showConfirmButton: false, timer: 3000,
+                    background: '#0E0E0E', color: '#fff'
+                });
+                fetchSekalipayData();
+            }
+        } catch (err) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Sinkronisasi Gagal',
+                text: err.response?.data?.error || err.message,
+                background: '#0E0E0E', color: '#fff'
+            });
+        } finally {
+            setSyncInProgress(false);
+        }
+    };
+
+    const handleMarkupUpdate = async (productId, variantId, markup) => {
+        try {
+            const body = { markup: parseInt(markup) };
+            if (variantId) body.variant_id = variantId;
+            await api.put(`/admin/sekalipay/admin/items/${productId}/markup`, body);
+            Swal.fire({
+                icon: 'success', title: 'Markup Diperbarui',
+                toast: true, position: 'top-end', showConfirmButton: false, timer: 2000,
+                background: '#0E0E0E', color: '#fff'
+            });
+            fetchSekalipayData();
+        } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Gagal Update Markup', text: err.message, background: '#0E0E0E', color: '#fff' });
+        }
+    };
+
+    const handleToggleProduct = async (productId) => {
+        try {
+            await api.put(`/admin/sekalipay/admin/items/${productId}/toggle`);
+            fetchSekalipayData();
+        } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Gagal', text: err.message, background: '#0E0E0E', color: '#fff' });
+        }
+    };
+
+    const handleGlobalMarkup = async () => {
+        const result = await Swal.fire({
+            title: 'Terapkan Markup Global?',
+            text: `Semua varian akan di-markup Rp ${parseInt(globalMarkupValue || 0).toLocaleString('id-ID')}`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#9333ea',
+            cancelButtonColor: '#1f1f1f',
+            confirmButtonText: 'Ya, Terapkan!',
+            cancelButtonText: 'Batal',
+            background: '#0E0E0E', color: '#fff'
+        });
+        if (result.isConfirmed) {
+            try {
+                await api.put('/admin/sekalipay/admin/global-markup', { markup: parseInt(globalMarkupValue || 0) });
+                Swal.fire({
+                    icon: 'success', title: 'Markup Global Diterapkan!',
+                    toast: true, position: 'top-end', showConfirmButton: false, timer: 3000,
+                    background: '#0E0E0E', color: '#fff'
+                });
+                fetchSekalipayData();
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'Gagal', text: err.message, background: '#0E0E0E', color: '#fff' });
+            }
+        }
+    };
 
     const getStats = () => {
         const totalRevenue = orders.reduce((sum, order) => sum + (order.price || 0), 0);
@@ -232,7 +339,7 @@ const AdminDashboard = () => {
                 setOrders(orderRes.data || []);
             } else {
                 const [prodRes, settingsRes] = await Promise.all([
-                    api.get('/products'),
+                    api.get('/services'),
                     api.get('/settings')
                 ]);
                 setProducts(prodRes.data || []);
@@ -308,21 +415,23 @@ const AdminDashboard = () => {
     const openProductModal = (prod = null, defaultCategory = '') => {
         if (prod) {
             setEditingProduct(prod);
-            setProductForm({ ...prod });
+            setProductForm({
+                name: prod.name || '',
+                category: prod.category || '',
+                icon: prod.icon || 'smartphone',
+                is_active: prod.is_active !== undefined ? prod.is_active : true,
+                variants: prod.variants || [{ name: '', price: 0 }],
+                features: prod.features || []
+            });
         } else {
             setEditingProduct(null);
             setProductForm({
-                id: '',
                 name: '',
-                category: defaultCategory,
-                subtitle: '',
-                price: 0,
-                badge: '',
-                badge_color: 'blue',
+                category: defaultCategory || 'Layanan Jasa',
                 icon: defaultCategory.toLowerCase().includes('game') ? 'gamepad' : defaultCategory.toLowerCase().includes('jasa') ? 'globe' : 'smartphone',
-                status: 'available',
-                features: [],
-                variants: [{ name: '', price: 0 }]
+                is_active: true,
+                variants: [{ name: '', price: 0 }],
+                features: []
             });
         }
         setIsModalOpen(true);
@@ -330,10 +439,19 @@ const AdminDashboard = () => {
 
     const saveProduct = async () => {
         try {
+            const filteredPayload = {
+                name: productForm.name,
+                category: productForm.category,
+                icon: productForm.icon,
+                is_active: productForm.is_active,
+                variants: productForm.variants,
+                features: productForm.features || []
+            };
+            
             if (editingProduct) {
-                await api.put(`/products/${productForm.id}`, productForm);
+                await api.put(`/services/${editingProduct.id}`, filteredPayload);
             } else {
-                await api.post('/products', productForm);
+                await api.post('/services', filteredPayload);
             }
             setIsModalOpen(false);
             fetchData();
@@ -358,7 +476,7 @@ const AdminDashboard = () => {
 
         if (result.isConfirmed) {
             try {
-                await api.delete(`/products/${id}`);
+                await api.delete(`/services/${id}`);
                 fetchData();
                 Swal.fire({ icon: 'success', title: 'Terhapus!', background: '#0E0E0E', color: '#fff' });
             } catch (err) {
@@ -528,6 +646,7 @@ const AdminDashboard = () => {
 
     const menuItems = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'sekalipay', label: 'Sekalipay', icon: Zap },
         { id: 'revenue', label: 'Pendapatan', icon: DollarSign },
         { id: 'products', label: 'Produk', icon: Package },
         { id: 'orders', label: 'Pesanan', icon: ShoppingBag },
@@ -652,6 +771,7 @@ const AdminDashboard = () => {
                     <div>
                         <h2 className="text-2xl font-bold text-white capitalize">
                             {activeTab === 'dashboard' ? 'Beranda & Statistik' : 
+                             activeTab === 'sekalipay' ? 'Integrasi Sekalipay' :
                              activeTab === 'revenue' ? 'Laporan Pendapatan' : 
                              activeTab === 'products' ? 'Manajemen Produk' : 
                              activeTab === 'orders' ? 'Daftar Pesanan' : 
@@ -678,13 +798,11 @@ const AdminDashboard = () => {
                             <div className="py-20 flex justify-center"><div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div></div>
                         ) : (() => {
                             const serviceIds = ['jasa-web', 'script-bot', 'vps-bot'];
-                            const isGameProduct = (p) => p.category && (p.category.toLowerCase().includes('game') || p.category.toLowerCase().includes('top up') || p.category.toLowerCase().includes('topup'));
+                            const isServiceProduct = (p) => serviceIds.includes(p.id) || (p.category && p.category.toLowerCase().includes('jasa'));
                             
-                            const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()) || (p.category && p.category.toLowerCase().includes(searchQuery.toLowerCase())));
+                            const filteredProducts = products.filter(p => isServiceProduct(p) && (p.name.toLowerCase().includes(searchQuery.toLowerCase()) || (p.category && p.category.toLowerCase().includes(searchQuery.toLowerCase()))));
                             
-                            const gameProducts = filteredProducts.filter(p => isGameProduct(p));
-                            const serviceProducts = filteredProducts.filter(p => serviceIds.includes(p.id));
-                            const appProducts = filteredProducts.filter(p => !serviceIds.includes(p.id) && !isGameProduct(p));
+                            const serviceProducts = filteredProducts;
 
                             const renderProductCard = (p) => (
                                 <div key={p.id} className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-4 flex items-center justify-between hover:border-white/10 transition-all group mb-3">
@@ -695,10 +813,9 @@ const AdminDashboard = () => {
                                         <div>
                                             <div className="flex items-center gap-2">
                                                 <h3 className="font-bold text-white">{p.name}</h3>
-                                                {p.badge && <span className="text-[9px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-1.5 py-0.5 rounded uppercase font-bold">{p.badge}</span>}
-                                                {p.status === 'sold_out' && <span className="text-[9px] bg-red-500/15 text-red-400 border border-red-500/20 px-1.5 py-0.5 rounded uppercase font-bold">Habis</span>}
+                                                {!p.is_active && <span className="text-[9px] bg-red-500/15 text-red-400 border border-red-500/20 px-1.5 py-0.5 rounded uppercase font-bold">Nonaktif</span>}
                                             </div>
-                                            <p className="text-xs text-gray-500">{p.category} • Rp {p.price?.toLocaleString('id-ID')}</p>
+                                            <p className="text-xs text-gray-500">{p.category} • Rp {(p.price || (p.variants && p.variants[0]?.price) || 0).toLocaleString('id-ID')}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
@@ -720,33 +837,13 @@ const AdminDashboard = () => {
 
                             return (
                                 <div>
-                                    {appProducts.length > 0 && (
-                                        <div className="mb-8">
-                                            <div className="flex justify-between items-center mb-4">
-                                                <h3 className="text-lg font-bold text-white flex items-center gap-2"><Smartphone size={20} className="text-purple-400"/> App Premium</h3>
-                                                <button onClick={() => openProductModal(null, 'Aplikasi premium')} className="bg-purple-600/20 text-purple-400 hover:bg-purple-600 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-xs font-bold transition-all"><Plus size={14}/> Tambah</button>
-                                            </div>
-                                            {appProducts.map(renderProductCard)}
+                                    <div className="mb-8">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <h3 className="text-lg font-bold text-white flex items-center gap-2"><Globe size={20} className="text-purple-400"/> Layanan Jasa</h3>
+                                            <button onClick={() => openProductModal(null, 'Layanan Jasa')} className="bg-purple-600/20 text-purple-400 hover:bg-purple-600 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-xs font-bold transition-all"><Plus size={14}/> Tambah</button>
                                         </div>
-                                    )}
-                                    {gameProducts.length > 0 && (
-                                        <div className="mb-8">
-                                            <div className="flex justify-between items-center mb-4">
-                                                <h3 className="text-lg font-bold text-white flex items-center gap-2"><Gamepad2 size={20} className="text-purple-400"/> Top Up Game</h3>
-                                                <button onClick={() => openProductModal(null, 'Top Up Game')} className="bg-purple-600/20 text-purple-400 hover:bg-purple-600 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-xs font-bold transition-all"><Plus size={14}/> Tambah</button>
-                                            </div>
-                                            {gameProducts.map(renderProductCard)}
-                                        </div>
-                                    )}
-                                    {serviceProducts.length > 0 && (
-                                        <div className="mb-8">
-                                            <div className="flex justify-between items-center mb-4">
-                                                <h3 className="text-lg font-bold text-white flex items-center gap-2"><Globe size={20} className="text-purple-400"/> Layanan Jasa</h3>
-                                                <button onClick={() => openProductModal(null, 'Layanan Jasa')} className="bg-purple-600/20 text-purple-400 hover:bg-purple-600 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-xs font-bold transition-all"><Plus size={14}/> Tambah</button>
-                                            </div>
-                                            {serviceProducts.map(renderProductCard)}
-                                        </div>
-                                    )}
+                                        {serviceProducts.map(renderProductCard)}
+                                    </div>
                                     {filteredProducts.length === 0 && (
                                         <div className="text-center py-10 text-gray-500 bg-[#0E0E0E] rounded-2xl border border-white/5">Tidak ada produk yang cocok dengan pencarian Anda.</div>
                                     )}
@@ -1152,6 +1249,251 @@ const AdminDashboard = () => {
 
                 )}
 
+                {activeTab === 'sekalipay' && (
+                    <div className="space-y-6">
+                        {/* Sync Status & Balance Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-5">
+                                <div className="flex items-center justify-between mb-3">
+                                    <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Saldo Sekalipay</p>
+                                    <DollarSign size={18} className="text-green-500" />
+                                </div>
+                                <h4 className="text-xl font-bold text-white">
+                                    {sekalipayBalance ? `Rp ${sekalipayBalance.balance?.toLocaleString('id-ID')}` : '—'}
+                                </h4>
+                            </div>
+                            <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-5">
+                                <div className="flex items-center justify-between mb-3">
+                                    <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Total Produk</p>
+                                    <Package size={18} className="text-purple-500" />
+                                </div>
+                                <h4 className="text-xl font-bold text-white">{sekalipayProducts.length}</h4>
+                            </div>
+                            <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-5">
+                                <div className="flex items-center justify-between mb-3">
+                                    <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Sync Terakhir</p>
+                                    <CheckCircle2 size={18} className="text-cyan-500" />
+                                </div>
+                                <h4 className="text-sm font-bold text-white">
+                                    {sekalipaySync?.synced_at ? new Date(sekalipaySync.synced_at).toLocaleString('id-ID') : 'Belum pernah sync'}
+                                </h4>
+                                {sekalipaySync?.type && (
+                                    <p className="text-[10px] text-gray-500 mt-1">Tipe: {sekalipaySync.type} • {sekalipaySync.productCount || 0} produk</p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Sync Actions */}
+                        <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-5">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                <div>
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2"><Zap size={20} className="text-yellow-400" /> Sinkronisasi Produk</h3>
+                                    <p className="text-xs text-gray-500 mt-1">Delta sync otomatis setiap 3 jam. Full sync harian jam 03:00.</p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => handleSync('delta')}
+                                        disabled={syncInProgress}
+                                        className="bg-white/5 border border-white/10 hover:bg-white/10 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-2"
+                                    >
+                                        {syncInProgress ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
+                                        Delta Sync
+                                    </button>
+                                    <button
+                                        onClick={() => handleSync('full')}
+                                        disabled={syncInProgress}
+                                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-purple-600/20 transition-all disabled:opacity-50 flex items-center gap-2"
+                                    >
+                                        {syncInProgress ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
+                                        Full Sync
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Global Markup */}
+                        <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-5">
+                            <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2"><DollarSign size={16} className="text-green-400" /> Markup Global</h3>
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2 flex-1">
+                                    <span className="text-xs text-gray-500">Rp</span>
+                                    <input
+                                        type="number"
+                                        value={globalMarkupValue}
+                                        onChange={(e) => setGlobalMarkupValue(e.target.value)}
+                                        className="flex-1 bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-purple-500/50 max-w-[200px]"
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <button
+                                    onClick={handleGlobalMarkup}
+                                    className="bg-green-600/20 text-green-400 hover:bg-green-600 hover:text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
+                                >
+                                    Terapkan ke Semua
+                                </button>
+                            </div>
+                            <p className="text-[10px] text-gray-600 mt-2">Terapkan markup nominal tetap ke semua varian produk. Harga jual = Harga dasar + Markup.</p>
+                        </div>
+
+                        {/* Search */}
+                        <div className="relative">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            <input
+                                type="text"
+                                placeholder="Cari produk Sekalipay..."
+                                value={sekalipaySearch}
+                                onChange={(e) => setSekalipaySearch(e.target.value)}
+                                className="w-full bg-[#0E0E0E] border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50 transition-all"
+                            />
+                        </div>
+
+                        {/* Product List */}
+                        {sekalipayLoading ? (
+                            <div className="py-20 flex justify-center"><div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div></div>
+                        ) : (() => {
+                            const filtered = sekalipayProducts.filter(p =>
+                                p.name?.toLowerCase().includes(sekalipaySearch.toLowerCase()) ||
+                                p.category?.toLowerCase().includes(sekalipaySearch.toLowerCase())
+                            );
+
+                            // Group by category
+                            const grouped = {};
+                            filtered.forEach(p => {
+                                const cat = p.category || 'Lainnya';
+                                if (!grouped[cat]) grouped[cat] = [];
+                                grouped[cat].push(p);
+                            });
+
+                            return Object.keys(grouped).length === 0 ? (
+                                <div className="text-center py-10 text-gray-500 bg-[#0E0E0E] rounded-2xl border border-white/5">
+                                    {sekalipayProducts.length === 0 ? 'Belum ada produk. Klik "Full Sync" untuk mengambil data dari Sekalipay.' : 'Tidak ada produk yang cocok.'}
+                                </div>
+                            ) : (
+                                <div className="space-y-6">
+                                    {Object.entries(grouped).map(([catName, catProducts]) => (
+                                        <div key={catName}>
+                                            <h3 className="text-sm font-bold text-purple-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                                <Package size={16} /> {catName}
+                                                <span className="text-[10px] text-gray-600 font-normal lowercase">({catProducts.length} produk)</span>
+                                            </h3>
+                                            <div className="space-y-2">
+                                                {catProducts.map(product => {
+                                                    const totalVariants = (product.variants || []).length;
+                                                    const inStock = (product.variants || []).filter(v => v.stock > 0).length;
+                                                    const isExpanded = expandedProduct === product.id;
+
+                                                    return (
+                                                        <div key={product.id} className={`bg-[#0E0E0E] border rounded-2xl transition-all ${
+                                                            product.is_active ? 'border-white/5 hover:border-white/10' : 'border-red-500/20 opacity-60'
+                                                        }`}>
+                                                            {/* Product Header */}
+                                                            <div
+                                                                className="p-4 flex items-center justify-between cursor-pointer"
+                                                                onClick={() => setExpandedProduct(isExpanded ? null : product.id)}
+                                                            >
+                                                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                                    {product.image ? (
+                                                                        <img src={product.image} alt="" className="w-10 h-10 rounded-xl object-cover bg-white/5" />
+                                                                    ) : (
+                                                                        <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-gray-500">
+                                                                            <Package size={18} />
+                                                                        </div>
+                                                                    )}
+                                                                    <div className="min-w-0">
+                                                                        <h4 className="font-bold text-white text-sm truncate">{product.name}</h4>
+                                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                                            <span className="text-[10px] text-gray-500">{totalVariants} varian</span>
+                                                                            <span className="text-[10px] text-green-500">{inStock} tersedia</span>
+                                                                            {!product.is_active && <span className="text-[9px] bg-red-500/15 text-red-400 px-1.5 py-0.5 rounded uppercase font-bold">Hidden</span>}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <button
+                                                                        onClick={(e) => { e.stopPropagation(); handleToggleProduct(product.id); }}
+                                                                        className={`p-2 rounded-lg transition-all text-xs ${product.is_active ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20' : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'}`}
+                                                                        title={product.is_active ? 'Sembunyikan' : 'Tampilkan'}
+                                                                    >
+                                                                        {product.is_active ? <Eye size={14} /> : <EyeOff size={14} />}
+                                                                    </button>
+                                                                    <ChevronDown size={16} className={`text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Expanded Variants */}
+                                                            {isExpanded && (
+                                                                <div className="border-t border-white/5 p-4">
+                                                                    <div className="grid grid-cols-12 gap-2 mb-2 px-2">
+                                                                        <span className="col-span-4 text-[9px] text-gray-600 uppercase tracking-widest font-bold">Varian</span>
+                                                                        <span className="col-span-2 text-[9px] text-gray-600 uppercase tracking-widest font-bold text-right">Harga Dasar</span>
+                                                                        <span className="col-span-2 text-[9px] text-gray-600 uppercase tracking-widest font-bold text-right">Markup</span>
+                                                                        <span className="col-span-2 text-[9px] text-gray-600 uppercase tracking-widest font-bold text-right">Harga Jual</span>
+                                                                        <span className="col-span-2 text-[9px] text-gray-600 uppercase tracking-widest font-bold text-right">Stok</span>
+                                                                    </div>
+                                                                    <div className="space-y-1">
+                                                                        {(product.variants || []).map(variant => (
+                                                                            <div key={variant.id} className="grid grid-cols-12 gap-2 items-center bg-white/[0.02] rounded-xl px-2 py-2 hover:bg-white/5 transition-all">
+                                                                                <div className="col-span-4">
+                                                                                    <p className="text-xs text-white font-medium truncate">{variant.name}</p>
+                                                                                    <p className="text-[9px] text-gray-600">{variant.sku || '—'}</p>
+                                                                                </div>
+                                                                                <p className="col-span-2 text-xs text-gray-400 text-right">Rp {variant.base_price?.toLocaleString('id-ID')}</p>
+                                                                                <div className="col-span-2">
+                                                                                    <input
+                                                                                        type="number"
+                                                                                        defaultValue={variant.markup || 0}
+                                                                                        onBlur={(e) => {
+                                                                                            const newMarkup = parseInt(e.target.value) || 0;
+                                                                                            if (newMarkup !== (variant.markup || 0)) {
+                                                                                                handleMarkupUpdate(product.id, variant.id, newMarkup);
+                                                                                            }
+                                                                                        }}
+                                                                                        onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
+                                                                                        className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-right text-white focus:outline-none focus:border-purple-500/50"
+                                                                                    />
+                                                                                </div>
+                                                                                <p className="col-span-2 text-xs text-green-400 font-bold text-right">Rp {variant.sell_price?.toLocaleString('id-ID')}</p>
+                                                                                <div className="col-span-2 text-right">
+                                                                                    <span className={`text-xs font-bold ${variant.stock > 0 ? 'text-white' : 'text-red-400'}`}>
+                                                                                        {variant.stock > 0 ? variant.stock : 'Habis'}
+                                                                                    </span>
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                    {/* Bulk markup for this product */}
+                                                                    <div className="mt-3 pt-3 border-t border-white/5 flex items-center gap-2">
+                                                                        <span className="text-[10px] text-gray-500">Markup semua varian:</span>
+                                                                        <div className="flex items-center gap-1">
+                                                                            <span className="text-[10px] text-gray-600">Rp</span>
+                                                                            <input
+                                                                                type="number"
+                                                                                placeholder="0"
+                                                                                className="w-24 bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white text-right focus:outline-none focus:border-purple-500/50"
+                                                                                onKeyDown={(e) => {
+                                                                                    if (e.key === 'Enter') {
+                                                                                        handleMarkupUpdate(product.id, null, parseInt(e.target.value) || 0);
+                                                                                        e.target.value = '';
+                                                                                    }
+                                                                                }}
+                                                                            />
+                                                                        </div>
+                                                                        <span className="text-[9px] text-gray-600">(tekan Enter)</span>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })()}
+                    </div>
+                )}
+
             </main>
 
             <AnimatePresence>
@@ -1174,16 +1516,6 @@ const AdminDashboard = () => {
                             <div className="p-8 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="space-y-4">
                                     <h4 className="text-xs font-bold text-purple-400 uppercase tracking-widest mb-4">Informasi Dasar</h4>
-                                    <div>
-                                        <label className="block text-xs text-gray-500 mb-1.5">ID Produk (Unique)</label>
-                                        <input 
-                                            disabled={!!editingProduct}
-                                            value={productForm.id}
-                                            onChange={(e) => setProductForm({...productForm, id: e.target.value.toLowerCase().replace(/\s+/g, '-')})}
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white"
-                                            placeholder="contoh: netflix-premium"
-                                        />
-                                    </div>
                                     <div>
                                         <label className="block text-xs text-gray-500 mb-1.5">Nama Produk</label>
                                         <input 
@@ -1208,26 +1540,6 @@ const AdminDashboard = () => {
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-xs text-gray-500 mb-1.5">Harga Dasar (Rp)</label>
-                                            <input 
-                                                type="number"
-                                                value={productForm.price}
-                                                onChange={(e) => setProductForm({...productForm, price: parseInt(e.target.value)})}
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-xs text-gray-500 mb-1.5">Badge (Opsional)</label>
-                                            <input 
-                                                value={productForm.badge}
-                                                onChange={(e) => setProductForm({...productForm, badge: e.target.value})}
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white"
-                                                placeholder="Hot, New, dll"
-                                            />
-                                        </div>
-                                        <div>
                                             <label className="block text-xs text-gray-500 mb-1.5">Icon</label>
                                             <select 
                                                 value={productForm.icon}
@@ -1244,13 +1556,13 @@ const AdminDashboard = () => {
                                         <div className="flex items-center gap-3">
                                             <button
                                                 type="button"
-                                                onClick={() => setProductForm({...productForm, status: productForm.status === 'available' ? 'sold_out' : 'available'})}
-                                                className={`relative w-12 h-6 rounded-full transition-all duration-300 ${productForm.status === 'available' ? 'bg-green-500' : 'bg-red-500'}`}
+                                                onClick={() => setProductForm({...productForm, is_active: !productForm.is_active})}
+                                                className={`relative w-12 h-6 rounded-full transition-all duration-300 ${productForm.is_active ? 'bg-green-500' : 'bg-red-500'}`}
                                             >
-                                                <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-all duration-300 ${productForm.status === 'available' ? 'left-[26px]' : 'left-0.5'}`} />
+                                                <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-all duration-300 ${productForm.is_active ? 'left-[26px]' : 'left-0.5'}`} />
                                             </button>
-                                            <span className={`text-sm font-bold ${productForm.status === 'available' ? 'text-green-400' : 'text-red-400'}`}>
-                                                {productForm.status === 'available' ? '✓ Tersedia' : '✗ Habis'}
+                                            <span className={`text-sm font-bold ${productForm.is_active ? 'text-green-400' : 'text-red-400'}`}>
+                                                {productForm.is_active ? '✓ Aktif' : '✗ Nonaktif'}
                                             </span>
                                         </div>
                                     </div>
@@ -1294,33 +1606,34 @@ const AdminDashboard = () => {
                                             ))}
                                         </div>
                                     </div>
-
+                                    
                                     <div>
-                                        <div className="flex justify-between items-center mb-4">
-                                            <h4 className="text-xs font-bold text-purple-400 uppercase tracking-widest">Fitur Produk</h4>
+                                        <div className="flex justify-between items-center mb-4 mt-6">
+                                            <h4 className="text-xs font-bold text-purple-400 uppercase tracking-widest">Fitur / Benefit Layanan</h4>
                                             <button 
-                                                onClick={() => setProductForm({...productForm, features: [...productForm.features, '']})}
+                                                onClick={() => setProductForm({...productForm, features: [...(productForm.features || []), '']})}
                                                 className="text-[10px] bg-white/5 px-2 py-1 rounded border border-white/10 text-gray-400 hover:text-white"
-                                            >+ Tambah</button>
+                                            >+ Tambah Fitur</button>
                                         </div>
-                                        <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
-                                            {productForm.features.map((f, i) => (
+                                        <div className="space-y-2 max-h-32 overflow-y-auto pr-2">
+                                            {(productForm.features || []).map((f, i) => (
                                                 <div key={i} className="flex gap-2">
                                                     <input 
                                                         value={f}
                                                         onChange={(e) => {
-                                                            const newF = [...productForm.features];
+                                                            const newF = [...(productForm.features || [])];
                                                             newF[i] = e.target.value;
                                                             setProductForm({...productForm, features: newF});
                                                         }}
                                                         className="flex-1 bg-white/5 border border-white/10 rounded-lg p-2 text-xs text-white"
-                                                        placeholder="Contoh: No Iklan"
+                                                        placeholder={`Fitur ke-${i + 1}`}
                                                     />
                                                     <button onClick={() => setProductForm({...productForm, features: productForm.features.filter((_, idx) => idx !== i)})} className="p-2 text-red-500"><X size={14}/></button>
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
+
                                 </div>
                             </div>
 

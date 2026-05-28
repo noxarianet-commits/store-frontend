@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, CheckCircle2, Copy, Upload, Star, ChevronRight, Shield, Download, AlertTriangle, AlertCircle } from 'lucide-react';
 import api from '../api';
@@ -8,6 +8,7 @@ import Swal from 'sweetalert2';
 const ProductPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -45,15 +46,37 @@ const ProductPage = () => {
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const res = await api.get('/products');
-                if (Array.isArray(res.data)) {
-                    const found = res.data.find(p => p.id === id);
-                    if (found) {
-                        setProduct(found);
-                        setSelectedVariant(found.variants[0]);
+                const isServiceRoute = location.pathname.startsWith('/service/');
+                
+                const [sekalipayRes, dbRes, servicesRes] = await Promise.all([
+                    !isServiceRoute ? api.get('/sekalipay/items').catch(() => ({ data: { data: [] } })) : Promise.resolve({ data: { data: [] } }),
+                    !isServiceRoute ? api.get('/products').catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
+                    api.get('/services').catch(() => ({ data: [] }))
+                ]);
+                
+                let foundProduct = null;
+                if (!isServiceRoute && sekalipayRes.data && Array.isArray(sekalipayRes.data.data)) {
+                    foundProduct = sekalipayRes.data.data.find(p => p.id.toString() === id);
+                }
+                if (!foundProduct && !isServiceRoute && dbRes.data && Array.isArray(dbRes.data)) {
+                    foundProduct = dbRes.data.find(p => p.id.toString() === id);
+                }
+                if (!foundProduct && servicesRes.data && Array.isArray(servicesRes.data)) {
+                    foundProduct = servicesRes.data.find(p => p.id.toString() === id);
+                    if (foundProduct) {
+                        foundProduct.is_service_table = true;
                     }
-                } else {
-                    console.error('Products response is not an array:', res.data);
+                }
+                
+                if (foundProduct) {
+                    // Map is_active to status for backward compatibility
+                    if (foundProduct.is_active === false) {
+                        foundProduct.status = 'sold_out';
+                    } else if (foundProduct.is_active === true) {
+                        foundProduct.status = 'available';
+                    }
+                    setProduct(foundProduct);
+                    setSelectedVariant(foundProduct.variants?.[0] || null);
                 }
                 setLoading(false);
             } catch (err) {
@@ -180,7 +203,8 @@ const ProductPage = () => {
             return;
         }
 
-        const message = product.id === 'jasa-web'
+        const isWebProduct = product.name?.toLowerCase().includes('web') || product.category?.toLowerCase().includes('jasa');
+        const message = isWebProduct
             ? `Halo noxarianet! Saya ingin order Jasa Pembuatan Website.%0A%0A*Informasi Pembeli*%0A- Nomor WA: ${formData.wa_number}%0A- Email: ${formData.email}%0A%0A*Detail Pesanan*%0A- Paket: ${selectedVariant?.name}%0A- Estimasi Budget: ${budget}%0A- Konsep/Fitur: ${conceptMsg}%0A%0AMohon bantuannya untuk detail lebih lanjut.`
             : `Halo noxarianet! Saya ingin request script bot WA.%0A%0A*Informasi Pembeli*%0A- Nomor WA: ${formData.wa_number}%0A- Email: ${formData.email}%0A%0A*Konsep Script*%0A${conceptMsg}%0A%0AMohon bantuannya untuk estimasi harga dan pengerjaan.`;
         
@@ -208,6 +232,7 @@ const ProductPage = () => {
     const totalToPay = calculateTotal();
     const steps = ['Pilih Varian', 'Data Pembeli', 'Pembayaran'];
     const isGameProduct = product?.category?.toLowerCase().includes('game') || product?.category?.toLowerCase().includes('top up') || product?.category?.toLowerCase().includes('topup');
+    const isServiceProduct = product?.is_service_table || product?.category?.toLowerCase().includes('jasa');
 
     return (
         <div className="min-h-screen font-sans text-gray-200">
@@ -346,8 +371,14 @@ const ProductPage = () => {
                                     </button>
                                     <button
                                         onClick={() => {
-                                            setStep(2);
-                                            window.scrollTo({ top: 100, behavior: 'smooth' });
+                                            if (isServiceProduct) {
+                                                const waText = `Halo noxarianet, saya ingin memesan ${product.name} - Varian: ${selectedVariant?.name || '-'}${selectedVariant?.price ? ` dengan harga Rp ${selectedVariant.price.toLocaleString('id-ID')}` : ''}.`;
+                                                const waUrl = `https://wa.me/6285199605580?text=${encodeURIComponent(waText)}`;
+                                                window.open(waUrl, '_blank');
+                                            } else {
+                                                setStep(2);
+                                                window.scrollTo({ top: 100, behavior: 'smooth' });
+                                            }
                                         }}
                                         disabled={product.status === 'sold_out'}
                                         className={`w-2/3 font-semibold py-3.5 rounded-xl transition flex items-center justify-center gap-2 text-sm ${
@@ -356,7 +387,7 @@ const ProductPage = () => {
                                                 : 'bg-purple-600 hover:bg-purple-700 text-white'
                                         }`}
                                     >
-                                        {product.status === 'sold_out' ? 'Stok Habis' : <>Lanjutkan <ChevronRight size={16} /></>}
+                                        {product.status === 'sold_out' ? 'Stok Habis' : isServiceProduct ? <>Hubungi WhatsApp <ChevronRight size={16} /></> : <>Lanjutkan <ChevronRight size={16} /></>}
                                     </button>
                                 </div>
                             </div>
@@ -398,7 +429,7 @@ const ProductPage = () => {
                                     </div>
                                     {selectedVariant?.price === 0 ? (
                                         <div className="space-y-4">
-                                            {product.id === 'jasa-web' && (
+                                            {product.name?.toLowerCase().includes('web') && (
                                                 <div>
                                                     <label className="block text-xs font-medium text-gray-400 mb-3">Estimasi Budget Anda</label>
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -427,12 +458,12 @@ const ProductPage = () => {
                                             )}
                                             <div>
                                                 <label className="block text-xs font-medium text-gray-400 mb-2">
-                                                    {product.id === 'jasa-web' ? 'Ceritakan Website Seperti Apa Yang Anda Inginkan' : 'Ceritakan Konsep Script Bot WA Anda'}
+                                                    {product.name?.toLowerCase().includes('web') ? 'Ceritakan Website Seperti Apa Yang Anda Inginkan' : 'Ceritakan Konsep Script Bot WA Anda'}
                                                 </label>
                                                 <textarea
                                                     value={conceptMsg}
                                                     onChange={(e) => setConceptMsg(e.target.value)}
-                                                    placeholder={product.id === 'jasa-web' ? "Contoh: Saya ingin website toko online yang ada fitur keranjang dan bayar otomatis..." : "Contoh: Saya ingin bot yang bisa auto reply, fitur download tiktok, dan integrasi payment..."}
+                                                    placeholder={product.name?.toLowerCase().includes('web') ? "Contoh: Saya ingin website toko online yang ada fitur keranjang dan bayar otomatis..." : "Contoh: Saya ingin bot yang bisa auto reply, fitur download tiktok, dan integrasi payment..."}
                                                     className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500/50 h-32 resize-none transition-colors"
                                                 />
                                             </div>

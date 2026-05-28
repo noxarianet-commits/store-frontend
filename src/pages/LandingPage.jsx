@@ -69,6 +69,45 @@ const categories = [
   { label: 'Layanan Jasa', value: 'jasa' },
 ];
 
+// Helper component to render product icon/image from database or fallback to Lucide icon
+const ProductIcon = ({ product, fallbackIcon: FallbackIcon, className = '' }) => {
+  const [imageError, setImageError] = useState(false);
+  const imageUrl = product.image || product.icon;
+  const iconColor = iconColorMap[product.icon] || 'bg-white/5 text-gray-400';
+
+  const isUrl = imageUrl && (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('/'));
+
+  if (isUrl && !imageError) {
+    return (
+      <div className={`w-16 h-16 rounded-2xl overflow-hidden transition-all duration-300 mb-4 mt-1 group-hover:scale-110 group-hover:brightness-125 border border-white/5 bg-white/5 flex items-center justify-center ${className}`}>
+        <img 
+          src={imageUrl} 
+          alt={product.name} 
+          className="w-full h-full object-cover rounded-2xl"
+          referrerPolicy="no-referrer"
+          onError={() => setImageError(true)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 mb-4 mt-1 ${iconColor} group-hover:scale-110 group-hover:brightness-125 ${className}`}>
+      <FallbackIcon size={30} />
+    </div>
+  );
+};
+
+const isProductSoldOut = (product) => {
+  if (product.is_service_table || (product.category && product.category.toLowerCase().includes('jasa'))) return false;
+  if (product.status === 'sold_out') return true;
+  if (product.variants && Array.isArray(product.variants)) {
+    if (product.variants.length === 0) return true;
+    return product.variants.every(v => v.stock === 0 || v.stock === null || v.stock === undefined);
+  }
+  return false;
+};
+
 const LandingPage = () => {
   const [products, setProducts] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
@@ -107,21 +146,46 @@ const LandingPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const prodRes = await api.get('/products');
-        if (Array.isArray(prodRes.data)) {
-          setProducts(prodRes.data);
-        } else {
-          console.error('Products response is not an array:', prodRes.data);
+        const [sekalipayRes, dbRes, servicesRes, testRes, settingsRes] = await Promise.all([
+          api.get('/sekalipay/items').catch(() => ({ data: { data: [] } })),
+          api.get('/products').catch(() => ({ data: [] })),
+          api.get('/services').catch(() => ({ data: [] })),
+          api.get('/testimonials').catch(() => ({ data: [] })),
+          api.get('/settings').catch(() => ({ data: null }))
+        ]);
+
+        let allProducts = [];
+        const seenIds = new Set();
+        if (sekalipayRes.data && Array.isArray(sekalipayRes.data.data)) {
+          sekalipayRes.data.data.forEach(p => {
+            if (!seenIds.has(p.id)) {
+              seenIds.add(p.id);
+              allProducts.push(p);
+            }
+          });
         }
+        if (dbRes.data && Array.isArray(dbRes.data)) {
+          dbRes.data.forEach(p => {
+            if (!seenIds.has(p.id)) {
+              seenIds.add(p.id);
+              allProducts.push(p);
+            }
+          });
+        }
+        if (servicesRes.data && Array.isArray(servicesRes.data)) {
+          servicesRes.data.forEach(p => {
+            p.is_service_table = true; // Mark as service from new table
+            allProducts.push(p);
+          });
+        }
+        setProducts(allProducts);
         
-        const testRes = await api.get('/testimonials');
         if (Array.isArray(testRes.data)) {
           setTestimonials(testRes.data);
         } else {
           console.error('Testimonials response is not an array:', testRes.data);
         }
 
-        const settingsRes = await api.get('/settings');
         console.log('Settings received from server:', settingsRes.data);
         
         if (settingsRes.data) {
@@ -214,12 +278,12 @@ const LandingPage = () => {
   }, [isFocused, searchQuery]);
 
   // Separate app products, game products, and service products
-  const serviceIds = ['jasa-web', 'script-bot', 'vps-bot'];
   const isGameProduct = (p) => p.category && (p.category.toLowerCase().includes('game') || p.category.toLowerCase().includes('top up') || p.category.toLowerCase().includes('topup'));
+  const isServiceProduct = (p) => p.is_service_table || (p.category && p.category.toLowerCase().includes('jasa'));
   
-  const rawServiceProducts = products.filter(p => serviceIds.includes(p.id));
+  const rawServiceProducts = products.filter(p => isServiceProduct(p));
   const rawGameProducts = products.filter(p => isGameProduct(p));
-  const rawAppProducts = products.filter(p => !serviceIds.includes(p.id) && !isGameProduct(p));
+  const rawAppProducts = products.filter(p => !isServiceProduct(p) && !isGameProduct(p));
 
   const appProducts = searchQuery
     ? rawAppProducts.filter(p => 
@@ -456,25 +520,24 @@ const LandingPage = () => {
             {appProducts.map((product) => {
               const IconComp = iconMap[product.icon] || Smartphone;
               const badgeStyle = badgeColorMap[product.badgeColor] || { bg: 'bg-gray-500/15', text: 'text-gray-400', border: 'border-gray-500/20' };
-              const iconColor = iconColorMap[product.icon] || 'bg-white/5 text-gray-400';
+
+              const isSoldOut = isProductSoldOut(product);
 
               return (
                 <Link
                   key={product.id}
                   to={`/product/${product.id}`}
-                  className={`group relative bg-[#0E0E0E] hover:bg-[#151515] border border-white/5 hover:border-white/10 rounded-2xl p-5 transition-all duration-200 flex flex-col items-center text-center ${product.status === 'sold_out' ? 'opacity-60' : ''}`}
+                  className={`group relative bg-[#0E0E0E] hover:bg-[#151515] border border-white/5 hover:border-white/10 rounded-2xl p-5 transition-all duration-200 flex flex-col items-center text-center ${isSoldOut ? 'opacity-60' : ''}`}
                 >
-                  {product.status === 'sold_out' && (
+                  {isSoldOut && (
                     <span className="absolute top-3 left-3 text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider border bg-red-500/20 text-red-400 border-red-500/30 z-10">Habis</span>
                   )}
-                  {product.badge && product.status !== 'sold_out' && (
+                  {product.badge && !isSoldOut && (
                     <span className={`absolute top-3 right-3 text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider border ${badgeStyle.bg} ${badgeStyle.text} ${badgeStyle.border}`}>
                       {product.badge}
                     </span>
                   )}
-                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 mb-4 mt-1 ${iconColor} group-hover:scale-110 group-hover:brightness-125`}>
-                    <IconComp size={30} />
-                  </div>
+                  <ProductIcon product={product} fallbackIcon={IconComp} />
                   <span className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">{product.category}</span>
                   <h3 className="text-sm font-bold text-white leading-tight mb-0.5">{product.name}</h3>
                   {product.subtitle && (
@@ -500,25 +563,24 @@ const LandingPage = () => {
               {gameProducts.map((product) => {
                 const IconComp = iconMap[product.icon] || Gamepad2;
                 const badgeStyle = badgeColorMap[product.badgeColor] || { bg: 'bg-gray-500/15', text: 'text-gray-400', border: 'border-gray-500/20' };
-                const iconColor = iconColorMap[product.icon] || 'bg-white/5 text-gray-400';
+
+                const isSoldOut = isProductSoldOut(product);
 
                 return (
                   <Link
                     key={product.id}
                     to={`/product/${product.id}`}
-                    className={`group relative bg-[#0E0E0E] hover:bg-[#151515] border border-white/5 hover:border-white/10 rounded-2xl p-5 transition-all duration-200 flex flex-col items-center text-center ${product.status === 'sold_out' ? 'opacity-60' : ''}`}
+                    className={`group relative bg-[#0E0E0E] hover:bg-[#151515] border border-white/5 hover:border-white/10 rounded-2xl p-5 transition-all duration-200 flex flex-col items-center text-center ${isSoldOut ? 'opacity-60' : ''}`}
                   >
-                    {product.status === 'sold_out' && (
+                    {isSoldOut && (
                       <span className="absolute top-3 left-3 text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider border bg-red-500/20 text-red-400 border-red-500/30 z-10">Habis</span>
                     )}
-                    {product.badge && product.status !== 'sold_out' && (
+                    {product.badge && !isSoldOut && (
                       <span className={`absolute top-3 right-3 text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider border ${badgeStyle.bg} ${badgeStyle.text} ${badgeStyle.border}`}>
                         {product.badge}
                       </span>
                     )}
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 mb-4 mt-1 ${iconColor} group-hover:scale-110 group-hover:brightness-125`}>
-                      <IconComp size={30} />
-                    </div>
+                    <ProductIcon product={product} fallbackIcon={IconComp} />
                     <span className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">{product.category}</span>
                     <h3 className="text-sm font-bold text-white leading-tight mb-0.5">{product.name}</h3>
                     {product.subtitle && (
@@ -549,43 +611,31 @@ const LandingPage = () => {
               const ServiceIcon = iconMapService[product.id] || Globe;
               const serviceBadge = badgeMapService[product.id];
               
-              const isConsultation = false; // Disable direct landing page consultation redirect for now to use product page form
+              const isSoldOut = isProductSoldOut(product);
               
-              const href = isConsultation
-                ? `https://wa.me/6285199605580?text=Halo%20noxarianet%2C%20saya%20ingin%20konsultasi%20mengenai%20${encodeURIComponent(product.name)}.`
-                : null;
-              
-              const CardEl = href ? 'a' : Link;
-              const cardProps = href
-                ? { href, target: '_blank', rel: 'noreferrer' }
-                : { to: `/product/${product.id}` };
-              
+              const startingPrice = product.variants && product.variants.length > 0
+                ? Math.min(...product.variants.map(v => v.price))
+                : 0;
+
               return (
-                <CardEl
+                <Link
                   key={product.id}
-                  {...cardProps}
-                  className={`group relative bg-[#0E0E0E] hover:bg-[#151515] border border-white/5 hover:border-white/10 rounded-2xl p-5 transition-all flex flex-col items-center text-center ${product.status === 'sold_out' ? 'opacity-60' : ''}`}
+                  to={product.is_service_table ? `/service/${product.id}` : `/product/${product.id}`}
+                  className={`group relative bg-[#0E0E0E] hover:bg-[#151515] border border-white/5 hover:border-white/10 rounded-2xl p-5 transition-all flex flex-col items-center text-center ${isSoldOut ? 'opacity-60' : ''}`}
                 >
-                  {product.status === 'sold_out' && (
-                    <span className="absolute top-3 left-3 text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider border bg-red-500/20 text-red-400 border-red-500/30 z-10">Habis</span>
-                  )}
-                  {serviceBadge && product.status !== 'sold_out' && (
+                  {serviceBadge && !isSoldOut && (
                     <span className={`absolute top-3 right-3 text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider border ${serviceBadge.class}`}>{serviceBadge.text}</span>
                   )}
-                  <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-white transition-colors mb-4 mt-1">
-                    <ServiceIcon size={30} />
-                  </div>
+                  <ProductIcon product={product} fallbackIcon={ServiceIcon} className="group-hover:text-white transition-colors" />
                   <span className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">{product.category}</span>
                   <h3 className="text-sm font-bold text-white leading-tight mb-0.5">{product.name}</h3>
                   {product.subtitle && (
                     <p className="text-[9px] text-purple-400/90 italic mb-1 px-2">{product.subtitle}</p>
                   )}
-                  {isConsultation ? (
-                    <p className="text-[11px] text-green-400 font-medium">Chat Admin via WhatsApp</p>
-                  ) : (
-                    <p className="text-[11px] text-gray-500">Mulai Rp {product.price.toLocaleString('id-ID')}</p>
-                  )}
-                </CardEl>
+                  <p className="text-[11px] text-purple-400 font-medium">
+                    {startingPrice > 0 ? `Mulai Rp ${startingPrice.toLocaleString('id-ID')}` : 'Tanya via Chat'}
+                  </p>
+                </Link>
               );
             })}
           </div>
