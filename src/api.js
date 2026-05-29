@@ -8,7 +8,8 @@ const api = axios.create({
 api.interceptors.request.use(config => {
     const token = localStorage.getItem('adminToken');
     if (token) {
-        config.headers['x-admin-token'] = token;
+        // Gunakan standar Authorization: Bearer header
+        config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
 }, error => {

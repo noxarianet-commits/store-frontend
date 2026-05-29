@@ -181,6 +181,15 @@ const AdminDashboard = () => {
         password: ''
     });
 
+    // State untuk form ganti password
+    const [passwordForm, setPasswordForm] = useState({
+        current_password: '',
+        new_password: '',
+        confirm_password: ''
+    });
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+
     const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
     const [editingOrder, setEditingOrder] = useState(null);
     const [orderForm, setOrderForm] = useState({
@@ -581,6 +590,35 @@ const AdminDashboard = () => {
             });
         } catch (err) {
             Swal.fire({ icon: 'error', title: 'Gagal!', background: '#0E0E0E', color: '#fff' });
+        }
+    };
+
+    const handleChangePassword = async () => {
+        const { current_password, new_password, confirm_password } = passwordForm;
+        if (!current_password || !new_password || !confirm_password) {
+            return Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Semua kolom password wajib diisi!', background: '#0E0E0E', color: '#fff' });
+        }
+        if (new_password.length < 8) {
+            return Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Password baru minimal 8 karakter!', background: '#0E0E0E', color: '#fff' });
+        }
+        if (new_password !== confirm_password) {
+            return Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Konfirmasi password tidak cocok!', background: '#0E0E0E', color: '#fff' });
+        }
+        try {
+            await api.put('/admin/password', { current_password, new_password });
+            setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
+            Swal.fire({
+                icon: 'success',
+                title: 'Password Berhasil Diubah!',
+                text: 'Silakan login kembali dengan password baru.',
+                background: '#0E0E0E',
+                color: '#fff'
+            }).then(() => {
+                setIsAuthenticated(false);
+                localStorage.removeItem('adminToken');
+            });
+        } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Gagal Ubah Password', text: err.response?.data?.error || err.message, background: '#0E0E0E', color: '#fff' });
         }
     };
 
@@ -1200,27 +1238,55 @@ const AdminDashboard = () => {
                                     <LogOut size={20} className="text-red-400 rotate-180" />
                                     Keamanan Admin
                                 </h3>
-                                <p className="text-xs text-gray-500">Ubah kredensial login dashboard Anda (Username & Password)</p>
+                                <p className="text-xs text-gray-500">Ubah password login dashboard Anda. Password lama diperlukan untuk konfirmasi.</p>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 gap-4 max-w-md">
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-400 mb-2">Username Baru</label>
-                                    <input 
-                                        type="text"
-                                        placeholder="Masukkan username baru"
-                                        value={authForm.username}
-                                        onChange={(e) => setAuthForm({...authForm, username: e.target.value})}
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-purple-500/50"
-                                    />
+                                    <label className="block text-xs font-medium text-gray-400 mb-2">Password Saat Ini</label>
+                                    <div className="relative">
+                                        <input 
+                                            type={showCurrentPassword ? "text" : "password"}
+                                            placeholder="Masukkan password saat ini"
+                                            value={passwordForm.current_password}
+                                            onChange={(e) => setPasswordForm({...passwordForm, current_password: e.target.value})}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 pr-10 text-sm text-white focus:outline-none focus:border-purple-500/50"
+                                        />
+                                        <button 
+                                            type="button"
+                                            onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                                        >
+                                            {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="block text-xs font-medium text-gray-400 mb-2">Password Baru</label>
                                     <div className="relative">
                                         <input 
+                                            type={showNewPassword ? "text" : "password"}
+                                            placeholder="Minimal 8 karakter"
+                                            value={passwordForm.new_password}
+                                            onChange={(e) => setPasswordForm({...passwordForm, new_password: e.target.value})}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 pr-10 text-sm text-white focus:outline-none focus:border-purple-500/50"
+                                        />
+                                        <button 
+                                            type="button"
+                                            onClick={() => setShowNewPassword(!showNewPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                                        >
+                                            {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-400 mb-2">Konfirmasi Password Baru</label>
+                                    <div className="relative">
+                                        <input 
                                             type={showSettingsPassword ? "text" : "password"}
-                                            placeholder="Masukkan password baru"
-                                            value={authForm.password}
-                                            onChange={(e) => setAuthForm({...authForm, password: e.target.value})}
+                                            placeholder="Ulangi password baru"
+                                            value={passwordForm.confirm_password}
+                                            onChange={(e) => setPasswordForm({...passwordForm, confirm_password: e.target.value})}
                                             className="w-full bg-white/5 border border-white/10 rounded-xl p-3 pr-10 text-sm text-white focus:outline-none focus:border-purple-500/50"
                                         />
                                         <button 
@@ -1234,15 +1300,10 @@ const AdminDashboard = () => {
                                 </div>
                             </div>
                             <button 
-                                onClick={() => {
-                                    if (!authForm.username || !authForm.password) {
-                                        return Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Username dan Password tidak boleh kosong!', background: '#0E0E0E', color: '#fff' });
-                                    }
-                                    updateSetting('admin_auth', authForm);
-                                }}
+                                onClick={handleChangePassword}
                                 className="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 mt-6 transition-all"
                             >
-                                <Save size={18} /> Simpan Kredensial Baru
+                                <Save size={18} /> Ubah Password
                             </button>
                         </div>
                     </div>
