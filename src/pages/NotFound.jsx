@@ -1,7 +1,6 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Home, Ghost, ChevronLeft, Sparkles, Cpu } from 'lucide-react';
+import { Home, ChevronLeft, Cpu } from 'lucide-react';
 
 const NotFound = () => {
   return (

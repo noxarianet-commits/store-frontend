@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe, Server, Code, Smartphone, ChevronRight, User, Clock, AlertCircle, Scissors, Music, Film, Palette, Brain, PlayCircle, Tv, Clapperboard, Play, Sparkles, BookOpen, Search, LogIn, Tag, Megaphone, Headphones, AlertTriangle, X, Star, Gamepad2, Swords, Trophy, Joystick, Target, Monitor, CreditCard, ShoppingCart, Zap, Heart, Gift } from 'lucide-react';
+import { Globe, Server, Code, Smartphone, ChevronRight, Scissors, Music, Film, Palette, Brain, PlayCircle, Tv, Clapperboard, Play, Sparkles, BookOpen, Search, Megaphone, X, Star, Gamepad2, Swords, Trophy, Joystick, Target, Monitor, CreditCard, ShoppingCart, Zap, Heart, Gift } from 'lucide-react';
 import api from '../api';
 
 // Icon mapping for products
@@ -63,11 +63,7 @@ const badgeColorMap = {
   orange: { bg: 'bg-orange-500/15', text: 'text-orange-400', border: 'border-orange-500/20' },
 };
 
-// Category filter options
-const categories = [
-  { label: 'Semua Produk', value: 'all' },
-  { label: 'Layanan Jasa', value: 'jasa' },
-];
+
 
 // Helper component to render product icon/image from database or fallback to Lucide icon
 const ProductIcon = ({ product, fallbackIcon: FallbackIcon, className = '' }) => {
@@ -118,7 +114,7 @@ const LandingPage = () => {
     info_modal_image: '/info.jpeg'
   });
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState('all');
+  
   const [typedPlaceholder, setTypedPlaceholder] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   
@@ -132,7 +128,8 @@ const LandingPage = () => {
   useEffect(() => {
     const hidden = localStorage.getItem('hideInfoModal');
     if (hidden !== 'true') {
-      setShowInfoModal(true);
+      const timer = setTimeout(() => setShowInfoModal(true), 0);
+      return () => clearTimeout(timer);
     }
   }, []);
 

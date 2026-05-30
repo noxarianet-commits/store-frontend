@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, CheckCircle2, Copy, Upload, Star, ChevronRight, Shield, Download, AlertTriangle, AlertCircle } from 'lucide-react';
@@ -34,12 +34,15 @@ const ProductPage = () => {
 
     useEffect(() => {
         if (selectedVariant) {
-            if (selectedVariant.price > 0) {
-                const rand = Math.floor(Math.random() * 50) + 1;
-                setUniquePrice(selectedVariant.price + rand);
-            } else {
-                setUniquePrice(0);
-            }
+            const timer = setTimeout(() => {
+                if (selectedVariant.price > 0) {
+                    const rand = Math.floor(Math.random() * 50) + 1;
+                    setUniquePrice(selectedVariant.price + rand);
+                } else {
+                    setUniquePrice(0);
+                }
+            }, 0);
+            return () => clearTimeout(timer);
         }
     }, [selectedVariant]);
 
@@ -85,7 +88,7 @@ const ProductPage = () => {
             }
         };
         fetchProduct();
-    }, [id]);
+    }, [id, location.pathname]);
 
     const handleFormChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -282,7 +285,7 @@ const ProductPage = () => {
                 {/* Step Progress */}
                 <div className="flex items-center gap-2 mb-8">
                     {steps.map((s, i) => (
-                        <React.Fragment key={i}>
+                        <Fragment key={i}>
                             <div className={`flex items-center gap-2 ${step > i + 1 ? 'text-purple-400' : step === i + 1 ? 'text-white' : 'text-gray-600'}`}>
                                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border transition-all ${
                                     step > i + 1
@@ -298,7 +301,7 @@ const ProductPage = () => {
                             {i < steps.length - 1 && (
                                 <div className={`flex-1 h-px transition-all ${step > i + 1 ? 'bg-purple-600' : 'bg-white/10'}`} />
                             )}
-                        </React.Fragment>
+                        </Fragment>
                     ))}
                 </div>
 
