@@ -1,16 +1,16 @@
-
+import { useState } from 'react';
 import { Save, Eye, EyeOff, ImageIcon, Upload, Loader2, LogOut } from 'lucide-react';
 import api from '../../api';
 import Swal from 'sweetalert2';
 
 const SettingsTab = ({
     settings, setSettings, updateSetting,
-    passwordForm, setPasswordForm, handleChangePassword,
-    uploadingBanner, setUploadingBanner,
-    showCurrentPassword, setShowCurrentPassword,
-    showNewPassword, setShowNewPassword,
-    showSettingsPassword, setShowSettingsPassword
+    passwordForm, setPasswordForm, handleChangePassword
 }) => {
+    const [uploadingBanner, setUploadingBanner] = useState(false);
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showSettingsPassword, setShowSettingsPassword] = useState(false);
     const handleInfoImageUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;

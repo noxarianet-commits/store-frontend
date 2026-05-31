@@ -4,13 +4,10 @@ import { useState } from 'react';
 
 const ProductsTab = ({ products, openProductModal, deleteProduct }) => {
     const [searchQuery, setSearchQuery] = useState('');
-    const serviceIds = ['jasa-web', 'script-bot', 'vps-bot'];
-    const isServiceProduct = (p) => serviceIds.includes(p.id) || (p.category && p.category.toLowerCase().includes('jasa'));
 
     const filteredProducts = products.filter(p =>
-        isServiceProduct(p) &&
-        (p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-         (p.category && p.category.toLowerCase().includes(searchQuery.toLowerCase())))
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (p.category && p.category.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
     const renderProductCard = (p) => (

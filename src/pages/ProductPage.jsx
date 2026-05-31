@@ -1,10 +1,70 @@
-import { useEffect, useState, Fragment } from 'react';
+import { useEffect, useState, useRef, Fragment } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, CheckCircle2, Copy, Upload, Star, ChevronRight, Shield, Download, AlertTriangle, AlertCircle } from 'lucide-react';
+import {
+    ArrowLeft, CheckCircle2, Copy, Star, ChevronRight,
+    Shield, AlertTriangle, AlertCircle, Clock, RefreshCw,
+    Loader2, Wifi, Info
+} from 'lucide-react';
 import api from '../api';
 import Swal from 'sweetalert2';
 
+// ══════════════════════════════════════════════════════════════════════════
+// HELPER — Format Rupiah
+// ══════════════════════════════════════════════════════════════════════════
+function formatRp(num) {
+    return `Rp ${Number(num).toLocaleString('id-ID')}`;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// HELPER — Order Process Label & Color
+// ══════════════════════════════════════════════════════════════════════════
+const ORDER_PROCESS_CONFIG = {
+    auto: { label: 'Instan', color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20' },
+    h2h: { label: 'Instan', color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20' },
+    manual: { label: 'Manual', color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' },
+    smm: { label: 'SMM', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
+};
+
+function isVariantOutOfStock(variant) {
+    return variant.stock === 0 || variant.stock === null || variant.stock === undefined;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// SUB-COMPONENT — Countdown Timer
+// ══════════════════════════════════════════════════════════════════════════
+function CountdownTimer({ expiredAt }) {
+    const [remaining, setRemaining] = useState('');
+
+    useEffect(() => {
+        if (!expiredAt) return;
+        const tick = () => {
+            const diff = new Date(expiredAt) - new Date();
+            if (diff <= 0) {
+                setRemaining('Kadaluarsa');
+                return;
+            }
+            const m = Math.floor(diff / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            setRemaining(`${m}:${s.toString().padStart(2, '0')}`);
+        };
+        tick();
+        const id = setInterval(tick, 1000);
+        return () => clearInterval(id);
+    }, [expiredAt]);
+
+    if (!expiredAt) return null;
+    return (
+        <div className="flex items-center gap-1.5 text-yellow-400 text-xs font-medium">
+            <Clock size={13} />
+            <span>Kadaluarsa dalam: <span className="font-mono font-bold">{remaining}</span></span>
+        </div>
+    );
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// MAIN COMPONENT
+// ══════════════════════════════════════════════════════════════════════════
 const ProductPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -17,46 +77,95 @@ const ProductPage = () => {
     const [step, setStep] = useState(1);
     const [selectedVariant, setSelectedVariant] = useState(null);
     const [formData, setFormData] = useState({
-        payment_method: 'QRIS',
         wa_number: '',
         email: '',
+        payment_code: '',
     });
 
-    const [proofImage, setProofImage] = useState(null);
-    const [proofPreview, setProofPreview] = useState('');
+    // Payment methods from PG
+    const [paymentMethods, setPaymentMethods] = useState([]);
+    const [loadingMethods, setLoadingMethods] = useState(false);
+    const [showAllMethods, setShowAllMethods] = useState(false);
+
+    // Testimonial
     const [testimonialMsg, setTestimonialMsg] = useState('');
     const [conceptMsg, setConceptMsg] = useState('');
     const [budget, setBudget] = useState('500k-1jt');
     const [rating, setRating] = useState(5);
+
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [copied, setCopied] = useState(false);
-    const [uniquePrice, setUniquePrice] = useState(0);
 
+    // Payment result (setelah createPayment berhasil)
+    const [paymentResult, setPaymentResult] = useState(null);
+
+    // Polling status
+    const [orderStatus, setOrderStatus] = useState(null);
+    const pollingRef = useRef(null);
+
+    // ── Fetch payment methods when entering Step 2 ──────────────────────
     useEffect(() => {
-        if (selectedVariant) {
-            const timer = setTimeout(() => {
-                if (selectedVariant.price > 0) {
-                    const rand = Math.floor(Math.random() * 50) + 1;
-                    setUniquePrice(selectedVariant.price + rand);
-                } else {
-                    setUniquePrice(0);
-                }
-            }, 0);
-            return () => clearTimeout(timer);
+        if (step === 2 && paymentMethods.length === 0) {
+            setLoadingMethods(true);
+            api.get('/payments/methods')
+                .then(res => {
+                    let methods = res.data?.data || [];
+                    methods = [...methods].reverse(); // Urutkan dari bawah sesuai request
+                    setPaymentMethods(methods);
+                    if (methods.length > 0 && !formData.payment_code) {
+                        const hasQris = methods.find(m => m.payment_code === 'QRISREALTIME');
+                        setFormData(prev => ({ ...prev, payment_code: hasQris ? 'QRISREALTIME' : methods[0].payment_code }));
+                    }
+                })
+                .catch(err => console.error('Gagal load payment methods:', err))
+                .finally(() => setLoadingMethods(false));
         }
-    }, [selectedVariant]);
+    }, [step]);
 
+    // ── Polling status order setelah payment dibuat ──────────────────────
+    useEffect(() => {
+        if (step === 3 && paymentResult?.order_id) {
+            startPolling(paymentResult.order_id);
+        }
+        return () => stopPolling();
+    }, [step, paymentResult]);
+
+    function startPolling(orderId) {
+        stopPolling();
+        pollingRef.current = setInterval(async () => {
+            try {
+                const res = await api.get(`/payments/status/${orderId}`);
+                const status = res.data?.data?.status;
+                setOrderStatus(res.data?.data);
+
+                if (status === 'COMPLETED' || status === 'FAILED' || status === 'CANCELLED') {
+                    stopPolling();
+                }
+            } catch (err) {
+                console.error('Polling error:', err.message);
+            }
+        }, 5000);
+    }
+
+    function stopPolling() {
+        if (pollingRef.current) {
+            clearInterval(pollingRef.current);
+            pollingRef.current = null;
+        }
+    }
+
+    // ── Fetch product ────────────────────────────────────────────────────
     useEffect(() => {
         const fetchProduct = async () => {
             try {
                 const isServiceRoute = location.pathname.startsWith('/service/');
-                
+
                 const [sekalipayRes, dbRes, servicesRes] = await Promise.all([
                     !isServiceRoute ? api.get('/sekalipay/items').catch(() => ({ data: { data: [] } })) : Promise.resolve({ data: { data: [] } }),
                     !isServiceRoute ? api.get('/products').catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
                     api.get('/services').catch(() => ({ data: [] }))
                 ]);
-                
+
                 let foundProduct = null;
                 if (!isServiceRoute && sekalipayRes.data && Array.isArray(sekalipayRes.data.data)) {
                     foundProduct = sekalipayRes.data.data.find(p => p.id.toString() === id);
@@ -66,20 +175,16 @@ const ProductPage = () => {
                 }
                 if (!foundProduct && servicesRes.data && Array.isArray(servicesRes.data)) {
                     foundProduct = servicesRes.data.find(p => p.id.toString() === id);
-                    if (foundProduct) {
-                        foundProduct.is_service_table = true;
-                    }
+                    if (foundProduct) foundProduct.is_service_table = true;
                 }
-                
+
                 if (foundProduct) {
-                    // Map is_active to status for backward compatibility
-                    if (foundProduct.is_active === false) {
-                        foundProduct.status = 'sold_out';
-                    } else if (foundProduct.is_active === true) {
-                        foundProduct.status = 'available';
-                    }
+                    if (foundProduct.is_active === false) foundProduct.status = 'sold_out';
+                    else if (foundProduct.is_active === true) foundProduct.status = 'available';
                     setProduct(foundProduct);
-                    setSelectedVariant(foundProduct.variants?.[0] || null);
+                    // Auto-select first in-stock variant, fallback to first variant
+                    const firstInStock = foundProduct.variants?.find(v => v.stock > 0);
+                    setSelectedVariant(firstInStock || foundProduct.variants?.[0] || null);
                 }
                 setLoading(false);
             } catch (err) {
@@ -94,126 +199,69 @@ const ProductPage = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleImageChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setProofImage(file);
-            setProofPreview(URL.createObjectURL(file));
-        }
-    };
-
     const copyToClipboard = (text) => {
         navigator.clipboard.writeText(text);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const calculateTotal = () => {
-        return uniquePrice;
-    };
-
-    const submitOrder = async () => {
+    // ── Submit: buat payment via PG ──────────────────────────────────────
+    const submitPayment = async () => {
         if (!formData.wa_number || !formData.email) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Upss...',
-                text: 'Nomor WA dan Email wajib diisi!',
-                background: '#0E0E0E',
-                color: '#fff',
-                confirmButtonColor: '#9333ea'
-            });
+            Swal.fire({ icon: 'warning', title: 'Upss...', text: 'Nomor WA dan Email wajib diisi!', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#9333ea' });
+            return;
+        }
+        if (!formData.payment_code) {
+            Swal.fire({ icon: 'warning', title: 'Upss...', text: 'Pilih metode pembayaran terlebih dahulu!', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#9333ea' });
             return;
         }
 
         setIsSubmitting(true);
         try {
-            const orderId = `NX-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-            const formDataObj = new FormData();
-            formDataObj.append('id', orderId);
-            formDataObj.append('product', product.name);
-            formDataObj.append('variant', selectedVariant.name);
-            formDataObj.append('price', uniquePrice);
-            formDataObj.append('payment_method', formData.payment_method);
-            formDataObj.append('wa_number', formData.wa_number);
-            formDataObj.append('email', formData.email);
-            formDataObj.append('testimonial', testimonialMsg);
+            const res = await api.post('/payments/create', {
+                product_id: product.id?.toString(),
+                variant_id: selectedVariant?.id,
+                variant_name: selectedVariant?.name,
+                product_name: product.name,
+                amount: selectedVariant?.price,
+                payment_code: formData.payment_code,
+                customer_name: formData.wa_number,
+                wa_number: formData.wa_number,
+                email: formData.email,
+            });
 
-            if (proofImage) {
-                formDataObj.append('proof_image', proofImage);
-            }
-
-            const res = await api.post('/order', formDataObj);
-
-            if (res.data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    html: `
-                        <div className="text-sm text-gray-300">
-                            <p className="mb-4">Pesanan Anda telah diterima. Produk akan dikirim lewat WhatsApp dalam 1-5 menit.</p>
-                            <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col items-center gap-3">
-                                <span className="text-xs text-gray-400 uppercase tracking-wider">ID Pesanan Anda</span>
-                                <span className="text-2xl font-mono font-bold text-purple-400 tracking-wider">${orderId}</span>
-                                <button 
-                                    id="copy-order-id"
-                                    class="px-4 py-2 bg-purple-600/20 text-purple-400 rounded-lg text-xs font-bold hover:bg-purple-600/30 transition-all border border-purple-600/30"
-                                >
-                                    Salin ID Pesanan
-                                </button>
-                            </div>
-                        </div>
-                    `,
-                    background: '#0E0E0E',
-                    color: '#fff',
-                    confirmButtonColor: '#9333ea',
-                    didOpen: () => {
-                        const copyBtn = document.getElementById('copy-order-id');
-                        copyBtn.addEventListener('click', () => {
-                            navigator.clipboard.writeText(orderId);
-                            copyBtn.innerText = '✓ Berhasil Disalin';
-                            copyBtn.classList.add('text-green-400', 'border-green-400/30', 'bg-green-600/20');
-                        });
-                    }
-                }).then(() => {
-                    navigate('/');
-                });
+            if (res.data?.success) {
+                setPaymentResult(res.data.data);
+                setOrderStatus({ status: 'PENDING', ...res.data.data });
+                setStep(3);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         } catch (err) {
             console.error(err);
             Swal.fire({
-                icon: 'error',
-                title: 'Kesalahan',
-                text: err.response?.data?.error || 'Gagal mengirim pesanan. Silakan coba lagi.',
-                background: '#0E0E0E',
-                color: '#fff',
-                confirmButtonColor: '#9333ea'
+                icon: 'error', title: 'Gagal Membuat Pembayaran',
+                text: err.response?.data?.error || 'Terjadi kesalahan. Silakan coba lagi.',
+                background: '#0E0E0E', color: '#fff', confirmButtonColor: '#9333ea'
             });
         } finally {
             setIsSubmitting(false);
         }
     };
 
+    // ── Service (manual WA consultation) ───────────────────────────────
     const handleCustomConsultation = () => {
         if (!formData.wa_number || !formData.email || !conceptMsg) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Upss...',
-                text: 'Mohon lengkapi WA, Email, dan Konsep Script Anda!',
-                background: '#0E0E0E',
-                color: '#fff',
-                confirmButtonColor: '#9333ea'
-            });
+            Swal.fire({ icon: 'warning', title: 'Upss...', text: 'Mohon lengkapi WA, Email, dan Konsep!', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#9333ea' });
             return;
         }
-
         const isWebProduct = product.name?.toLowerCase().includes('web') || product.category?.toLowerCase().includes('jasa');
         const message = isWebProduct
             ? `Halo noxarianet! Saya ingin order Jasa Pembuatan Website.%0A%0A*Informasi Pembeli*%0A- Nomor WA: ${formData.wa_number}%0A- Email: ${formData.email}%0A%0A*Detail Pesanan*%0A- Paket: ${selectedVariant?.name}%0A- Estimasi Budget: ${budget}%0A- Konsep/Fitur: ${conceptMsg}%0A%0AMohon bantuannya untuk detail lebih lanjut.`
             : `Halo noxarianet! Saya ingin request script bot WA.%0A%0A*Informasi Pembeli*%0A- Nomor WA: ${formData.wa_number}%0A- Email: ${formData.email}%0A%0A*Konsep Script*%0A${conceptMsg}%0A%0AMohon bantuannya untuk estimasi harga dan pengerjaan.`;
-        
         window.open(`https://wa.me/6285199605580?text=${message}`, '_blank');
     };
 
+    // ── Loading & not found ──────────────────────────────────────────────
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center">
             <div className="text-center">
@@ -232,10 +280,19 @@ const ProductPage = () => {
         </div>
     );
 
-    const totalToPay = calculateTotal();
     const steps = ['Pilih Varian', 'Data Pembeli', 'Pembayaran'];
     const isGameProduct = product?.category?.toLowerCase().includes('game') || product?.category?.toLowerCase().includes('top up') || product?.category?.toLowerCase().includes('topup');
     const isServiceProduct = product?.is_service_table || product?.category?.toLowerCase().includes('jasa');
+
+    // Status badge config
+    const statusConfig = {
+        PENDING: { label: 'Menunggu Pembayaran', color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20', icon: <Clock size={16} className="text-yellow-400" /> },
+        PROCESSING: { label: 'Sedang Diproses', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20', icon: <Loader2 size={16} className="text-blue-400 animate-spin" /> },
+        COMPLETED: { label: 'Selesai!', color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20', icon: <CheckCircle2 size={16} className="text-green-400" /> },
+        FAILED: { label: 'Gagal', color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20', icon: <AlertCircle size={16} className="text-red-400" /> },
+        CANCELLED: { label: 'Dibatalkan', color: 'text-gray-400', bg: 'bg-white/5 border-white/10', icon: <AlertCircle size={16} className="text-gray-400" /> },
+    };
+    const currentStatus = statusConfig[orderStatus?.status] || statusConfig['PENDING'];
 
     return (
         <div className="min-h-screen font-sans text-gray-200">
@@ -252,10 +309,7 @@ const ProductPage = () => {
             <main className="max-w-2xl mx-auto px-4 py-10">
                 {/* Back Button */}
                 <button
-                    onClick={() => {
-                        window.scrollTo(0, 0);
-                        navigate('/');
-                    }}
+                    onClick={() => { window.scrollTo(0, 0); navigate('/'); }}
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 text-gray-400 hover:text-white transition-all mb-8 text-sm font-medium shadow-sm backdrop-blur-sm"
                 >
                     <ArrowLeft size={16} /> Kembali ke Beranda
@@ -276,7 +330,7 @@ const ProductPage = () => {
                             </div>
                             <div>
                                 <p className="text-sm font-bold text-red-400">Stok Habis</p>
-                                <p className="text-xs text-gray-400">Produk ini sedang tidak tersedia untuk saat ini. Silakan cek kembali nanti.</p>
+                                <p className="text-xs text-gray-400">Produk ini sedang tidak tersedia. Silakan cek kembali nanti.</p>
                             </div>
                         </div>
                     </div>
@@ -288,11 +342,7 @@ const ProductPage = () => {
                         <Fragment key={i}>
                             <div className={`flex items-center gap-2 ${step > i + 1 ? 'text-purple-400' : step === i + 1 ? 'text-white' : 'text-gray-600'}`}>
                                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border transition-all ${
-                                    step > i + 1
-                                        ? 'bg-purple-600 border-purple-600 text-white'
-                                        : step === i + 1
-                                            ? 'border-purple-500 text-purple-400 bg-purple-500/10'
-                                            : 'border-white/10 text-gray-600'
+                                    step > i + 1 ? 'bg-purple-600 border-purple-600 text-white' : step === i + 1 ? 'border-purple-500 text-purple-400 bg-purple-500/10' : 'border-white/10 text-gray-600'
                                 }`}>
                                     {step > i + 1 ? <CheckCircle2 size={14} /> : i + 1}
                                 </div>
@@ -320,31 +370,50 @@ const ProductPage = () => {
                             <div>
                                 <h2 className="text-base font-bold text-white mb-5">Pilih Paket</h2>
                                 <div className="space-y-3 mb-6">
-                                    {product.variants.map((variant, idx) => (
+                                    {product.variants.map((variant, idx) => {
+                                        const outOfStock = isVariantOutOfStock(variant);
+                                        const processConfig = ORDER_PROCESS_CONFIG[variant.order_process] || null;
+                                        return (
                                         <button
                                             key={idx}
-                                            onClick={() => setSelectedVariant(variant)}
+                                            onClick={() => !outOfStock && setSelectedVariant(variant)}
+                                            disabled={outOfStock}
                                             className={`w-full flex justify-between items-center p-4 rounded-xl border text-left transition-all ${
-                                                selectedVariant?.name === variant.name
-                                                    ? 'border-purple-500 bg-purple-500/10'
-                                                    : 'border-white/5 hover:border-white/15 bg-white/2'
+                                                outOfStock
+                                                    ? 'border-white/5 bg-white/2 opacity-50 cursor-not-allowed'
+                                                    : selectedVariant?.name === variant.name
+                                                        ? 'border-purple-500 bg-purple-500/10'
+                                                        : 'border-white/5 hover:border-white/15 bg-white/2'
                                             }`}
                                         >
                                             <div className="flex items-center gap-3">
                                                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                                                    selectedVariant?.name === variant.name ? 'border-purple-500' : 'border-white/20'
+                                                    outOfStock ? 'border-white/10' : selectedVariant?.name === variant.name ? 'border-purple-500' : 'border-white/20'
                                                 }`}>
-                                                    {selectedVariant?.name === variant.name && (
+                                                    {!outOfStock && selectedVariant?.name === variant.name && (
                                                         <div className="w-2.5 h-2.5 rounded-full bg-purple-500" />
                                                     )}
                                                 </div>
-                                                <span className="text-sm font-medium text-white">{variant.name}</span>
+                                                <div className="flex flex-col">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`text-sm font-medium ${outOfStock ? 'text-gray-500 line-through' : 'text-white'}`}>{variant.name}</span>
+                                                        {processConfig && (
+                                                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${processConfig.bg} ${processConfig.color}`}>
+                                                                {processConfig.label}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {outOfStock && (
+                                                        <span className="text-[10px] text-red-400 font-medium">Stok Habis</span>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <span className="text-sm font-bold text-purple-400">
-                                                {variant.price > 0 ? `Rp ${variant.price.toLocaleString('id-ID')}` : 'Tanya via Chat'}
+                                            <span className={`text-sm font-bold ${outOfStock ? 'text-gray-500' : 'text-purple-400'}`}>
+                                                {variant.price > 0 ? formatRp(variant.price) : 'Tanya via Chat'}
                                             </span>
                                         </button>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
 
                                 {/* Features */}
@@ -354,8 +423,7 @@ const ProductPage = () => {
                                         <div className="grid grid-cols-2 gap-2">
                                             {product.features.map((f, i) => (
                                                 <div key={i} className="flex items-center gap-2 text-sm text-gray-300">
-                                                    <CheckCircle2 size={14} className="text-purple-400 shrink-0" />
-                                                    {f}
+                                                    <CheckCircle2 size={14} className="text-purple-400 shrink-0" />{f}
                                                 </div>
                                             ))}
                                         </div>
@@ -364,20 +432,14 @@ const ProductPage = () => {
 
                                 <div className="flex gap-3">
                                     <button
-                                        onClick={() => {
-                                            window.scrollTo(0, 0);
-                                            navigate('/');
-                                        }}
+                                        onClick={() => { window.scrollTo(0, 0); navigate('/'); }}
                                         className="w-1/3 bg-white/5 hover:bg-white/10 py-3.5 rounded-xl font-semibold text-white transition-colors border border-white/5 text-sm"
-                                    >
-                                        Kembali
-                                    </button>
+                                    >Kembali</button>
                                     <button
                                         onClick={() => {
                                             if (isServiceProduct) {
-                                                const waText = `Halo noxarianet, saya ingin memesan ${product.name} - Varian: ${selectedVariant?.name || '-'}${selectedVariant?.price ? ` dengan harga Rp ${selectedVariant.price.toLocaleString('id-ID')}` : ''}.`;
-                                                const waUrl = `https://wa.me/6285199605580?text=${encodeURIComponent(waText)}`;
-                                                window.open(waUrl, '_blank');
+                                                const waText = `Halo noxarianet, saya ingin memesan ${product.name} - Varian: ${selectedVariant?.name || '-'}${selectedVariant?.price ? ` dengan harga ${formatRp(selectedVariant.price)}` : ''}.`;
+                                                window.open(`https://wa.me/6285199605580?text=${encodeURIComponent(waText)}`, '_blank');
                                             } else {
                                                 setStep(2);
                                                 window.scrollTo({ top: 100, behavior: 'smooth' });
@@ -417,10 +479,10 @@ const ProductPage = () => {
                                         </label>
                                         <input
                                             name="email"
-                                            type={isGameProduct ? "text" : "email"}
+                                            type={isGameProduct ? 'text' : 'email'}
                                             value={formData.email}
                                             onChange={handleFormChange}
-                                            placeholder={isGameProduct ? "Contoh: 12345678 (2012)" : "Contoh: nama@gmail.com"}
+                                            placeholder={isGameProduct ? 'Contoh: 12345678 (2012)' : 'Contoh: nama@gmail.com'}
                                             className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500/50 transition-colors"
                                         />
                                         {isGameProduct && (
@@ -430,7 +492,54 @@ const ProductPage = () => {
                                             </p>
                                         )}
                                     </div>
-                                    {selectedVariant?.price === 0 ? (
+
+                                    {/* Metode Pembayaran — dari PG */}
+                                    {selectedVariant?.price > 0 && !isServiceProduct && (
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-400 mb-2">Metode Pembayaran</label>
+                                            {loadingMethods ? (
+                                                <div className="flex items-center gap-2 text-gray-400 text-sm py-4">
+                                                    <Loader2 size={16} className="animate-spin" /> Memuat metode pembayaran...
+                                                </div>
+                                            ) : paymentMethods.length === 0 ? (
+                                                <div className="text-xs text-red-400 flex items-center gap-2">
+                                                    <AlertCircle size={14} /> Gagal memuat metode pembayaran. Coba refresh halaman.
+                                                </div>
+                                            ) : (
+                                                <div>
+                                                    <div className="grid grid-cols-2 gap-2.5">
+                                                        {(showAllMethods ? paymentMethods : paymentMethods.slice(0, 6)).map((pm) => (
+                                                            <button
+                                                                key={pm.payment_code}
+                                                                type="button"
+                                                                onClick={() => setFormData({ ...formData, payment_code: pm.payment_code })}
+                                                                className={`p-3.5 rounded-xl border text-left transition-all ${
+                                                                    formData.payment_code === pm.payment_code
+                                                                        ? 'border-purple-500 bg-purple-500/10 shadow-[0_0_15px_rgba(147,51,234,0.1)]'
+                                                                        : 'border-white/10 hover:border-white/20 bg-white/3'
+                                                                }`}
+                                                            >
+                                                                <span className="block font-bold text-white text-sm">{pm.payment_name}</span>
+                                                                <span className="text-[11px] text-gray-400">{pm.fee_info?.description || pm.payment_type}</span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                    {paymentMethods.length > 6 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowAllMethods(!showAllMethods)}
+                                                            className="w-full mt-3 py-2 text-sm text-purple-400 hover:text-purple-300 font-medium transition-colors border border-purple-500/20 bg-purple-500/5 rounded-xl hover:bg-purple-500/10 flex justify-center items-center gap-1"
+                                                        >
+                                                            {showAllMethods ? 'Tampilkan Lebih Sedikit' : `Tampilkan ${paymentMethods.length - 6} Metode Lainnya`}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Custom service fields */}
+                                    {selectedVariant?.price === 0 && (
                                         <div className="space-y-4">
                                             {product.name?.toLowerCase().includes('web') && (
                                                 <div>
@@ -442,19 +551,13 @@ const ProductPage = () => {
                                                             { label: 'Rp 1jt - 2jt', value: '1jt-2jt' },
                                                             { label: 'Rp 2jt - 5jt', value: '2jt-5jt' },
                                                             { label: 'Diatas Rp 5jt', value: 'Diatas 5jt' }
-                                                        ].map((opt) => (
+                                                        ].map(opt => (
                                                             <button
                                                                 key={opt.value}
                                                                 type="button"
                                                                 onClick={() => setBudget(opt.value)}
-                                                                className={`p-3 rounded-xl border text-sm font-medium transition-all ${
-                                                                    budget === opt.value
-                                                                        ? 'border-purple-500 bg-purple-500/10 text-white shadow-[0_0_15px_rgba(147,51,234,0.1)]'
-                                                                        : 'border-white/5 bg-white/2 text-gray-400 hover:border-white/15'
-                                                                }`}
-                                                            >
-                                                                {opt.label}
-                                                            </button>
+                                                                className={`p-3 rounded-xl border text-sm font-medium transition-all ${budget === opt.value ? 'border-purple-500 bg-purple-500/10 text-white' : 'border-white/5 bg-white/2 text-gray-400 hover:border-white/15'}`}
+                                                            >{opt.label}</button>
                                                         ))}
                                                     </div>
                                                 </div>
@@ -466,218 +569,280 @@ const ProductPage = () => {
                                                 <textarea
                                                     value={conceptMsg}
                                                     onChange={(e) => setConceptMsg(e.target.value)}
-                                                    placeholder={product.name?.toLowerCase().includes('web') ? "Contoh: Saya ingin website toko online yang ada fitur keranjang dan bayar otomatis..." : "Contoh: Saya ingin bot yang bisa auto reply, fitur download tiktok, dan integrasi payment..."}
+                                                    placeholder={product.name?.toLowerCase().includes('web') ? 'Contoh: Saya ingin website toko online...' : 'Contoh: Saya ingin bot auto reply...'}
                                                     className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500/50 h-32 resize-none transition-colors"
                                                 />
                                             </div>
                                         </div>
-                                    ) : (
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-400 mb-2">Metode Pembayaran</label>
-                                            <div className="grid grid-cols-2 gap-3">
-                                                {[
-                                                    { label: 'QRIS', sub: 'Manual', value: 'QRIS' },
-                                                    { label: 'DANA', sub: 'Manual', value: 'DANA' }
-                                                ].map(pm => (
-                                                    <button
-                                                        key={pm.value}
-                                                        type="button"
-                                                        onClick={() => setFormData({ ...formData, payment_method: pm.value })}
-                                                        className={`p-3.5 rounded-xl border text-center transition-all ${
-                                                            formData.payment_method === pm.value
-                                                                ? 'border-purple-500 bg-purple-500/10'
-                                                                : 'border-white/10 hover:border-white/20'
-                                                        }`}
-                                                    >
-                                                        <span className="block font-bold text-white text-sm">{pm.label}</span>
-                                                        <span className="text-[11px] text-gray-400">{pm.sub}</span>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
                                     )}
                                 </div>
 
-                                {/* Summary */}
-                                <div className="bg-white/3 border border-white/5 rounded-xl p-4 mb-5 text-sm">
-                                    <div className="flex justify-between text-gray-400 mb-1">
-                                        <span>{selectedVariant?.name}</span>
-                                        <span>{selectedVariant?.price > 0 ? `Rp ${selectedVariant.price.toLocaleString('id-ID')}` : 'Tanya via Chat'}</span>
-                                    </div>
-                                    {selectedVariant?.price > 0 && (
+                                {/* Order Summary */}
+                                {selectedVariant?.price > 0 && (
+                                    <div className="bg-white/3 border border-white/5 rounded-xl p-4 mb-5 text-sm">
+                                        <div className="flex justify-between text-gray-400 mb-1">
+                                            <span>{selectedVariant?.name}</span>
+                                            <span>{formatRp(selectedVariant?.price)}</span>
+                                        </div>
+                                        {formData.payment_code && (() => {
+                                            const method = paymentMethods.find(m => m.payment_code === formData.payment_code);
+                                            if (!method) return null;
+                                            const feeInfo = method.fee_info;
+                                            return (
+                                                <div className="flex justify-between text-gray-400 mb-1 text-xs">
+                                                    <span>Biaya {method.payment_name}</span>
+                                                    <span>{feeInfo?.description || '-'}</span>
+                                                </div>
+                                            );
+                                        })()}
                                         <div className="flex justify-between text-white font-bold border-t border-white/10 pt-2 mt-2">
                                             <span>Total</span>
-                                            <span className="text-purple-400">{totalToPay > 0 ? `Rp ${totalToPay.toLocaleString('id-ID')}` : 'Tanya via Chat'}</span>
+                                            <span className="text-purple-400">{formatRp(selectedVariant?.price)}<span className="text-gray-500 font-normal text-xs"> + fee PG</span></span>
                                         </div>
-                                    )}
-                                </div>
+                                    </div>
+                                )}
 
                                 <div className="flex gap-3">
                                     <button
-                                        onClick={() => {
-                                            setStep(1);
-                                            window.scrollTo({ top: 100, behavior: 'smooth' });
-                                        }}
-                                        className="w-1/3 bg-white/5 hover:bg-white/10 py-3.5 rounded-xl font-semibold text-white transition-colors border border-white/5 text-sm"
-                                    >
-                                        Kembali
-                                    </button>
+                                        onClick={() => { setStep(1); window.scrollTo({ top: 100, behavior: 'smooth' }); }}
+                                        disabled={isSubmitting}
+                                        className="w-1/3 bg-white/5 hover:bg-white/10 py-3.5 rounded-xl font-semibold text-white transition-colors border border-white/5 text-sm disabled:opacity-50"
+                                    >Kembali</button>
                                     <button
                                         onClick={() => {
                                             if (selectedVariant?.price === 0) {
                                                 handleCustomConsultation();
                                             } else {
-                                                if (formData.wa_number && formData.email) {
-                                                    setStep(3);
-                                                    window.scrollTo({ top: 100, behavior: 'smooth' });
-                                                }
-                                                else Swal.fire({
-                                                    icon: 'warning',
-                                                    title: 'Upss...',
-                                                    text: 'Mohon lengkapi WA dan Email',
-                                                    background: '#0E0E0E',
-                                                    color: '#fff',
-                                                    confirmButtonColor: '#9333ea'
-                                                });
+                                                // submitPayment() akan handle validasi, API call, dan setStep(3)
+                                                submitPayment();
                                             }
                                         }}
-                                        className="w-2/3 bg-purple-600 hover:bg-purple-700 py-3.5 rounded-xl font-semibold text-white transition-colors flex items-center justify-center gap-2 text-sm"
+                                        disabled={isSubmitting}
+                                        className="w-2/3 bg-purple-600 hover:bg-purple-700 py-3.5 rounded-xl font-semibold text-white transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        {selectedVariant?.price === 0 ? 'Kirim ke WhatsApp' : `Bayar Rp ${totalToPay.toLocaleString('id-ID')}`} <ChevronRight size={16} />
+                                        {isSubmitting ? (
+                                            <><Loader2 size={16} className="animate-spin" /> Memproses...</>
+                                        ) : (
+                                            selectedVariant?.price === 0 ? 'Kirim ke WhatsApp' : <>Lanjut Bayar <ChevronRight size={16} /></>
+                                        )}
                                     </button>
                                 </div>
                             </div>
                         )}
 
-                        {/* ════ STEP 3: PAYMENT ════ */}
+                        {/* ════ STEP 3: PEMBAYARAN ════ */}
                         {step === 3 && (
                             <div>
-                                <div className="text-center mb-6">
-                                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Pembayaran</p>
-                                    <p className="text-4xl font-extrabold text-white">{totalToPay > 0 ? `Rp ${totalToPay.toLocaleString('id-ID')}` : 'Chat Admin'}</p>
-                                </div>
-
-                                {/* Payment method detail */}
-                                <div className="bg-white/3 border border-white/5 rounded-xl p-5 mb-5 text-center">
-                                    {formData.payment_method === 'QRIS' ? (
-                                        <div>
-                                            <p className="text-sm text-gray-400 mb-4">Scan QR Code di bawah ini</p>
-                                            <div className="bg-white rounded-2xl mx-auto w-52 p-2 mb-4">
-                                                <img src="/qris.jpeg" alt="QRIS" className="w-full h-auto rounded-xl" />
-                                            </div>
-                                            
-                                            <a 
-                                                href="/qris.jpeg" 
-                                                download="QRIS_noxarianet.jpeg"
-                                                className="inline-flex items-center gap-2 text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors mb-5 bg-purple-500/10 px-4 py-2 rounded-lg border border-purple-500/20"
-                                            >
-                                                <Download size={14} /> Simpan QR Code
-                                            </a>
-
-                                            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-4 text-left">
-                                                <div className="flex gap-3 items-start">
-                                                    <AlertTriangle className="text-red-500 shrink-0 mt-0.5" size={18} />
-                                                    <div>
-                                                        <p className="text-[11px] font-bold text-red-500 uppercase tracking-wider mb-1">Peringatan Keras! ⚠</p>
-                                                        <p className="text-[11px] text-gray-300 leading-relaxed">
-                                                            Pastikan nominal transfer **SAMA PERSIS** hingga digit terakhir: <span className="text-white font-bold underline">Rp {totalToPay.toLocaleString('id-ID')}</span>. 
-                                                            Jika tidak sesuai, pesanan **TIDAK AKAN DIPROSES** dan dana dianggap hangus.
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div>
-                                            <p className="text-sm text-gray-400 mb-4">Transfer DANA ke nomor berikut:</p>
-                                            <div className="inline-flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl px-5 py-3 mb-4">
-                                                <span className="text-xl font-mono font-bold text-white tracking-widest">085885084941</span>
-                                                <button
-                                                    onClick={() => copyToClipboard('085885084941')}
-                                                    className={`p-1.5 rounded-lg transition-colors ${copied ? 'text-green-400 bg-green-500/10' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-                                                    title="Salin nomor"
-                                                >
-                                                    <Copy size={16} />
-                                                </button>
-                                            </div>
-                                            {copied && <p className="text-green-400 text-xs">✓ Nomor disalin!</p>}
+                                {/* Status Badge */}
+                                <div className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border mb-5 ${currentStatus.bg}`}>
+                                    {currentStatus.icon}
+                                    <span className={`text-sm font-semibold ${currentStatus.color}`}>{currentStatus.label}</span>
+                                    {(orderStatus?.status === 'PENDING' || orderStatus?.status === 'PROCESSING') && (
+                                        <div className="ml-auto flex items-center gap-1.5 text-gray-500 text-xs">
+                                            <Wifi size={12} className="animate-pulse" /> live
                                         </div>
                                     )}
                                 </div>
 
-                                {/* Upload & Testimonial */}
-                                <div className="space-y-4 mb-5">
-                                    <div className="bg-white/3 border border-white/5 rounded-xl p-4">
-                                        <label className="flex items-center gap-2 text-xs font-medium text-gray-400 mb-3">
-                                            <Upload size={14} className="text-purple-400" />
-                                            Upload Bukti Transfer
-                                        </label>
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={handleImageChange}
-                                            className="block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-600/20 file:text-purple-400 hover:file:bg-purple-600/30 transition-colors cursor-pointer"
-                                        />
-                                        {proofPreview && (
-                                            <div className="mt-3 rounded-xl overflow-hidden border border-white/10 w-fit">
-                                                <img src={proofPreview} alt="Preview" className="h-32 object-cover" />
+                                {/* PENDING — tampilkan instruksi bayar */}
+                                {(orderStatus?.status === 'PENDING' || !orderStatus?.status) && paymentResult && (
+                                    <div>
+                                        <div className="text-center mb-5">
+                                            <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Pembayaran</p>
+                                            <p className="text-4xl font-extrabold text-white">{formatRp(paymentResult.total || paymentResult.amount)}</p>
+                                            {paymentResult.fee > 0 && (
+                                                <p className="text-xs text-gray-500 mt-1">termasuk fee {formatRp(paymentResult.fee)}</p>
+                                            )}
+                                        </div>
+
+                                        <div className="bg-white/3 border border-white/5 rounded-xl p-5 mb-4 text-center">
+                                            {/* QRIS */}
+                                            {paymentResult.payment_code === 'QRIS' && paymentResult.qr_link ? (
+                                                <div>
+                                                    <p className="text-sm text-gray-400 mb-4">Scan QR Code untuk membayar</p>
+                                                    <div className="bg-white rounded-2xl mx-auto w-52 p-2 mb-4">
+                                                        <img src={paymentResult.qr_link} alt="QRIS" className="w-full h-auto rounded-xl" />
+                                                    </div>
+                                                    <a
+                                                        href={paymentResult.qr_link}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center gap-2 text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors bg-purple-500/10 px-4 py-2 rounded-lg border border-purple-500/20"
+                                                    >
+                                                        Buka di Tab Baru
+                                                    </a>
+                                                </div>
+                                            ) : paymentResult.payment_link ? (
+                                                /* Non-QRIS / VA — redirect ke payment link */
+                                                <div>
+                                                    <p className="text-sm text-gray-400 mb-4">Klik tombol di bawah untuk melanjutkan pembayaran</p>
+                                                    {paymentResult.virtual_account && (
+                                                        <div className="mb-4">
+                                                            <p className="text-xs text-gray-500 mb-2">Nomor Virtual Account</p>
+                                                            <div className="inline-flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl px-5 py-3">
+                                                                <span className="text-xl font-mono font-bold text-white tracking-widest">{paymentResult.virtual_account}</span>
+                                                                <button
+                                                                    onClick={() => copyToClipboard(paymentResult.virtual_account)}
+                                                                    className={`p-1.5 rounded-lg transition-colors ${copied ? 'text-green-400 bg-green-500/10' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
+                                                                >
+                                                                    <Copy size={16} />
+                                                                </button>
+                                                            </div>
+                                                            {copied && <p className="text-green-400 text-xs mt-2">✓ Disalin!</p>}
+                                                        </div>
+                                                    )}
+                                                    <a
+                                                        href={paymentResult.payment_link}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors text-sm mt-3"
+                                                    >
+                                                        Bayar Sekarang <ChevronRight size={16} />
+                                                    </a>
+                                                </div>
+                                            ) : null}
+                                        </div>
+
+                                        {/* Countdown */}
+                                        <div className="flex justify-center mb-4">
+                                            <CountdownTimer expiredAt={paymentResult.expired_at} />
+                                        </div>
+
+                                        {/* ID Order */}
+                                        <div className="bg-white/3 border border-white/5 rounded-xl p-3 text-center text-xs text-gray-500 mb-4">
+                                            ID Pesanan: <span className="font-mono text-white font-semibold">{paymentResult.order_id}</span>
+                                            <button onClick={() => copyToClipboard(paymentResult.order_id)} className="ml-2 text-purple-400 hover:text-purple-300">
+                                                <Copy size={12} />
+                                            </button>
+                                        </div>
+
+                                        <p className="text-xs text-gray-500 text-center">
+                                            Setelah pembayaran berhasil, pesanan akan diproses otomatis. Detail akun dikirim ke WhatsApp Anda.
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* PROCESSING */}
+                                {orderStatus?.status === 'PROCESSING' && (
+                                    <div className="text-center py-6">
+                                        <div className="w-16 h-16 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto mb-4">
+                                            <Loader2 size={28} className="text-blue-400 animate-spin" />
+                                        </div>
+                                        <p className="text-white font-semibold mb-1">Pembayaran Dikonfirmasi!</p>
+                                        <p className="text-sm text-gray-400">Pesanan Anda sedang diproses otomatis...</p>
+                                        <p className="text-xs text-gray-500 mt-2">ID: <span className="font-mono">{paymentResult?.order_id}</span></p>
+                                    </div>
+                                )}
+
+                                {/* COMPLETED */}
+                                {orderStatus?.status === 'COMPLETED' && (
+                                    <div className="text-center py-4">
+                                        <div className="w-16 h-16 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-4">
+                                            <CheckCircle2 size={28} className="text-green-400" />
+                                        </div>
+                                        <p className="text-white font-bold text-lg mb-1">Pesanan Selesai!</p>
+                                        <p className="text-sm text-gray-400 mb-5">Detail akun telah dikirim ke WhatsApp <span className="text-white font-semibold">{formData.wa_number}</span>.</p>
+
+                                        {/* Tampilkan licenses jika ada */}
+                                        {orderStatus.account_details?.licenses?.length > 0 && (
+                                            <div className="bg-white/3 border border-white/5 rounded-xl p-4 mb-5 text-left">
+                                                <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">Detail Akun</p>
+                                                {orderStatus.account_details.licenses.map((lic, i) => (
+                                                    <div key={i} className="flex items-center justify-between bg-white/5 rounded-lg p-3 mb-2 last:mb-0">
+                                                        <span className="font-mono text-white text-sm">{lic}</span>
+                                                        <button onClick={() => copyToClipboard(lic)} className="text-purple-400 hover:text-purple-300 transition-colors ml-2">
+                                                            <Copy size={14} />
+                                                        </button>
+                                                    </div>
+                                                ))}
                                             </div>
                                         )}
-                                    </div>
 
-                                    <div className="bg-white/3 border border-white/5 rounded-xl p-4">
-                                        <label className="block text-xs font-medium text-gray-400 mb-3">Tinggalkan Testimoni (Opsional)</label>
-                                        <div className="flex gap-1 mb-3">
-                                            {[1, 2, 3, 4, 5].map(star => (
-                                                <button key={star} onClick={() => setRating(star)} className="focus:outline-none">
-                                                    <Star size={20} className={star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-white/10'} />
-                                                </button>
-                                            ))}
+                                        {/* Testimoni */}
+                                        <div className="bg-white/3 border border-white/5 rounded-xl p-4 text-left mb-5">
+                                            <label className="block text-xs font-medium text-gray-400 mb-3">Tinggalkan Testimoni (Opsional)</label>
+                                            <div className="flex gap-1 mb-3">
+                                                {[1, 2, 3, 4, 5].map(star => (
+                                                    <button key={star} onClick={() => setRating(star)} className="focus:outline-none">
+                                                        <Star size={20} className={star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-white/10'} />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <textarea
+                                                value={testimonialMsg}
+                                                onChange={(e) => setTestimonialMsg(e.target.value)}
+                                                placeholder="Tuliskan pengalaman Anda..."
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500/50 h-20 resize-none"
+                                            />
                                         </div>
-                                        <textarea
-                                            value={testimonialMsg}
-                                            onChange={(e) => setTestimonialMsg(e.target.value)}
-                                            placeholder="Tuliskan pengalaman Anda..."
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500/50 h-20 resize-none"
-                                        />
+
+                                        <button
+                                            onClick={() => { window.scrollTo(0, 0); navigate('/'); }}
+                                            className="w-full bg-purple-600 hover:bg-purple-700 py-3.5 rounded-xl font-semibold text-white transition-colors text-sm"
+                                        >
+                                            Kembali ke Beranda
+                                        </button>
                                     </div>
-                                </div>
+                                )}
+
+                                {/* FAILED */}
+                                {(orderStatus?.status === 'FAILED' || orderStatus?.status === 'CANCELLED') && (
+                                    <div className="text-center py-4">
+                                        <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
+                                            <AlertCircle size={28} className="text-red-400" />
+                                        </div>
+                                        <p className="text-white font-bold text-lg mb-1">Pesanan Gagal</p>
+                                        <p className="text-sm text-gray-400 mb-5">
+                                            {orderStatus?.error_message
+                                                ? `Alasan: ${orderStatus.error_message}`
+                                                : 'Terjadi kesalahan dalam memproses pesanan Anda. Tim admin akan segera dihubungi.'}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mb-5">
+                                            Jika sudah membayar, hubungi admin via WhatsApp dengan menyertakan ID Pesanan:&nbsp;
+                                            <span className="font-mono text-white">{paymentResult?.order_id}</span>
+                                        </p>
+                                        <div className="flex gap-3">
+                                            <a
+                                                href={`https://wa.me/6285199605580?text=Halo%20admin%2C%20pesanan%20saya%20gagal.%20ID%3A%20${paymentResult?.order_id}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex-1 bg-green-600/20 hover:bg-green-600/30 border border-green-500/20 py-3 rounded-xl font-semibold text-green-400 transition-colors text-sm text-center"
+                                            >
+                                                Hubungi Admin
+                                            </a>
+                                            <button
+                                                onClick={() => { window.scrollTo(0, 0); navigate('/'); }}
+                                                className="flex-1 bg-white/5 hover:bg-white/10 py-3 rounded-xl font-semibold text-white transition-colors border border-white/5 text-sm"
+                                            >
+                                                Kembali
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Trust Badge */}
-                                <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mb-5">
-                                    <Shield size={14} className="text-green-500" />
-                                    <span>Transaksi Aman &amp; Bergaransi oleh noxarianet</span>
-                                </div>
+                                {orderStatus?.status !== 'COMPLETED' && orderStatus?.status !== 'FAILED' && (
+                                    <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mt-5">
+                                        <Shield size={14} className="text-green-500" />
+                                        <span>Transaksi Aman & Bergaransi oleh noxarianet</span>
+                                    </div>
+                                )}
 
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => {
-                                            setStep(2);
-                                            window.scrollTo({ top: 100, behavior: 'smooth' });
-                                        }}
-                                        className="w-1/3 bg-white/5 hover:bg-white/10 py-3.5 rounded-xl font-semibold text-white transition-colors border border-white/5 text-sm"
-                                    >
-                                        Kembali
-                                    </button>
-                                    <button
-                                        onClick={submitOrder}
-                                        disabled={isSubmitting || !proofImage}
-                                        className={`w-2/3 py-3.5 rounded-xl font-bold text-sm transition-all flex justify-center items-center gap-2 ${
-                                            isSubmitting || !proofImage
-                                                ? 'bg-white/5 text-gray-600 cursor-not-allowed border border-white/5'
-                                                : 'bg-green-600 hover:bg-green-700 text-white'
-                                        }`}
-                                    >
-                                        {isSubmitting ? (
-                                            <>
-                                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                                Mengirim...
-                                            </>
-                                        ) : (
-                                            <>✓ Konfirmasi</>
-                                        )}
-                                    </button>
-                                </div>
+                                {/* Manual refresh */}
+                                {(orderStatus?.status === 'PENDING' || orderStatus?.status === 'PROCESSING') && (
+                                    <div className="flex justify-center mt-4">
+                                        <button
+                                            onClick={async () => {
+                                                if (!paymentResult?.order_id) return;
+                                                const res = await api.get(`/payments/status/${paymentResult.order_id}`).catch(() => null);
+                                                if (res) setOrderStatus(res.data?.data);
+                                            }}
+                                            className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                                        >
+                                            <RefreshCw size={12} /> Refresh status
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </motion.div>

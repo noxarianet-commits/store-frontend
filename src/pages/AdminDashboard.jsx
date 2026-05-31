@@ -27,7 +27,7 @@ const AdminDashboard = () => {
 
     // Data states
     const [orders, setOrders] = useState([]);
-    const [products, setProducts] = useState([]);
+    const [services, setServices] = useState([]);
     const [settings, setSettings] = useState({});
     const [banners, setBanners] = useState([]);
     const [sekalipayProducts, setSekalipayProducts] = useState([]);
@@ -56,9 +56,9 @@ const AdminDashboard = () => {
         catch (e) { console.error('Gagal fetch orders:', e); }
     };
 
-    const fetchProducts = async () => {
-        try { const res = await api.get('/products'); setProducts(res.data); }
-        catch (e) { console.error('Gagal fetch products:', e); }
+    const fetchServices = async () => {
+        try { const res = await api.get('/services'); setServices(res.data); }
+        catch (e) { console.error('Gagal fetch services:', e); }
     };
 
     const fetchSettings = async () => {
@@ -88,7 +88,7 @@ const AdminDashboard = () => {
 
     const fetchData = async () => {
         setLoading(true);
-        await Promise.all([fetchOrders(), fetchProducts(), fetchSettings(), fetchBanners()]);
+        await Promise.all([fetchOrders(), fetchServices(), fetchSettings(), fetchBanners()]);
         if (activeTab === 'sekalipay') await fetchSekalipay();
         setLoading(false);
     };
@@ -194,20 +194,20 @@ const AdminDashboard = () => {
     const saveProduct = async (form) => {
         try {
             if (editingProduct) {
-                await api.put(`/products/${editingProduct.id}`, form);
+                await api.put(`/services/${editingProduct.id}`, form);
                 Swal.fire({ icon: 'success', title: 'Produk diperbarui!', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#7c3aed', timer: 1500, showConfirmButton: false });
             } else {
-                await api.post('/products', form);
+                await api.post('/services', form);
                 Swal.fire({ icon: 'success', title: 'Produk ditambahkan!', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#7c3aed', timer: 1500, showConfirmButton: false });
             }
             setIsModalOpen(false);
             setEditingProduct(null);
-            await fetchProducts();
+            await fetchServices();
         } catch (err) { Swal.fire({ icon: 'error', title: 'Gagal simpan produk', text: err.response?.data?.error || err.message, background: '#0E0E0E', color: '#fff', confirmButtonColor: '#7c3aed' }); }
     };
     const deleteProduct = async (id) => {
         const result = await Swal.fire({ icon: 'warning', title: 'Hapus produk?', showCancelButton: true, confirmButtonText: 'Ya, hapus!', cancelButtonText: 'Batal', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#dc2626' });
-        if (result.isConfirmed) { await api.delete(`/products/${id}`); await fetchProducts(); Swal.fire({ icon: 'success', title: 'Produk dihapus!', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#7c3aed', timer: 1500, showConfirmButton: false }); }
+        if (result.isConfirmed) { await api.delete(`/services/${id}`); await fetchServices(); Swal.fire({ icon: 'success', title: 'Produk dihapus!', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#7c3aed', timer: 1500, showConfirmButton: false }); }
     };
 
     // ---- Order CRUD ----
@@ -308,7 +308,7 @@ const AdminDashboard = () => {
                     {activeTab === 'revenue' && <RevenueTab orders={orders} settings={settings} />}
                     {activeTab === 'products' && (
                         <ProductsTab
-                            products={products} openProductModal={openProductModal} deleteProduct={deleteProduct}
+                            products={services} openProductModal={openProductModal} deleteProduct={deleteProduct}
                         />
                     )}
                     {activeTab === 'orders' && (
@@ -321,9 +321,8 @@ const AdminDashboard = () => {
                     )}
                     {activeTab === 'settings' && (
                         <SettingsTab
-                            settings={settings} updateSetting={updateSetting}
-                            showPasswordForm={showPasswordForm} setShowPasswordForm={setShowPasswordForm}
-                            passwordData={passwordData} setPasswordData={setPasswordData}
+                            settings={settings} setSettings={setSettings} updateSetting={updateSetting}
+                            passwordForm={passwordData} setPasswordForm={setPasswordData}
                             handleChangePassword={handleChangePassword}
                         />
                     )}
