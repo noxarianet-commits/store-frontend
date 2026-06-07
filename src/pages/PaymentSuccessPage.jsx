@@ -191,7 +191,7 @@ const PaymentSuccessPage = () => {
                                     <>
                                         {orderData.pg_invoice && (
                                             <div className="flex justify-between">
-                                                <span className="text-gray-400">Invoice PG</span>
+                                                <span className="text-gray-400">ID Transaksi</span>
                                                 <span className="text-white text-xs font-mono">{orderData.pg_invoice}</span>
                                             </div>
                                         )}

@@ -79,13 +79,7 @@ const ProductPage = () => {
     const [formData, setFormData] = useState({
         wa_number: '',
         email: '',
-        payment_code: '',
     });
-
-    // Payment methods from PG
-    const [paymentMethods, setPaymentMethods] = useState([]);
-    const [loadingMethods, setLoadingMethods] = useState(false);
-    const [showAllMethods, setShowAllMethods] = useState(false);
 
     // Testimonial
     const [testimonialMsg, setTestimonialMsg] = useState('');
@@ -103,24 +97,7 @@ const ProductPage = () => {
     const [orderStatus, setOrderStatus] = useState(null);
     const pollingRef = useRef(null);
 
-    // ── Fetch payment methods when entering Step 2 ──────────────────────
-    useEffect(() => {
-        if (step === 2 && paymentMethods.length === 0) {
-            setLoadingMethods(true);
-            api.get('/payments/methods')
-                .then(res => {
-                    let methods = res.data?.data || [];
-                    methods = [...methods].reverse(); // Urutkan dari bawah sesuai request
-                    setPaymentMethods(methods);
-                    if (methods.length > 0 && !formData.payment_code) {
-                        const hasQris = methods.find(m => m.payment_code === 'QRISREALTIME');
-                        setFormData(prev => ({ ...prev, payment_code: hasQris ? 'QRISREALTIME' : methods[0].payment_code }));
-                    }
-                })
-                .catch(err => console.error('Gagal load payment methods:', err))
-                .finally(() => setLoadingMethods(false));
-        }
-    }, [step]);
+
 
     // ── Polling status order setelah payment dibuat ──────────────────────
     useEffect(() => {
@@ -211,10 +188,6 @@ const ProductPage = () => {
             Swal.fire({ icon: 'warning', title: 'Upss...', text: 'Nomor WA dan Email wajib diisi!', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#9333ea' });
             return;
         }
-        if (!formData.payment_code) {
-            Swal.fire({ icon: 'warning', title: 'Upss...', text: 'Pilih metode pembayaran terlebih dahulu!', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#9333ea' });
-            return;
-        }
 
         setIsSubmitting(true);
         try {
@@ -224,7 +197,6 @@ const ProductPage = () => {
                 variant_name: selectedVariant?.name,
                 product_name: product.name,
                 amount: selectedVariant?.price,
-                payment_code: formData.payment_code,
                 customer_name: formData.wa_number,
                 wa_number: formData.wa_number,
                 email: formData.email,
@@ -493,48 +465,20 @@ const ProductPage = () => {
                                         )}
                                     </div>
 
-                                    {/* Metode Pembayaran — dari PG */}
+                                    {/* Metode Pembayaran — QRIS via FinCloud */}
                                     {selectedVariant?.price > 0 && !isServiceProduct && (
-                                        <div>
+                                        <div className="bg-white/3 border border-white/5 rounded-xl p-4">
                                             <label className="block text-xs font-medium text-gray-400 mb-2">Metode Pembayaran</label>
-                                            {loadingMethods ? (
-                                                <div className="flex items-center gap-2 text-gray-400 text-sm py-4">
-                                                    <Loader2 size={16} className="animate-spin" /> Memuat metode pembayaran...
+                                            <div className="flex items-center gap-3 p-3 rounded-xl border border-purple-500 bg-purple-500/10">
+                                                <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shrink-0">
+                                                    <span className="text-sm font-black text-black">QR</span>
                                                 </div>
-                                            ) : paymentMethods.length === 0 ? (
-                                                <div className="text-xs text-red-400 flex items-center gap-2">
-                                                    <AlertCircle size={14} /> Gagal memuat metode pembayaran. Coba refresh halaman.
-                                                </div>
-                                            ) : (
                                                 <div>
-                                                    <div className="grid grid-cols-2 gap-2.5">
-                                                        {(showAllMethods ? paymentMethods : paymentMethods.slice(0, 6)).map((pm) => (
-                                                            <button
-                                                                key={pm.payment_code}
-                                                                type="button"
-                                                                onClick={() => setFormData({ ...formData, payment_code: pm.payment_code })}
-                                                                className={`p-3.5 rounded-xl border text-left transition-all ${
-                                                                    formData.payment_code === pm.payment_code
-                                                                        ? 'border-purple-500 bg-purple-500/10 shadow-[0_0_15px_rgba(147,51,234,0.1)]'
-                                                                        : 'border-white/10 hover:border-white/20 bg-white/3'
-                                                                }`}
-                                                            >
-                                                                <span className="block font-bold text-white text-sm">{pm.payment_name}</span>
-                                                                <span className="text-[11px] text-gray-400">{pm.fee_info?.description || pm.payment_type}</span>
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                    {paymentMethods.length > 6 && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setShowAllMethods(!showAllMethods)}
-                                                            className="w-full mt-3 py-2 text-sm text-purple-400 hover:text-purple-300 font-medium transition-colors border border-purple-500/20 bg-purple-500/5 rounded-xl hover:bg-purple-500/10 flex justify-center items-center gap-1"
-                                                        >
-                                                            {showAllMethods ? 'Tampilkan Lebih Sedikit' : `Tampilkan ${paymentMethods.length - 6} Metode Lainnya`}
-                                                        </button>
-                                                    )}
+                                                    <span className="block font-bold text-white text-sm">QRIS</span>
+                                                    <span className="text-[11px] text-gray-400">Scan QR via E-Wallet / M-Banking</span>
                                                 </div>
-                                            )}
+                                                <CheckCircle2 size={18} className="text-purple-400 ml-auto" />
+                                            </div>
                                         </div>
                                     )}
 
@@ -584,20 +528,9 @@ const ProductPage = () => {
                                             <span>{selectedVariant?.name}</span>
                                             <span>{formatRp(selectedVariant?.price)}</span>
                                         </div>
-                                        {formData.payment_code && (() => {
-                                            const method = paymentMethods.find(m => m.payment_code === formData.payment_code);
-                                            if (!method) return null;
-                                            const feeInfo = method.fee_info;
-                                            return (
-                                                <div className="flex justify-between text-gray-400 mb-1 text-xs">
-                                                    <span>Biaya {method.payment_name}</span>
-                                                    <span>{feeInfo?.description || '-'}</span>
-                                                </div>
-                                            );
-                                        })()}
                                         <div className="flex justify-between text-white font-bold border-t border-white/10 pt-2 mt-2">
                                             <span>Total</span>
-                                            <span className="text-purple-400">{formatRp(selectedVariant?.price)}<span className="text-gray-500 font-normal text-xs"> + fee PG</span></span>
+                                            <span className="text-purple-400">{formatRp(selectedVariant?.price)}<span className="text-gray-500 font-normal text-xs"> + fee QRIS</span></span>
                                         </div>
                                     </div>
                                 )}
@@ -656,48 +589,44 @@ const ProductPage = () => {
                                         </div>
 
                                         <div className="bg-white/3 border border-white/5 rounded-xl p-5 mb-4 text-center">
-                                            {/* QRIS */}
-                                            {paymentResult.payment_code === 'QRIS' && paymentResult.qr_link ? (
+                                            {/* QRIS via FinCloud */}
+                                            {paymentResult.qr_link ? (
                                                 <div>
                                                     <p className="text-sm text-gray-400 mb-4">Scan QR Code untuk membayar</p>
                                                     <div className="bg-white rounded-2xl mx-auto w-52 p-2 mb-4">
                                                         <img src={paymentResult.qr_link} alt="QRIS" className="w-full h-auto rounded-xl" />
                                                     </div>
-                                                    <a
-                                                        href={paymentResult.qr_link}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="inline-flex items-center gap-2 text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors bg-purple-500/10 px-4 py-2 rounded-lg border border-purple-500/20"
-                                                    >
-                                                        Buka di Tab Baru
-                                                    </a>
+                                                    <div className="flex items-center justify-center gap-3">
+                                                        <a
+                                                            href={paymentResult.qr_link}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="inline-flex items-center gap-2 text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors bg-purple-500/10 px-4 py-2 rounded-lg border border-purple-500/20"
+                                                        >
+                                                            Buka QR di Tab Baru
+                                                        </a>
+                                                        {paymentResult.payment_link && (
+                                                            <a
+                                                                href={paymentResult.payment_link}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="inline-flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-gray-300 transition-colors bg-white/5 px-4 py-2 rounded-lg border border-white/10"
+                                                            >
+                                                                Lihat Invoice
+                                                            </a>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             ) : paymentResult.payment_link ? (
-                                                /* Non-QRIS / VA — redirect ke payment link */
                                                 <div>
                                                     <p className="text-sm text-gray-400 mb-4">Klik tombol di bawah untuk melanjutkan pembayaran</p>
-                                                    {paymentResult.virtual_account && (
-                                                        <div className="mb-4">
-                                                            <p className="text-xs text-gray-500 mb-2">Nomor Virtual Account</p>
-                                                            <div className="inline-flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl px-5 py-3">
-                                                                <span className="text-xl font-mono font-bold text-white tracking-widest">{paymentResult.virtual_account}</span>
-                                                                <button
-                                                                    onClick={() => copyToClipboard(paymentResult.virtual_account)}
-                                                                    className={`p-1.5 rounded-lg transition-colors ${copied ? 'text-green-400 bg-green-500/10' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-                                                                >
-                                                                    <Copy size={16} />
-                                                                </button>
-                                                            </div>
-                                                            {copied && <p className="text-green-400 text-xs mt-2">✓ Disalin!</p>}
-                                                        </div>
-                                                    )}
                                                     <a
                                                         href={paymentResult.payment_link}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors text-sm mt-3"
                                                     >
-                                                        Bayar Sekarang <ChevronRight size={16} />
+                                                        Lihat Invoice <ChevronRight size={16} />
                                                     </a>
                                                 </div>
                                             ) : null}
