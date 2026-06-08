@@ -249,7 +249,7 @@ const AdminDashboard = () => {
     // ---- Settings ----
     const updateSetting = async (key, value) => {
         try {
-            await api.put('/settings', { key, value });
+            await api.put(`/settings/${key}`, { value });
             await fetchSettings();
         } catch (err) { console.error('Gagal update setting:', err); }
     };
