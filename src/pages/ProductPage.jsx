@@ -417,14 +417,14 @@ const ProductPage = () => {
                                                 window.scrollTo({ top: 100, behavior: 'smooth' });
                                             }
                                         }}
-                                        disabled={product.status === 'sold_out'}
+                                        disabled={product.status === 'sold_out' || !selectedVariant || isVariantOutOfStock(selectedVariant)}
                                         className={`w-2/3 font-semibold py-3.5 rounded-xl transition flex items-center justify-center gap-2 text-sm ${
-                                            product.status === 'sold_out'
+                                            (product.status === 'sold_out' || !selectedVariant || isVariantOutOfStock(selectedVariant))
                                                 ? 'bg-white/5 text-gray-600 cursor-not-allowed border border-white/5'
                                                 : 'bg-purple-600 hover:bg-purple-700 text-white'
                                         }`}
                                     >
-                                        {product.status === 'sold_out' ? 'Stok Habis' : isServiceProduct ? <>Hubungi WhatsApp <ChevronRight size={16} /></> : <>Lanjutkan <ChevronRight size={16} /></>}
+                                        {(product.status === 'sold_out' || !selectedVariant || isVariantOutOfStock(selectedVariant)) ? 'Stok Habis' : isServiceProduct ? <>Hubungi WhatsApp <ChevronRight size={16} /></> : <>Lanjutkan <ChevronRight size={16} /></>}
                                     </button>
                                 </div>
                             </div>
