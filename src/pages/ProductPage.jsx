@@ -4,10 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowLeft, CheckCircle2, Copy, Star, ChevronRight,
     Shield, AlertTriangle, AlertCircle, Clock, RefreshCw,
-    Loader2, Wifi, Info
+    Loader2, Wifi, Info, Download
 } from 'lucide-react';
 import api from '../api';
 import Swal from 'sweetalert2';
+import { notifySuccess, notifyError, notifyWarning, showAlert } from '../utils/notify';
 
 // ══════════════════════════════════════════════════════════════════════════
 // HELPER — Format Rupiah
@@ -86,9 +87,11 @@ const ProductPage = () => {
     const [conceptMsg, setConceptMsg] = useState('');
     const [budget, setBudget] = useState('500k-1jt');
     const [rating, setRating] = useState(5);
+    const [testimonialSubmitted, setTestimonialSubmitted] = useState(false);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     // Payment result (setelah createPayment berhasil)
     const [paymentResult, setPaymentResult] = useState(null);
@@ -96,8 +99,55 @@ const ProductPage = () => {
     // Polling status
     const [orderStatus, setOrderStatus] = useState(null);
     const pollingRef = useRef(null);
+    const completedAlertShown = useRef(false);
 
+    // ── SessionStorage persistence ──────────────────────────────────────
+    const storageKey = `payment_${id}`;
 
+    useEffect(() => {
+        try {
+            const saved = sessionStorage.getItem(storageKey);
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (parsed.step === 3 && parsed.paymentResult) {
+                    setStep(3);
+                    setPaymentResult(parsed.paymentResult);
+                    setOrderStatus(parsed.orderStatus || null);
+                    setFormData(parsed.formData || { wa_number: '', email: '' });
+                    if (parsed.testimonialSubmitted) setTestimonialSubmitted(true);
+                    // completedAlertShown TIDAK di-restore dari storage
+                    // supaya alert selalu muncul saat refresh jika status COMPLETED
+                }
+            }
+        } catch (e) { /* ignore */ }
+    }, []);
+
+    useEffect(() => {
+        if (step === 3 && paymentResult) {
+            try {
+                sessionStorage.setItem(storageKey, JSON.stringify({
+                    step, paymentResult, orderStatus, formData,
+                    testimonialSubmitted
+                }));
+            } catch (e) { /* ignore */ }
+        }
+    }, [step, paymentResult, orderStatus, formData, testimonialSubmitted]);
+
+    // ── SweetAlert when COMPLETED ──────────────────────────────────────
+    useEffect(() => {
+        if (orderStatus?.status === 'COMPLETED' && !completedAlertShown.current) {
+            completedAlertShown.current = true;
+            Swal.fire({
+                icon: 'success',
+                title: 'Pesanan Selesai!',
+                text: 'Pembayaran berhasil dan pesanan Anda telah diproses.',
+                background: '#0E0E0E',
+                color: '#fff',
+                confirmButtonColor: '#7c3aed',
+                confirmButtonText: 'Lanjutkan'
+            });
+        }
+    }, [orderStatus?.status]);
 
     // ── Polling status order setelah payment dibuat ──────────────────────
     useEffect(() => {
@@ -130,6 +180,56 @@ const ProductPage = () => {
             pollingRef.current = null;
         }
     }
+
+    // ── Download QR ─────────────────────────────────────────────────────
+    const downloadQR = async (qrUrl) => {
+        try {
+            const response = await fetch(qrUrl);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `QR-${paymentResult?.order_id || 'pembayaran'}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        } catch (e) {
+            window.open(qrUrl, '_blank');
+        }
+    };
+
+    // ── Manual Refresh Status ───────────────────────────────────────────
+    const manualRefresh = async () => {
+        if (!paymentResult?.order_id) return;
+        setIsRefreshing(true);
+        try {
+            const res = await api.get(`/payments/status/${paymentResult.order_id}`);
+            if (res.data?.data) setOrderStatus(res.data.data);
+        } catch (e) { /* ignore */ }
+        setIsRefreshing(false);
+    };
+
+    // ── Submit Testimonial ──────────────────────────────────────────────
+    const submitTestimonial = async () => {
+        if (!testimonialMsg.trim()) {
+            notifyWarning('Tuliskan pengalaman Anda.');
+            return;
+        }
+        try {
+            await api.post('/testimonials', {
+                name: formData.wa_number || 'Customer',
+                text: testimonialMsg,
+                product: product?.name || '',
+                rating,
+                order_id: paymentResult?.order_id || null
+            });
+            setTestimonialSubmitted(true);
+            notifySuccess('Terima kasih atas testimoninya!');
+        } catch (err) {
+            notifyError('Tidak bisa menyimpan testimoni.');
+        }
+    };
 
     // ── Fetch product ────────────────────────────────────────────────────
     useEffect(() => {
@@ -185,7 +285,7 @@ const ProductPage = () => {
     // ── Submit: buat payment via PG ──────────────────────────────────────
     const submitPayment = async () => {
         if (!formData.wa_number || !formData.email) {
-            Swal.fire({ icon: 'warning', title: 'Upss...', text: 'Nomor WA dan Email wajib diisi!', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#9333ea' });
+            notifyWarning('Nomor WA dan Email wajib diisi!');
             return;
         }
 
@@ -223,7 +323,7 @@ const ProductPage = () => {
     // ── Service (manual WA consultation) ───────────────────────────────
     const handleCustomConsultation = () => {
         if (!formData.wa_number || !formData.email || !conceptMsg) {
-            Swal.fire({ icon: 'warning', title: 'Upss...', text: 'Mohon lengkapi WA, Email, dan Konsep!', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#9333ea' });
+            notifyWarning('Mohon lengkapi WA, Email, dan Konsep!');
             return;
         }
         const isWebProduct = product.name?.toLowerCase().includes('web') || product.category?.toLowerCase().includes('jasa');
@@ -281,7 +381,7 @@ const ProductPage = () => {
             <main className="max-w-2xl mx-auto px-4 py-10">
                 {/* Back Button */}
                 <button
-                    onClick={() => { window.scrollTo(0, 0); navigate('/'); }}
+                    onClick={() => { sessionStorage.removeItem(storageKey); window.scrollTo(0, 0); navigate('/'); }}
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 text-gray-400 hover:text-white transition-all mb-8 text-sm font-medium shadow-sm backdrop-blur-sm"
                 >
                     <ArrowLeft size={16} /> Kembali ke Beranda
@@ -546,7 +646,6 @@ const ProductPage = () => {
                                             if (selectedVariant?.price === 0) {
                                                 handleCustomConsultation();
                                             } else {
-                                                // submitPayment() akan handle validasi, API call, dan setStep(3)
                                                 submitPayment();
                                             }
                                         }}
@@ -597,14 +696,12 @@ const ProductPage = () => {
                                                         <img src={paymentResult.qr_link} alt="QRIS" className="w-full h-auto rounded-xl" />
                                                     </div>
                                                     <div className="flex items-center justify-center gap-3">
-                                                        <a
-                                                            href={paymentResult.qr_link}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="inline-flex items-center gap-2 text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors bg-purple-500/10 px-4 py-2 rounded-lg border border-purple-500/20"
+                                                        <button
+                                                            onClick={() => downloadQR(paymentResult.qr_link)}
+                                                            className="inline-flex items-center gap-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-all"
                                                         >
-                                                            Buka QR di Tab Baru
-                                                        </a>
+                                                            <Download size={14} /> Download QR
+                                                        </button>
                                                         {paymentResult.payment_link && (
                                                             <a
                                                                 href={paymentResult.payment_link}
@@ -688,25 +785,38 @@ const ProductPage = () => {
                                         )}
 
                                         {/* Testimoni */}
-                                        <div className="bg-white/3 border border-white/5 rounded-xl p-4 text-left mb-5">
-                                            <label className="block text-xs font-medium text-gray-400 mb-3">Tinggalkan Testimoni (Opsional)</label>
-                                            <div className="flex gap-1 mb-3">
-                                                {[1, 2, 3, 4, 5].map(star => (
-                                                    <button key={star} onClick={() => setRating(star)} className="focus:outline-none">
-                                                        <Star size={20} className={star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-white/10'} />
-                                                    </button>
-                                                ))}
+                                        {!testimonialSubmitted ? (
+                                            <div className="bg-white/3 border border-white/5 rounded-xl p-4 text-left mb-5">
+                                                <label className="block text-xs font-medium text-gray-400 mb-3">Tinggalkan Testimoni (Opsional)</label>
+                                                <div className="flex gap-1 mb-3">
+                                                    {[1, 2, 3, 4, 5].map(star => (
+                                                        <button key={star} onClick={() => setRating(star)} className="focus:outline-none">
+                                                            <Star size={20} className={star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-white/10'} />
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                <textarea
+                                                    value={testimonialMsg}
+                                                    onChange={(e) => setTestimonialMsg(e.target.value)}
+                                                    placeholder="Tuliskan pengalaman Anda..."
+                                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500/50 h-20 resize-none mb-3"
+                                                />
+                                                <button
+                                                    onClick={submitTestimonial}
+                                                    className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2.5 rounded-xl text-sm font-bold transition-all"
+                                                >
+                                                    Kirim Testimoni
+                                                </button>
                                             </div>
-                                            <textarea
-                                                value={testimonialMsg}
-                                                onChange={(e) => setTestimonialMsg(e.target.value)}
-                                                placeholder="Tuliskan pengalaman Anda..."
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500/50 h-20 resize-none"
-                                            />
-                                        </div>
+                                        ) : (
+                                            <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4 mb-5 text-center">
+                                                <CheckCircle2 size={20} className="text-green-400 mx-auto mb-1" />
+                                                <p className="text-sm text-green-400 font-medium">Terima kasih atas testimoninya!</p>
+                                            </div>
+                                        )}
 
                                         <button
-                                            onClick={() => { window.scrollTo(0, 0); navigate('/'); }}
+                                            onClick={() => { sessionStorage.removeItem(storageKey); window.scrollTo(0, 0); navigate('/'); }}
                                             className="w-full bg-purple-600 hover:bg-purple-700 py-3.5 rounded-xl font-semibold text-white transition-colors text-sm"
                                         >
                                             Kembali ke Beranda
@@ -740,7 +850,7 @@ const ProductPage = () => {
                                                 Hubungi Admin
                                             </a>
                                             <button
-                                                onClick={() => { window.scrollTo(0, 0); navigate('/'); }}
+                                                onClick={() => { sessionStorage.removeItem(storageKey); window.scrollTo(0, 0); navigate('/'); }}
                                                 className="flex-1 bg-white/5 hover:bg-white/10 py-3 rounded-xl font-semibold text-white transition-colors border border-white/5 text-sm"
                                             >
                                                 Kembali
@@ -761,14 +871,11 @@ const ProductPage = () => {
                                 {(orderStatus?.status === 'PENDING' || orderStatus?.status === 'PROCESSING') && (
                                     <div className="flex justify-center mt-4">
                                         <button
-                                            onClick={async () => {
-                                                if (!paymentResult?.order_id) return;
-                                                const res = await api.get(`/payments/status/${paymentResult.order_id}`).catch(() => null);
-                                                if (res) setOrderStatus(res.data?.data);
-                                            }}
-                                            className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                                            onClick={manualRefresh}
+                                            disabled={isRefreshing}
+                                            className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors disabled:opacity-50"
                                         >
-                                            <RefreshCw size={12} /> Refresh status
+                                            <RefreshCw size={12} className={isRefreshing ? 'animate-spin' : ''} /> {isRefreshing ? 'Mengecek...' : 'Refresh status'}
                                         </button>
                                     </div>
                                 )}

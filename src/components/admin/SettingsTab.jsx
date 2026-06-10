@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Save, Eye, EyeOff, ImageIcon, Upload, Loader2, LogOut } from 'lucide-react';
 import api from '../../api';
-import Swal from 'sweetalert2';
+import { notifySuccess, notifyError } from '../../utils/notify';
 
 const SettingsTab = ({
     settings, setSettings, updateSetting,
@@ -25,9 +25,9 @@ const SettingsTab = ({
             });
             const newUrl = res.data.url;
             await updateSetting('info_modal_image', newUrl);
-            Swal.fire({ icon: 'success', title: 'Gambar Terupdate!', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, background: '#0E0E0E', color: '#fff' });
+            notifySuccess('Gambar popup berhasil diupdate!');
         } catch (err) {
-            Swal.fire({ icon: 'error', title: 'Gagal Upload!', text: err.message, background: '#0E0E0E', color: '#fff' });
+            notifyError('Gagal upload gambar popup');
         } finally {
             setUploadingBanner(false);
         }

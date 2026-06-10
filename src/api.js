@@ -12,7 +12,6 @@ api.interceptors.request.use(config => {
         config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
-    return Promise.reject(error);
 });
 
 // Add a response interceptor to handle global errors (500, 429, Network Error)

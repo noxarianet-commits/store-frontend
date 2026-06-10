@@ -1,16 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, Save } from 'lucide-react';
 
-const INITIAL_FORM = { id: '', product: '', variant: '', price: 0, wa_number: '', email: '', testimonial: '' };
-
 const OrderModal = ({ editingOrder, onClose, onSave }) => {
-    const [form, setForm] = useState(INITIAL_FORM);
-    const prevOrderRef = useRef(null);
+    const [form, setForm] = useState({
+        id: '', product: '', variant: '', price: 0,
+        wa_number: '', email: '', testimonial: '',
+        status: 'PENDING', payment_method: ''
+    });
 
     useEffect(() => {
-        if (editingOrder && editingOrder.id !== prevOrderRef.current) {
-            prevOrderRef.current = editingOrder.id;
+        if (editingOrder) {
             setForm({
                 id: editingOrder.id || '',
                 product: editingOrder.product || '',
@@ -19,9 +19,13 @@ const OrderModal = ({ editingOrder, onClose, onSave }) => {
                 wa_number: editingOrder.wa_number || '',
                 email: editingOrder.email || '',
                 testimonial: editingOrder.testimonial || '',
+                status: editingOrder.status || 'PENDING',
+                payment_method: editingOrder.payment_method || ''
             });
         }
     }, [editingOrder]);
+
+    if (!editingOrder) return null;
 
     return (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
@@ -63,6 +67,20 @@ const OrderModal = ({ editingOrder, onClose, onSave }) => {
                     <div>
                         <label className="block text-xs text-gray-500 mb-1.5">Email</label>
                         <input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white" />
+                    </div>
+                    <div>
+                        <label className="block text-xs text-gray-500 mb-1.5">Status</label>
+                        <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white">
+                            <option value="PENDING">Menunggu</option>
+                            <option value="PROCESSING">Diproses</option>
+                            <option value="COMPLETED">Selesai</option>
+                            <option value="FAILED">Gagal</option>
+                            <option value="CANCELLED">Dibatalkan</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-xs text-gray-500 mb-1.5">Metode Pembayaran</label>
+                        <input value={form.payment_method} onChange={(e) => setForm({ ...form, payment_method: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white" placeholder="Contoh: QRIS" />
                     </div>
                     <div>
                         <label className="block text-xs text-gray-500 mb-1.5">Testimonial</label>

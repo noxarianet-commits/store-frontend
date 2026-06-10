@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import api from '../api';
-import Swal from 'sweetalert2';
+import { notifySuccess, notifyError, notifyWarning, confirmAction } from '../utils/notify';
 
 import AdminSidebar from '../components/admin/AdminSidebar';
 import AdminLoginForm from '../components/admin/AdminLoginForm';
@@ -37,6 +37,7 @@ const AdminDashboard = () => {
     const [sekalipaySearch, setSekalipaySearch] = useState('');
     const [expandedProduct, setExpandedProduct] = useState(null);
     const [syncInProgress, setSyncInProgress] = useState(false);
+    const [uploadingBanner, setUploadingBanner] = useState(false);
     const [globalMarkupValue, setGlobalMarkupValue] = useState('');
     const [error] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -44,12 +45,13 @@ const AdminDashboard = () => {
     // Modal states
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
+    const [isAddingProduct, setIsAddingProduct] = useState(false);
     const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
     const [editingOrder, setEditingOrder] = useState(null);
 
     // Password change
     const [showPasswordForm, setShowPasswordForm] = useState(false);
-    const [passwordData, setPasswordData] = useState({ current: '', newPass: '' });
+    const [passwordData, setPasswordData] = useState({ current_password: '', new_password: '', confirm_password: '' });
 
     const fetchOrders = async () => {
         try { const res = await api.get('/orders'); setOrders(res.data); }
@@ -123,25 +125,42 @@ const AdminDashboard = () => {
             setIsLogin(true);
             fetchData();
         } catch (err) {
-            Swal.fire({ icon: 'error', title: 'Gagal Masuk', text: err.response?.data?.error || 'Username atau password salah', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#7c3aed' });
+            notifyError(err.response?.data?.error || 'Username atau password salah');
         }
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem('adminToken');
-        setIsLogin(false);
+    const handleLogout = async () => {
+        const confirmed = await confirmAction({ title: 'Yakin ingin logout?', text: 'Anda harus login kembali untuk mengakses dashboard.', confirmText: 'Ya, Logout', cancelText: 'Batal' });
+        if (confirmed) {
+            localStorage.removeItem('adminToken');
+            setIsLogin(false);
+        }
     };
 
     // ---- Password ----
     const handleChangePassword = async (e) => {
         e.preventDefault();
+        if (!passwordData.current_password || !passwordData.new_password) {
+            notifyWarning('Password lama dan password baru wajib diisi!');
+            return;
+        }
+        if (passwordData.new_password.length < 8) {
+            notifyWarning('Password baru minimal 8 karakter!');
+            return;
+        }
+        if (passwordData.new_password !== passwordData.confirm_password) {
+            notifyWarning('Konfirmasi password baru tidak cocok!');
+            return;
+        }
         try {
-            await api.put('/admin/password', passwordData);
-            Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Password berhasil diubah', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#7c3aed' });
-            setShowPasswordForm(false);
-            setPasswordData({ current: '', newPass: '' });
+            await api.put('/admin/password', {
+                current_password: passwordData.current_password,
+                new_password: passwordData.new_password
+            });
+            notifySuccess('Password berhasil diubah!');
+            setPasswordData({ current_password: '', new_password: '', confirm_password: '' });
         } catch (err) {
-            Swal.fire({ icon: 'error', title: 'Gagal', text: err.response?.data?.error || 'Terjadi kesalahan', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#7c3aed' });
+            notifyError(err.response?.data?.error || 'Gagal mengubah password');
         }
     };
 
@@ -150,24 +169,24 @@ const AdminDashboard = () => {
         setSyncInProgress(true);
         try {
             const res = await api.post('/admin/sekalipay/sync', { type });
-            Swal.fire({ icon: 'success', title: 'Sync Berhasil', text: `${res.data.message} (${res.data.syncedProducts || 0} produk)`, background: '#0E0E0E', color: '#fff', confirmButtonColor: '#7c3aed' });
+            notifySuccess(`Sync berhasil: ${res.data.syncedProducts || 0} produk disinkronkan`);
             await fetchSekalipay();
         } catch (err) {
-            Swal.fire({ icon: 'error', title: 'Sync Gagal', text: err.response?.data?.error || err.message, background: '#0E0E0E', color: '#fff', confirmButtonColor: '#7c3aed' });
+            notifyError(err.response?.data?.error || 'Sync gagal');
         }
         setSyncInProgress(false);
     };
 
     const handleGlobalMarkup = async () => {
         const val = parseInt(globalMarkupValue);
-        if (isNaN(val) || val < 0) { Swal.fire({ icon: 'warning', title: 'Masukkan nilai markup yang valid', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#7c3aed' }); return; }
+        if (isNaN(val) || val < 0) { notifyWarning('Masukkan nilai markup yang valid'); return; }
         try {
             const res = await api.post('/admin/sekalipay/global-markup', { markup: val });
-            Swal.fire({ icon: 'success', title: 'Berhasil', text: res.data.message, background: '#0E0E0E', color: '#fff', confirmButtonColor: '#7c3aed' });
+            notifySuccess(res.data.message);
             setGlobalMarkupValue('');
             await fetchSekalipay();
         } catch (err) {
-            Swal.fire({ icon: 'error', title: 'Gagal', text: err.response?.data?.error || err.message, background: '#0E0E0E', color: '#fff', confirmButtonColor: '#7c3aed' });
+            notifyError(err.response?.data?.error || 'Gagal menerapkan markup');
         }
     };
 
@@ -175,8 +194,9 @@ const AdminDashboard = () => {
         try {
             await api.patch(`/admin/sekalipay/products/${productId}/markup`, { variantId, markup });
             await fetchSekalipay();
+            notifySuccess('Markup berhasil diupdate!');
         } catch (err) {
-            Swal.fire({ icon: 'error', title: 'Gagal update markup', text: err.response?.data?.error || err.message, background: '#0E0E0E', color: '#fff', confirmButtonColor: '#7c3aed' });
+            notifyError(err.response?.data?.error || 'Gagal update markup');
         }
     };
 
@@ -184,30 +204,36 @@ const AdminDashboard = () => {
         try {
             await api.patch(`/admin/sekalipay/products/${productId}/toggle`);
             await fetchSekalipay();
+            notifySuccess('Status produk berhasil diubah!');
         } catch (err) {
-            Swal.fire({ icon: 'error', title: 'Gagal', text: err.response?.data?.error || err.message, background: '#0E0E0E', color: '#fff', confirmButtonColor: '#7c3aed' });
+            notifyError(err.response?.data?.error || 'Gagal toggle produk');
         }
     };
 
     // ---- Product CRUD ----
-    const openProductModal = (product = null) => { setEditingProduct(product); setIsModalOpen(true); };
+    const openProductModal = (product = null) => {
+        setEditingProduct(product);
+        setIsAddingProduct(!product);
+        setIsModalOpen(true);
+    };
     const saveProduct = async (form) => {
         try {
-            if (editingProduct) {
-                await api.put(`/services/${editingProduct.id}`, form);
-                Swal.fire({ icon: 'success', title: 'Produk diperbarui!', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#7c3aed', timer: 1500, showConfirmButton: false });
-            } else {
+            if (isAddingProduct) {
                 await api.post('/services', form);
-                Swal.fire({ icon: 'success', title: 'Produk ditambahkan!', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#7c3aed', timer: 1500, showConfirmButton: false });
+                notifySuccess('Produk berhasil ditambahkan!');
+            } else {
+                await api.put(`/services/${editingProduct.id}`, form);
+                notifySuccess('Produk berhasil diperbarui!');
             }
             setIsModalOpen(false);
             setEditingProduct(null);
+            setIsAddingProduct(false);
             await fetchServices();
-        } catch (err) { Swal.fire({ icon: 'error', title: 'Gagal simpan produk', text: err.response?.data?.error || err.message, background: '#0E0E0E', color: '#fff', confirmButtonColor: '#7c3aed' }); }
+        } catch (err) { notifyError(err.response?.data?.error || 'Gagal menyimpan produk'); }
     };
     const deleteProduct = async (id) => {
-        const result = await Swal.fire({ icon: 'warning', title: 'Hapus produk?', showCancelButton: true, confirmButtonText: 'Ya, hapus!', cancelButtonText: 'Batal', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#dc2626' });
-        if (result.isConfirmed) { await api.delete(`/services/${id}`); await fetchServices(); Swal.fire({ icon: 'success', title: 'Produk dihapus!', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#7c3aed', timer: 1500, showConfirmButton: false }); }
+        const confirmed = await confirmAction({ title: 'Hapus produk?', text: 'Produk yang dihapus tidak bisa dikembalikan.', danger: true, confirmText: 'Ya, hapus!' });
+        if (confirmed) { await api.delete(`/services/${id}`); await fetchServices(); notifySuccess('Produk berhasil dihapus!'); }
     };
 
     // ---- Order CRUD ----
@@ -216,16 +242,16 @@ const AdminDashboard = () => {
         try {
             if (editingOrder) {
                 await api.put(`/orders/${editingOrder.id}`, form);
-                Swal.fire({ icon: 'success', title: 'Pesanan diperbarui!', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#7c3aed', timer: 1500, showConfirmButton: false });
+                notifySuccess('Pesanan berhasil diperbarui!');
             }
             setIsOrderModalOpen(false);
             setEditingOrder(null);
             await fetchOrders();
-        } catch (err) { Swal.fire({ icon: 'error', title: 'Gagal', text: err.response?.data?.error || err.message, background: '#0E0E0E', color: '#fff', confirmButtonColor: '#7c3aed' }); }
+        } catch (err) { notifyError(err.response?.data?.error || 'Gagal memperbarui pesanan'); }
     };
     const deleteOrder = async (id) => {
-        const result = await Swal.fire({ icon: 'warning', title: 'Hapus pesanan?', showCancelButton: true, confirmButtonText: 'Ya, hapus!', cancelButtonText: 'Batal', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#dc2626' });
-        if (result.isConfirmed) { await api.delete(`/orders/${id}`); await fetchOrders(); Swal.fire({ icon: 'success', title: 'Pesanan dihapus!', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#7c3aed', timer: 1500, showConfirmButton: false }); }
+        const confirmed = await confirmAction({ title: 'Hapus pesanan?', text: 'Pesanan yang dihapus tidak bisa dikembalikan.', danger: true, confirmText: 'Ya, hapus!' });
+        if (confirmed) { await api.delete(`/orders/${id}`); await fetchOrders(); notifySuccess('Pesanan berhasil dihapus!'); }
     };
 
     // ---- Banner ----
@@ -234,16 +260,18 @@ const AdminDashboard = () => {
         if (!file) return;
         const formData = new FormData();
         formData.append('banner', file);
+        setUploadingBanner(true);
         try {
             await api.post('/banners', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-            Swal.fire({ icon: 'success', title: 'Banner diunggah!', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#7c3aed', timer: 1500, showConfirmButton: false });
+            notifySuccess('Banner berhasil diunggah!');
             await fetchBanners();
-        } catch (err) { Swal.fire({ icon: 'error', title: 'Gagal upload banner', text: err.response?.data?.error || err.message, background: '#0E0E0E', color: '#fff', confirmButtonColor: '#7c3aed' }); }
+        } catch (err) { notifyError(err.response?.data?.error || 'Gagal upload banner'); }
         if (fileInputRef.current) fileInputRef.current.value = '';
+        setUploadingBanner(false);
     };
     const deleteBanner = async (id) => {
-        const result = await Swal.fire({ icon: 'warning', title: 'Hapus banner?', showCancelButton: true, confirmButtonText: 'Ya, hapus!', cancelButtonText: 'Batal', background: '#0E0E0E', color: '#fff', confirmButtonColor: '#dc2626' });
-        if (result.isConfirmed) { await api.delete(`/banners/${id}`); await fetchBanners(); }
+        const confirmed = await confirmAction({ title: 'Hapus banner?', text: 'Banner yang dihapus tidak bisa dikembalikan.', danger: true, confirmText: 'Ya, hapus!' });
+        if (confirmed) { await api.delete(`/banners/${id}`); await fetchBanners(); notifySuccess('Banner berhasil dihapus!'); }
     };
 
     // ---- Settings ----
@@ -251,7 +279,11 @@ const AdminDashboard = () => {
         try {
             await api.put(`/settings/${key}`, { value });
             await fetchSettings();
-        } catch (err) { console.error('Gagal update setting:', err); }
+            notifySuccess('Pengaturan berhasil disimpan!');
+        } catch (err) {
+            notifyError('Gagal menyimpan pengaturan');
+            console.error('Gagal update setting:', err);
+        }
     };
 
     // ---- Render ----
@@ -284,10 +316,10 @@ const AdminDashboard = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#0A031A] flex">
+        <div className="min-h-screen bg-[#0A031A] flex flex-col md:flex-row">
             <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} handleLogout={handleLogout} isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
 
-            <main className="flex-1 overflow-auto">
+            <main className="flex-1 overflow-auto w-full">
                 <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
                     <WelcomeMarquee />
 
@@ -305,7 +337,7 @@ const AdminDashboard = () => {
                             expandedProduct={expandedProduct} setExpandedProduct={setExpandedProduct}
                         />
                     )}
-                    {activeTab === 'revenue' && <RevenueTab orders={orders} settings={settings} />}
+                    {activeTab === 'revenue' && <RevenueTab orders={orders} settings={settings} updateSetting={updateSetting} />}
                     {activeTab === 'products' && (
                         <ProductsTab
                             products={services} openProductModal={openProductModal} deleteProduct={deleteProduct}
@@ -317,6 +349,7 @@ const AdminDashboard = () => {
                     {activeTab === 'banners' && (
                         <BannersTab banners={banners} handleBannerUpload={handleBannerUpload}
                             deleteBanner={deleteBanner} fileInputRef={fileInputRef}
+                            uploadingBanner={uploadingBanner}
                         />
                     )}
                     {activeTab === 'settings' && (
@@ -331,7 +364,7 @@ const AdminDashboard = () => {
 
             {/* Modals */}
             <AnimatePresence>
-                {isModalOpen && <ProductModal editingProduct={editingProduct} onClose={() => { setIsModalOpen(false); setEditingProduct(null); }} onSave={saveProduct} />}
+                {isModalOpen && <ProductModal isAdding={isAddingProduct} editingProduct={editingProduct} onClose={() => { setIsModalOpen(false); setEditingProduct(null); setIsAddingProduct(false); }} onSave={saveProduct} />}
                 {isOrderModalOpen && <OrderModal editingOrder={editingOrder} onClose={() => { setIsOrderModalOpen(false); setEditingOrder(null); }} onSave={saveOrder} />}
             </AnimatePresence>
         </div>

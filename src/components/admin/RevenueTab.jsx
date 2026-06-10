@@ -3,8 +3,9 @@ import { DollarSign, Package, Sparkles, AlertCircle, Settings } from 'lucide-rea
 import StatCard from '../ui/StatCard';
 
 const RevenueTab = ({ orders, settings, updateSetting }) => {
-    const totalRevenue = orders.reduce((sum, order) => sum + (order.price || 0), 0);
-    const netProfit = totalRevenue - settings.initial_capital;
+    const totalRevenue = orders.reduce((sum, order) => sum + (Number(order.price) || 0), 0);
+    const capital = Number(settings.initial_capital) || 0;
+    const netProfit = totalRevenue - capital;
 
     return (
         <div className="space-y-8">
