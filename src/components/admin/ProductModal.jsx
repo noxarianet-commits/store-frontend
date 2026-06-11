@@ -115,10 +115,10 @@ const ProductModal = ({ isAdding, editingProduct, onClose, onSave }) => {
                             <select
                                 value={form.icon}
                                 onChange={(e) => setForm({ ...form, icon: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white"
+                                className="w-full bg-[#1a1a2e] border border-white/10 rounded-xl p-3 text-sm text-white appearance-none cursor-pointer focus:outline-none focus:border-purple-500/50"
                             >
                                 {iconOptions.map(opt => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                    <option key={opt.value} value={opt.value} className="bg-[#1a1a2e] text-white">{opt.label}</option>
                                 ))}
                             </select>
                         </div>

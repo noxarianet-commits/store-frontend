@@ -130,7 +130,7 @@ const PaymentSuccessPage = () => {
     }
 
     return (
-        <div className="min-h-screen font-sans text-gray-200 bg-[#0A0A0A]">
+        <div className="min-h-screen font-sans text-gray-200">
             {/* HEADER */}
             <nav className="sticky top-0 z-50 bg-[#0A0A0A]/95 backdrop-blur-xl border-b border-white/5">
                 <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">

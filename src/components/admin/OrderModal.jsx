@@ -70,12 +70,12 @@ const OrderModal = ({ editingOrder, onClose, onSave }) => {
                     </div>
                     <div>
                         <label className="block text-xs text-gray-500 mb-1.5">Status</label>
-                        <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white">
-                            <option value="PENDING">Menunggu</option>
-                            <option value="PROCESSING">Diproses</option>
-                            <option value="COMPLETED">Selesai</option>
-                            <option value="FAILED">Gagal</option>
-                            <option value="CANCELLED">Dibatalkan</option>
+                        <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full bg-[#1a1a2e] border border-white/10 rounded-xl p-3 text-sm text-white appearance-none cursor-pointer focus:outline-none focus:border-purple-500/50">
+                            <option value="PENDING" className="bg-[#1a1a2e] text-white">Menunggu</option>
+                            <option value="PROCESSING" className="bg-[#1a1a2e] text-white">Diproses</option>
+                            <option value="COMPLETED" className="bg-[#1a1a2e] text-white">Selesai</option>
+                            <option value="FAILED" className="bg-[#1a1a2e] text-white">Gagal</option>
+                            <option value="CANCELLED" className="bg-[#1a1a2e] text-white">Dibatalkan</option>
                         </select>
                     </div>
                     <div>

@@ -5,7 +5,7 @@ import { ArrowLeft, HelpCircle } from 'lucide-react';
 const CaraOrder = () => {
     const navigate = useNavigate();
     return (
-        <div className="min-h-screen bg-[#0A0A0A] text-gray-200 p-6 md:p-12 font-sans">
+        <div className="min-h-screen text-gray-200 p-6 md:p-12 font-sans">
             <div className="max-w-3xl mx-auto">
                 <button
                     onClick={() => navigate(-1)}

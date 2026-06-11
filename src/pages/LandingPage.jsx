@@ -106,6 +106,7 @@ const isProductSoldOut = (product) => {
 
 const LandingPage = () => {
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [testimonials, setTestimonials] = useState([]);
   const [settings, setSettings] = useState({
     shop_status: { isOpen: true, message: '' },
@@ -142,6 +143,7 @@ const LandingPage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
         const [sekalipayRes, dbRes, servicesRes, testRes, settingsRes] = await Promise.all([
           api.get('/sekalipay/items').catch(() => ({ data: { data: [] } })),
@@ -198,6 +200,8 @@ const LandingPage = () => {
         }
       } catch (err) {
         console.error('Failed to fetch data', err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
@@ -513,6 +517,18 @@ const LandingPage = () => {
             </h2>
           </div>
 
+          {loading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-5 flex flex-col items-center text-center animate-pulse">
+                  <div className="w-12 h-12 rounded-xl bg-white/5 mb-3" />
+                  <div className="w-10 h-2.5 rounded bg-white/5 mb-2" />
+                  <div className="w-16 h-3.5 rounded bg-white/5 mb-1" />
+                  <div className="w-12 h-2 rounded bg-white/5" />
+                </div>
+              ))}
+            </div>
+          ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {appProducts.map((product) => {
               const IconComp = iconMap[product.icon] || Smartphone;
@@ -544,6 +560,7 @@ const LandingPage = () => {
               );
             })}
           </div>
+          )}
         </section>
 
         {/* ═══ TOP UP GAME SECTION ═══ */}
@@ -597,6 +614,19 @@ const LandingPage = () => {
             <h2 className="text-xl font-bold text-white">Layanan Jasa & Bot</h2>
           </div>
           
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-5 flex flex-col items-center text-center animate-pulse">
+                  <div className="w-12 h-12 rounded-xl bg-white/5 mb-3" />
+                  <div className="w-10 h-2.5 rounded bg-white/5 mb-2" />
+                  <div className="w-16 h-3.5 rounded bg-white/5 mb-1" />
+                  <div className="w-12 h-2 rounded bg-white/5 mb-2" />
+                  <div className="w-20 h-2.5 rounded bg-white/5" />
+                </div>
+              ))}
+            </div>
+          ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             {serviceProducts.map((product) => {
               const iconMapService = { 'jasa-web': Globe, 'script-bot': Code, 'vps-bot': Server };
@@ -614,10 +644,13 @@ const LandingPage = () => {
                 ? Math.min(...product.variants.map(v => v.price))
                 : 0;
 
+              const isWebsiteService = product.name?.toLowerCase().includes('pembuatan website') || product.name?.toLowerCase().includes('jasa website');
+              const productLink = isWebsiteService ? '/website-order' : (product.is_service_table ? `/service/${product.id}` : `/product/${product.id}`);
+
               return (
                 <Link
                   key={product.id}
-                  to={product.is_service_table ? `/service/${product.id}` : `/product/${product.id}`}
+                  to={productLink}
                   className={`group relative bg-[#0E0E0E] hover:bg-[#151515] border border-white/5 hover:border-white/10 rounded-2xl p-5 transition-all flex flex-col items-center text-center ${isSoldOut ? 'opacity-60' : ''}`}
                 >
                   {serviceBadge && !isSoldOut && (
@@ -636,6 +669,7 @@ const LandingPage = () => {
               );
             })}
           </div>
+          )}
         </section>
 
         {/* ═══ TESTIMONIAL SLIDER ═══ */}
@@ -716,7 +750,7 @@ const LandingPage = () => {
       </main>
 
       {/* ═══ FOOTER ═══ */}
-      <footer className="border-t border-white/5 bg-[#0A0A0A]">
+      <footer className="border-t border-white/5 bg-[#0A0A0A]/80 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-6 py-10">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
             {/* Brand */}
@@ -749,6 +783,11 @@ const LandingPage = () => {
                   </a>
                 </li>
               </ul>
+              {/* Metode Pembayaran */}
+              <div className="mt-5">
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">Metode Pembayaran</p>
+                <img src="/qris-logo.png" alt="QRIS" className="h-10 object-contain bg-white rounded px-2 py-1" />
+              </div>
             </div>
           </div>
           <div className="text-center text-[11px] text-gray-600 border-t border-white/5 pt-6">

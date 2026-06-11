@@ -100,8 +100,9 @@ const ProductPage = () => {
     const [orderStatus, setOrderStatus] = useState(null);
     const pollingRef = useRef(null);
     const completedAlertShown = useRef(false);
+    const hasRestored = useRef(false);
 
-    // ── SessionStorage persistence ──────────────────────────────────────
+    // ── SessionStorage persistence ─────────────────────────────────────
     const storageKey = `payment_${id}`;
 
     useEffect(() => {
@@ -109,29 +110,30 @@ const ProductPage = () => {
             const saved = sessionStorage.getItem(storageKey);
             if (saved) {
                 const parsed = JSON.parse(saved);
+                // Restore step & data dari posisi terakhir user
+                if (parsed.step) setStep(parsed.step);
+                if (parsed.selectedVariant) setSelectedVariant(parsed.selectedVariant);
+                if (parsed.formData) setFormData(parsed.formData);
                 if (parsed.step === 3 && parsed.paymentResult) {
-                    setStep(3);
                     setPaymentResult(parsed.paymentResult);
                     setOrderStatus(parsed.orderStatus || null);
-                    setFormData(parsed.formData || { wa_number: '', email: '' });
-                    if (parsed.testimonialSubmitted) setTestimonialSubmitted(true);
-                    // completedAlertShown TIDAK di-restore dari storage
-                    // supaya alert selalu muncul saat refresh jika status COMPLETED
                 }
+                if (parsed.testimonialSubmitted) setTestimonialSubmitted(true);
             }
         } catch (e) { /* ignore */ }
+        hasRestored.current = true;
     }, []);
 
     useEffect(() => {
-        if (step === 3 && paymentResult) {
-            try {
-                sessionStorage.setItem(storageKey, JSON.stringify({
-                    step, paymentResult, orderStatus, formData,
-                    testimonialSubmitted
-                }));
-            } catch (e) { /* ignore */ }
-        }
-    }, [step, paymentResult, orderStatus, formData, testimonialSubmitted]);
+        // Jangan save sebelum restore selesai (mencegah timpa data saat mount)
+        if (!hasRestored.current) return;
+        try {
+            sessionStorage.setItem(storageKey, JSON.stringify({
+                step, selectedVariant, formData, paymentResult, orderStatus,
+                testimonialSubmitted
+            }));
+        } catch (e) { /* ignore */ }
+    }, [step, selectedVariant, formData, paymentResult, orderStatus, testimonialSubmitted]);
 
     // ── SweetAlert when COMPLETED ──────────────────────────────────────
     useEffect(() => {
@@ -181,10 +183,11 @@ const ProductPage = () => {
         }
     }
 
-    // ── Download QR ─────────────────────────────────────────────────────
+    // ── Download QR (canvas-based for cross-origin) ───────────────────
     const downloadQR = async (qrUrl) => {
         try {
-            const response = await fetch(qrUrl);
+            // Coba fetch dulu
+            const response = await fetch(qrUrl, { mode: 'cors' });
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -194,9 +197,51 @@ const ProductPage = () => {
             a.click();
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
+            notifySuccess('QR Code berhasil didownload!');
         } catch (e) {
-            window.open(qrUrl, '_blank');
+            // Fallback: buka di canvas lalu download
+            try {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.naturalWidth;
+                    canvas.height = img.naturalHeight;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `QR-${paymentResult?.order_id || 'pembayaran'}.png`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            window.URL.revokeObjectURL(url);
+                            notifySuccess('QR Code berhasil didownload!');
+                        }
+                    }, 'image/png');
+                };
+                img.onerror = () => {
+                    // Last fallback: buka di tab baru
+                    window.open(qrUrl, '_blank');
+                    notifyWarning('Tidak bisa download otomatis. Silakan klik kanan gambar → Save Image.');
+                };
+                img.src = qrUrl;
+            } catch (err) {
+                window.open(qrUrl, '_blank');
+            }
         }
+    };
+
+    // ── Saya Sudah Bayar ────────────────────────────────────────────────
+    const handleSudahBayar = () => {
+        showAlert({
+            title: 'Mohon Ditunggu',
+            text: 'Pesanan Anda sedang diproses dan akan dikirimkan via WA secara otomatis setelah proses pesanan selesai.',
+            confirmText: 'Baik',
+        });
     };
 
     // ── Manual Refresh Status ───────────────────────────────────────────
@@ -333,13 +378,54 @@ const ProductPage = () => {
         window.open(`https://wa.me/6285199605580?text=${message}`, '_blank');
     };
 
-    // ── Loading & not found ──────────────────────────────────────────────
+    // ── Loading Skeleton ────────────────────────────────────────────────
     if (loading) return (
-        <div className="min-h-screen flex items-center justify-center">
-            <div className="text-center">
-                <div className="w-10 h-10 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-gray-400 text-sm">Memuat produk...</p>
-            </div>
+        <div className="min-h-screen font-sans text-gray-200">
+            {/* HEADER Skeleton */}
+            <nav className="sticky top-0 z-50 bg-[#0A0A0A]/95 backdrop-blur-xl border-b border-white/5">
+                <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-lg bg-white/5 animate-pulse" />
+                        <div className="w-24 h-5 rounded bg-white/5 animate-pulse" />
+                    </div>
+                </div>
+            </nav>
+
+            <main className="max-w-2xl mx-auto px-4 py-10">
+                {/* Product Header Skeleton */}
+                <div className="mb-8">
+                    <div className="w-20 h-3 rounded bg-white/5 animate-pulse mb-3" />
+                    <div className="w-48 h-7 rounded bg-white/5 animate-pulse" />
+                </div>
+
+                {/* Step Progress Skeleton */}
+                <div className="flex items-center gap-2 mb-8">
+                    {[1, 2, 3].map((i) => (
+                        <Fragment key={i}>
+                            <div className="flex items-center gap-2">
+                                <div className="w-7 h-7 rounded-full bg-white/5 animate-pulse" />
+                                <div className="w-16 h-3 rounded bg-white/5 animate-pulse hidden sm:block" />
+                            </div>
+                            {i < 3 && <div className="flex-1 h-px bg-white/5" />}
+                        </Fragment>
+                    ))}
+                </div>
+
+                {/* Variant Cards Skeleton */}
+                <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="bg-white/3 border border-white/5 rounded-2xl p-5 animate-pulse">
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <div className="w-32 h-4 rounded bg-white/5 mb-2" />
+                                    <div className="w-20 h-3 rounded bg-white/5" />
+                                </div>
+                                <div className="w-16 h-6 rounded bg-white/5" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </main>
         </div>
     );
 
@@ -352,7 +438,7 @@ const ProductPage = () => {
         </div>
     );
 
-    const steps = ['Pilih Varian', 'Data Pembeli', 'Pembayaran'];
+    const steps = ['Checkout', 'Data Pembeli', 'Pembayaran'];
     const isGameProduct = product?.category?.toLowerCase().includes('game') || product?.category?.toLowerCase().includes('top up') || product?.category?.toLowerCase().includes('topup');
     const isServiceProduct = product?.is_service_table || product?.category?.toLowerCase().includes('jasa');
 
@@ -379,14 +465,6 @@ const ProductPage = () => {
             </nav>
 
             <main className="max-w-2xl mx-auto px-4 py-10">
-                {/* Back Button */}
-                <button
-                    onClick={() => { sessionStorage.removeItem(storageKey); window.scrollTo(0, 0); navigate('/'); }}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 text-gray-400 hover:text-white transition-all mb-8 text-sm font-medium shadow-sm backdrop-blur-sm"
-                >
-                    <ArrowLeft size={16} /> Kembali ke Beranda
-                </button>
-
                 {/* Product Header */}
                 <div className="mb-8">
                     <span className="text-xs font-semibold text-purple-400 uppercase tracking-wider">{product.category}</span>
@@ -665,6 +743,15 @@ const ProductPage = () => {
                         {/* ════ STEP 3: PEMBAYARAN ════ */}
                         {step === 3 && (
                             <div>
+                                {/* Info Tunggu */}
+                                <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-3 mb-5">
+                                    <Info size={18} className="text-blue-400 mt-0.5 shrink-0" />
+                                    <div>
+                                        <p className="text-blue-300 text-sm font-semibold">Mohon Ditunggu</p>
+                                        <p className="text-blue-300/70 text-xs mt-0.5">Pesanan akan diproses selama 1-5 menit dan detail akun akan dikirim ke WhatsApp Anda. Mohon tetap di halaman ini.</p>
+                                    </div>
+                                </div>
+
                                 {/* Status Badge */}
                                 <div className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border mb-5 ${currentStatus.bg}`}>
                                     {currentStatus.icon}
@@ -867,9 +954,15 @@ const ProductPage = () => {
                                     </div>
                                 )}
 
-                                {/* Manual refresh */}
+                                {/* Manual refresh + Sudah Bayar */}
                                 {(orderStatus?.status === 'PENDING' || orderStatus?.status === 'PROCESSING') && (
-                                    <div className="flex justify-center mt-4">
+                                    <div className="flex flex-col items-center gap-3 mt-4">
+                                        <button
+                                            onClick={handleSudahBayar}
+                                            className="inline-flex items-center gap-2 text-sm font-bold text-white bg-green-600 hover:bg-green-700 px-6 py-3 rounded-xl transition-all shadow-lg shadow-green-600/20"
+                                        >
+                                            <CheckCircle2 size={16} /> Saya Sudah Bayar
+                                        </button>
                                         <button
                                             onClick={manualRefresh}
                                             disabled={isRefreshing}
