@@ -11,11 +11,13 @@ import NotFound from './pages/NotFound';
 import ErrorPage from './pages/ErrorPage';
 import FloatingButtons from './components/FloatingButtons';
 import ScrollToTop from './components/ScrollToTop';
+import AnimatedBackground from './components/AnimatedBackground';
 
 function App() {
   return (
     <>
       <ScrollToTop />
+      <AnimatedBackground />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/product/:id" element={<ProductPage />} />

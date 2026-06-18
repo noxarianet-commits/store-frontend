@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import api from '../api';
@@ -14,7 +14,6 @@ import ProductsTab from '../components/admin/ProductsTab';
 import ProductModal from '../components/admin/ProductModal';
 import OrdersTab from '../components/admin/OrdersTab';
 import OrderModal from '../components/admin/OrderModal';
-import BannersTab from '../components/admin/BannersTab';
 import SettingsTab from '../components/admin/SettingsTab';
 
 const AdminDashboard = () => {
@@ -23,13 +22,11 @@ const AdminDashboard = () => {
     const [showLoginPassword, setShowLoginPassword] = useState(false);
     const [activeTab, setActiveTab] = useState('dashboard');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const fileInputRef = useRef(null);
 
     // Data states
     const [orders, setOrders] = useState([]);
     const [services, setServices] = useState([]);
     const [settings, setSettings] = useState({});
-    const [banners, setBanners] = useState([]);
     const [sekalipayProducts, setSekalipayProducts] = useState([]);
     const [sekalipayBalance, setSekalipayBalance] = useState(null);
     const [sekalipaySync, setSekalipaySync] = useState(null);
@@ -37,7 +34,6 @@ const AdminDashboard = () => {
     const [sekalipaySearch, setSekalipaySearch] = useState('');
     const [expandedProduct, setExpandedProduct] = useState(null);
     const [syncInProgress, setSyncInProgress] = useState(false);
-    const [uploadingBanner, setUploadingBanner] = useState(false);
     const [globalMarkupValue, setGlobalMarkupValue] = useState('');
     const [error] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -68,11 +64,6 @@ const AdminDashboard = () => {
         catch (e) { console.error('Gagal fetch settings:', e); }
     };
 
-    const fetchBanners = async () => {
-        try { const res = await api.get('/banners'); setBanners(res.data); }
-        catch (e) { console.error('Gagal fetch banners:', e); }
-    };
-
     const fetchSekalipay = useCallback(async () => {
         setSekalipayLoading(true);
         try {
@@ -90,7 +81,7 @@ const AdminDashboard = () => {
 
     const fetchData = async () => {
         setLoading(true);
-        await Promise.all([fetchOrders(), fetchServices(), fetchSettings(), fetchBanners()]);
+        await Promise.all([fetchOrders(), fetchServices(), fetchSettings()]);
         if (activeTab === 'sekalipay') await fetchSekalipay();
         setLoading(false);
     };
@@ -254,26 +245,6 @@ const AdminDashboard = () => {
         if (confirmed) { await api.delete(`/orders/${id}`); await fetchOrders(); notifySuccess('Pesanan berhasil dihapus!'); }
     };
 
-    // ---- Banner ----
-    const handleBannerUpload = async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        const formData = new FormData();
-        formData.append('banner', file);
-        setUploadingBanner(true);
-        try {
-            await api.post('/banners', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-            notifySuccess('Banner berhasil diunggah!');
-            await fetchBanners();
-        } catch (err) { notifyError(err.response?.data?.error || 'Gagal upload banner'); }
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        setUploadingBanner(false);
-    };
-    const deleteBanner = async (id) => {
-        const confirmed = await confirmAction({ title: 'Hapus banner?', text: 'Banner yang dihapus tidak bisa dikembalikan.', danger: true, confirmText: 'Ya, hapus!' });
-        if (confirmed) { await api.delete(`/banners/${id}`); await fetchBanners(); notifySuccess('Banner berhasil dihapus!'); }
-    };
-
     // ---- Settings ----
     const updateSetting = async (key, value) => {
         try {
@@ -345,12 +316,6 @@ const AdminDashboard = () => {
                     )}
                     {activeTab === 'orders' && (
                         <OrdersTab orders={orders} openOrderModal={openOrderModal} deleteOrder={deleteOrder} />
-                    )}
-                    {activeTab === 'banners' && (
-                        <BannersTab banners={banners} handleBannerUpload={handleBannerUpload}
-                            deleteBanner={deleteBanner} fileInputRef={fileInputRef}
-                            uploadingBanner={uploadingBanner}
-                        />
                     )}
                     {activeTab === 'settings' && (
                         <SettingsTab

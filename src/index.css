@@ -4,115 +4,22 @@
 
 @layer utilities {
   .glass {
-    @apply bg-white/5 backdrop-blur-md border border-white/10;
+    @apply bg-[#0E0E0E] border border-purple-500/25;
   }
   .glass-card {
-    @apply glass rounded-2xl shadow-xl shadow-purple-900/20 hover:bg-white/10 transition-all duration-300;
+    @apply glass rounded-2xl shadow-xl shadow-purple-900/20 hover:bg-[#151515] hover:border-purple-400/50 transition-all duration-300;
   }
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   @apply text-white font-sans overflow-x-hidden m-0;
   background-color: #060212;
-  /* Grid pattern - kotak kecil */
-  background-image:
-    linear-gradient(rgba(139, 92, 246, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(139, 92, 246, 0.06) 1px, transparent 1px);
-  background-size: 28px 28px;
-  background-position: center center;
   min-height: 100vh;
   position: relative;
-}
-
-/* Animated lighting effect */
-body::before {
-  content: '';
-  position: fixed;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  pointer-events: none;
-  z-index: 0;
-  background: radial-gradient(
-    500px circle at 50% 50%,
-    rgba(139, 92, 246, 0.15),
-    rgba(99, 102, 241, 0.05) 40%,
-    transparent 65%
-  );
-  animation: lightingMove 14s ease-in-out infinite;
-}
-
-@keyframes lightingMove {
-  0%   { transform: translate(0%, 0%); }
-  25%  { transform: translate(30%, -15%); }
-  50%  { transform: translate(15%, 35%); }
-  75%  { transform: translate(-20%, 25%); }
-  100% { transform: translate(0%, 0%); }
-}
-
-/* ═══ ANIMATED BACKGROUND BLOBS ═══ */
-.blob {
-  position: fixed;
-  border-radius: 50%;
-  filter: blur(80px);
-  z-index: -1;
-  pointer-events: none;
-  will-change: transform;
-}
-
-.blob-1 {
-  top: -10%;
-  left: -5%;
-  width: 45vw;
-  height: 45vw;
-  max-width: 600px;
-  max-height: 600px;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.22) 0%, transparent 70%);
-  animation: blob1 18s ease-in-out infinite;
-}
-
-.blob-2 {
-  top: 15%;
-  right: -10%;
-  width: 40vw;
-  height: 40vw;
-  max-width: 500px;
-  max-height: 500px;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.18) 0%, transparent 70%);
-  animation: blob2 22s ease-in-out infinite;
-}
-
-.blob-3 {
-  bottom: -5%;
-  left: 25%;
-  width: 35vw;
-  height: 35vw;
-  max-width: 450px;
-  max-height: 450px;
-  background: radial-gradient(circle, rgba(129, 140, 248, 0.16) 0%, transparent 70%);
-  animation: blob3 20s ease-in-out infinite;
-}
-
-@keyframes blob1 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(10vw, 8vh) scale(1.15); }
-  50% { transform: translate(5vw, 18vh) scale(0.9); }
-  75% { transform: translate(-8vw, 6vh) scale(1.1); }
-}
-
-@keyframes blob2 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(-8vw, 10vh) scale(1.1); }
-  50% { transform: translate(-15vw, 5vh) scale(1.15); }
-  75% { transform: translate(-5vw, -8vh) scale(0.9); }
-}
-
-@keyframes blob3 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(8vw, -8vh) scale(1.12); }
-  50% { transform: translate(-6vw, -15vh) scale(0.88); }
-  75% { transform: translate(10vw, -5vh) scale(1.05); }
 }
 
 @keyframes marquee {

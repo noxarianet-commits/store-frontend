@@ -68,16 +68,42 @@ const SettingsTab = ({
 
             {/* Info Modal Image */}
             <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-6">
-                <div className="mb-6">
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                        <ImageIcon size={20} className="text-purple-400" />
-                        Gambar Popup (Info Penting)
-                    </h3>
-                    <p className="text-xs text-gray-500">Rekomendasi rasio 3:4 (Contoh: 600x800px atau 720x960px)</p>
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                            <ImageIcon size={20} className="text-purple-400" />
+                            Popup Info Penting
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-1">
+                            Kelola popup yang muncul saat pengguna membuka halaman utama
+                        </p>
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                        <button
+                            onClick={() => updateSetting('info_modal_active', settings.info_modal_active === undefined ? false : !settings.info_modal_active)}
+                            className={`relative w-14 h-7 rounded-full transition-all duration-300 flex items-center px-1 ${settings.info_modal_active !== false ? 'bg-green-600' : 'bg-gray-700'}`}
+                        >
+                            <div className={`w-5 h-5 bg-white rounded-full transition-all duration-300 transform ${settings.info_modal_active !== false ? 'translate-x-7' : 'translate-x-0'}`} />
+                        </button>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${settings.info_modal_active !== false ? 'text-green-400' : 'text-gray-500'}`}>
+                            {settings.info_modal_active !== false ? 'Aktif' : 'Nonaktif'}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Mode info */}
+                <div className={`mb-6 p-3 rounded-xl border text-xs leading-relaxed flex items-start gap-2 ${settings.info_modal_active !== false ? 'bg-green-500/5 border-green-500/20 text-green-300' : 'bg-yellow-500/5 border-yellow-500/20 text-yellow-300'}`}>
+                    <span className="text-base flex-shrink-0">{settings.info_modal_active !== false ? '🖼️' : '💬'}</span>
+                    <span>
+                        {settings.info_modal_active !== false
+                            ? <><strong>Mode Gambar (Aktif):</strong> Popup menampilkan gambar yang Anda upload di bawah ini, beserta tombol Join WA dan Tutup.</>
+                            : <><strong>Mode Simpel (Nonaktif):</strong> Popup hanya menampilkan tombol Gabung Grup WhatsApp dan Tutup, tanpa gambar.</>
+                        }
+                    </span>
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-8 items-start">
-                    <div className="w-full md:w-1/3 aspect-[3/4] bg-white/5 rounded-2xl overflow-hidden border border-white/10 relative group">
+                    <div className={`w-full md:w-1/3 aspect-[3/4] bg-white/5 rounded-2xl overflow-hidden border relative group transition-all ${settings.info_modal_active !== false ? 'border-white/10' : 'border-white/5 opacity-40'}`}>
                         <img
                             src={settings.info_modal_image}
                             alt="Info Modal"
@@ -88,12 +114,17 @@ const SettingsTab = ({
                                 <Loader2 size={32} className="text-purple-500 animate-spin" />
                             </div>
                         )}
+                        {settings.info_modal_active === false && (
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest bg-black/60 px-3 py-1.5 rounded-lg">Tidak Digunakan</span>
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex-1 space-y-4">
                         <div className="p-4 bg-purple-500/5 border border-purple-500/10 rounded-xl">
                             <p className="text-xs text-purple-300 leading-relaxed">
-                                Disarankan menggunakan gambar dengan rasio 3:4 atau sejenisnya. Gambar akan otomatis terupdate di halaman depan setelah diupload.
+                                Rekomendasi rasio 3:4 (Contoh: 600x800px atau 720x960px). Gambar akan otomatis terupdate di halaman depan setelah diupload.
                             </p>
                         </div>
 
@@ -105,6 +136,7 @@ const SettingsTab = ({
                         >
                             <Upload size={18} /> Ganti Gambar Popup
                         </button>
+
                     </div>
                 </div>
             </div>

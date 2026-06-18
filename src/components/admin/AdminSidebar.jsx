@@ -7,7 +7,6 @@ const menuItems = [
     { id: 'revenue', label: 'Pendapatan', icon: null },
     { id: 'products', label: 'Produk', icon: null },
     { id: 'orders', label: 'Pesanan', icon: null },
-    { id: 'banners', label: 'Banner & Promo', icon: null },
     { id: 'settings', label: 'Pengaturan Toko', icon: null },
 ];
 
