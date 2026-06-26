@@ -15,6 +15,7 @@ import ProductModal from '../components/admin/ProductModal';
 import OrdersTab from '../components/admin/OrdersTab';
 import OrderModal from '../components/admin/OrderModal';
 import SettingsTab from '../components/admin/SettingsTab';
+import FeaturedTab from '../components/admin/FeaturedTab';
 
 const AdminDashboard = () => {
     const [isLogin, setIsLogin] = useState(false);
@@ -35,6 +36,8 @@ const AdminDashboard = () => {
     const [expandedProduct, setExpandedProduct] = useState(null);
     const [syncInProgress, setSyncInProgress] = useState(false);
     const [globalMarkupValue, setGlobalMarkupValue] = useState('');
+    const [featuredProducts, setFeaturedProducts] = useState([]);
+    const [featuredLoading, setFeaturedLoading] = useState(false);
     const [error] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -83,8 +86,18 @@ const AdminDashboard = () => {
         setLoading(true);
         await Promise.all([fetchOrders(), fetchServices(), fetchSettings()]);
         if (activeTab === 'sekalipay') await fetchSekalipay();
+        if (activeTab === 'featured') await fetchFeaturedProducts();
         setLoading(false);
     };
+
+    const fetchFeaturedProducts = useCallback(async () => {
+        setFeaturedLoading(true);
+        try {
+            const res = await api.get('/admin/sekalipay/products');
+            setFeaturedProducts(res.data || []);
+        } catch (e) { console.error('Gagal fetch featured products:', e); }
+        setFeaturedLoading(false);
+    }, []);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -106,6 +119,13 @@ const AdminDashboard = () => {
             return () => clearTimeout(timer);
         }
     }, [activeTab, isLogin, fetchSekalipay]);
+
+    useEffect(() => {
+        if (isLogin && activeTab === 'featured') {
+            const timer = setTimeout(() => fetchFeaturedProducts(), 0);
+            return () => clearTimeout(timer);
+        }
+    }, [activeTab, isLogin, fetchFeaturedProducts]);
 
     // ---- Auth ----
     const handleLogin = async (e) => {
@@ -198,6 +218,16 @@ const AdminDashboard = () => {
             notifySuccess('Status produk berhasil diubah!');
         } catch (err) {
             notifyError(err.response?.data?.error || 'Gagal toggle produk');
+        }
+    };
+
+    const handleToggleFeatured = async (productId) => {
+        try {
+            const res = await api.patch(`/admin/sekalipay/products/${productId}/featured`);
+            await fetchFeaturedProducts();
+            notifySuccess(res.data.is_featured ? 'Produk ditandai sebagai unggulan!' : 'Produk dihapus dari unggulan.');
+        } catch (err) {
+            notifyError(err.response?.data?.error || 'Gagal mengubah status unggulan');
         }
     };
 
@@ -309,6 +339,14 @@ const AdminDashboard = () => {
                         />
                     )}
                     {activeTab === 'revenue' && <RevenueTab orders={orders} settings={settings} updateSetting={updateSetting} />}
+                    {activeTab === 'featured' && (
+                        <FeaturedTab
+                            products={featuredProducts}
+                            featuredCount={featuredProducts.filter(p => p.is_featured).length}
+                            loading={featuredLoading}
+                            onToggleFeatured={handleToggleFeatured}
+                        />
+                    )}
                     {activeTab === 'products' && (
                         <ProductsTab
                             products={services} openProductModal={openProductModal} deleteProduct={deleteProduct}

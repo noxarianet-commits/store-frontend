@@ -4,6 +4,7 @@ import { Menu, X, LogOut } from 'lucide-react';
 const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: null },
     { id: 'sekalipay', label: 'Sekalipay', icon: null },
+    { id: 'featured', label: 'Produk Unggulan', icon: null },
     { id: 'revenue', label: 'Pendapatan', icon: null },
     { id: 'products', label: 'Produk', icon: null },
     { id: 'orders', label: 'Pesanan', icon: null },

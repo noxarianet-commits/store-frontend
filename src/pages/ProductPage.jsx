@@ -81,6 +81,10 @@ const ProductPage = () => {
         wa_number: '',
         email: '',
     });
+    const [fieldData, setFieldData] = useState({});
+    const [providerQty, setProviderQty] = useState('');
+    const [validatedAccount, setValidatedAccount] = useState(null);
+    const [isValidating, setIsValidating] = useState(false);
 
     // Testimonial
     const [testimonialMsg, setTestimonialMsg] = useState('');
@@ -114,6 +118,9 @@ const ProductPage = () => {
                 if (parsed.step) setStep(parsed.step);
                 if (parsed.selectedVariant) setSelectedVariant(parsed.selectedVariant);
                 if (parsed.formData) setFormData(parsed.formData);
+                if (parsed.fieldData) setFieldData(parsed.fieldData);
+                if (parsed.providerQty) setProviderQty(parsed.providerQty);
+                if (parsed.validatedAccount) setValidatedAccount(parsed.validatedAccount);
                 if (parsed.step === 3 && parsed.paymentResult) {
                     setPaymentResult(parsed.paymentResult);
                     setOrderStatus(parsed.orderStatus || null);
@@ -129,11 +136,11 @@ const ProductPage = () => {
         if (!hasRestored.current) return;
         try {
             sessionStorage.setItem(storageKey, JSON.stringify({
-                step, selectedVariant, formData, paymentResult, orderStatus,
+                step, selectedVariant, formData, fieldData, providerQty, validatedAccount, paymentResult, orderStatus,
                 testimonialSubmitted
             }));
         } catch (e) { /* ignore */ }
-    }, [step, selectedVariant, formData, paymentResult, orderStatus, testimonialSubmitted]);
+    }, [step, selectedVariant, formData, fieldData, providerQty, validatedAccount, paymentResult, orderStatus, testimonialSubmitted]);
 
     // ── SweetAlert when COMPLETED ──────────────────────────────────────
     useEffect(() => {
@@ -235,7 +242,34 @@ const ProductPage = () => {
         }
     };
 
-    // ── Saya Sudah Bayar ────────────────────────────────────────────────
+    // ── Cek ID / Validate Account ───────────────────────────────────────
+    const handleValidateAccount = async () => {
+        if (!selectedVariant || !selectedVariant.validation?.available) return;
+        
+        let customerId = fieldData['customer_id'] || fieldData['note'] || '';
+        let zoneId = fieldData['zone_id'] || '';
+
+        if (!customerId) {
+            notifyWarning('Masukkan ID target (User ID) terlebih dahulu');
+            return;
+        }
+
+        setIsValidating(true);
+        try {
+            const res = await api.post('/sekalipay/validate', {
+                item_id: selectedVariant.id,
+                customer_id: customerId,
+                zone_id: zoneId || undefined,
+            });
+            setValidatedAccount(res.data);
+            notifySuccess(`Akun ditemukan: ${res.data?.account_name || res.data?.display_name}`);
+        } catch (err) {
+            notifyError(err.response?.data?.error || 'Gagal mengecek akun');
+            setValidatedAccount(null);
+        } finally {
+            setIsValidating(false);
+        }
+    };
     const handleSudahBayar = () => {
         showAlert({
             title: 'Mohon Ditunggu',
@@ -327,24 +361,54 @@ const ProductPage = () => {
         setTimeout(() => setCopied(false), 2000);
     };
 
+    const isOpenDenom = selectedVariant?.provider_meta?.open_denom;
+    const computedPrice = Math.ceil(isOpenDenom ? (parseInt(providerQty) || 0) + (selectedVariant?.price || 0) : (selectedVariant?.price || 0));
+
     // ── Submit: buat payment via PG ──────────────────────────────────────
     const submitPayment = async () => {
         if (!formData.wa_number || !formData.email) {
             notifyWarning('Nomor WA dan Email wajib diisi!');
             return;
         }
+        
+        // Cek validasi open denom
+        if (isOpenDenom) {
+            const pQty = parseInt(providerQty) || 0;
+            const minQty = selectedVariant.provider_meta.min_qty;
+            const maxQty = selectedVariant.provider_meta.max_qty;
+            if (pQty <= 0) return notifyWarning('Nominal wajib diisi!');
+            if (minQty && pQty < minQty) return notifyWarning(`Nominal minimal adalah ${formatRp(minQty)}`);
+            if (maxQty && pQty > maxQty) return notifyWarning(`Nominal maksimal adalah ${formatRp(maxQty)}`);
+        }
+
+        // Cek mandatory fields
+        if (selectedVariant?.required_fields) {
+            for (const f of selectedVariant.required_fields) {
+                if (f.required && f.key !== 'provider_qty' && !fieldData[f.key]) {
+                    return notifyWarning(`${f.label} wajib diisi!`);
+                }
+            }
+        }
 
         setIsSubmitting(true);
         try {
+            const noteStr = isOpenDenom 
+                ? JSON.stringify({ target: fieldData.note || '', provider_qty: parseInt(providerQty) || 0 })
+                : (selectedVariant?.order_process === 'smm' 
+                    ? JSON.stringify({ target: fieldData.target || fieldData.note || '', opt_smm: [], comment_smm: '' }) 
+                    : fieldData.note || '');
+
             const res = await api.post('/payments/create', {
                 product_id: product.id?.toString(),
                 variant_id: selectedVariant?.id,
                 variant_name: selectedVariant?.name,
                 product_name: product.name,
-                amount: selectedVariant?.price,
-                customer_name: formData.wa_number,
+                amount: computedPrice,
+                customer_name: validatedAccount?.account_name || validatedAccount?.display_name || formData.wa_number,
                 wa_number: formData.wa_number,
                 email: formData.email,
+                note: noteStr,
+                provider_qty: isOpenDenom ? parseInt(providerQty) : undefined,
             });
 
             if (res.data?.success) {
@@ -452,6 +516,26 @@ const ProductPage = () => {
     };
     const currentStatus = statusConfig[orderStatus?.status] || statusConfig['PENDING'];
 
+    // ── Compute dynamic fields (merge required_fields and validation.fields) ──
+    const dynamicFields = [];
+    if (selectedVariant) {
+        const reqFields = selectedVariant.required_fields || [];
+        const valFields = selectedVariant.validation?.available ? (selectedVariant.validation.fields || []) : [];
+        const hasCustomerIdInVal = valFields.some(v => v.key === 'customer_id');
+
+        reqFields.forEach(rf => {
+            // Hide generic 'note' if validation provides 'customer_id'
+            if (rf.key === 'note' && hasCustomerIdInVal) return;
+            // Hide required field if validation already covers this exact key
+            if (valFields.some(vf => vf.key === rf.key)) return;
+            dynamicFields.push(rf);
+        });
+
+        valFields.forEach(vf => {
+            dynamicFields.push(vf);
+        });
+    }
+
     return (
         <div className="min-h-screen font-sans text-gray-200">
             {/* HEADER */}
@@ -520,13 +604,20 @@ const ProductPage = () => {
                             <div>
                                 <h2 className="text-base font-bold text-white mb-5">Pilih Paket</h2>
                                 <div className="space-y-3 mb-6">
-                                    {product.variants.map((variant, idx) => {
+                                    {[...(product.variants || [])].sort((a, b) => (a.price || a.sell_price || 0) - (b.price || b.sell_price || 0)).map((variant, idx) => {
                                         const outOfStock = isVariantOutOfStock(variant);
                                         const processConfig = ORDER_PROCESS_CONFIG[variant.order_process] || null;
                                         return (
                                         <button
                                             key={idx}
-                                            onClick={() => !outOfStock && setSelectedVariant(variant)}
+                                            onClick={() => {
+                                                if (!outOfStock) {
+                                                    setSelectedVariant(variant);
+                                                    setFieldData({});
+                                                    setProviderQty('');
+                                                    setValidatedAccount(null);
+                                                }
+                                            }}
                                             disabled={outOfStock}
                                             className={`w-full flex justify-between items-center p-4 rounded-xl border text-left transition-all ${
                                                 outOfStock
@@ -559,7 +650,7 @@ const ProductPage = () => {
                                                 </div>
                                             </div>
                                             <span className={`text-sm font-bold ${outOfStock ? 'text-gray-500' : 'text-purple-400'}`}>
-                                                {variant.price > 0 ? formatRp(variant.price) : 'Tanya via Chat'}
+                                                {(variant.sell_price || variant.price) > 0 ? formatRp(variant.sell_price || variant.price) : 'Tanya via Chat'}
                                             </span>
                                         </button>
                                         );
@@ -588,7 +679,7 @@ const ProductPage = () => {
                                     <button
                                         onClick={() => {
                                             if (isServiceProduct) {
-                                                const waText = `Halo noxarianet, saya ingin memesan ${product.name} - Varian: ${selectedVariant?.name || '-'}${selectedVariant?.price ? ` dengan harga ${formatRp(selectedVariant.price)}` : ''}.`;
+                                                const waText = `Halo noxarianet, saya ingin memesan ${product.name} - Varian: ${selectedVariant?.name || '-'}${(selectedVariant?.sell_price || selectedVariant?.price) ? ` dengan harga ${formatRp(selectedVariant.sell_price || selectedVariant.price)}` : ''}.`;
                                                 window.open(`https://wa.me/6285199605580?text=${encodeURIComponent(waText)}`, '_blank');
                                             } else {
                                                 setStep(2);
@@ -624,24 +715,54 @@ const ProductPage = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium text-gray-400 mb-2">
-                                            {isGameProduct ? 'ID Game & Server ID' : 'Alamat Email Gmail'}
-                                        </label>
+                                        <label className="block text-xs font-medium text-gray-400 mb-2">Alamat Email Gmail</label>
                                         <input
                                             name="email"
-                                            type={isGameProduct ? 'text' : 'email'}
+                                            type="email"
                                             value={formData.email}
                                             onChange={handleFormChange}
-                                            placeholder={isGameProduct ? 'Contoh: 12345678 (2012)' : 'Contoh: nama@gmail.com'}
+                                            placeholder="Contoh: nama@gmail.com"
                                             className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500/50 transition-colors"
                                         />
-                                        {isGameProduct && (
-                                            <p className="text-[10px] text-gray-500 mt-2 flex items-center gap-1">
-                                                <AlertTriangle size={12} className="text-yellow-500" />
-                                                Pastikan ID & Server sudah benar. Proses top up 1-5 menit.
-                                            </p>
-                                        )}
                                     </div>
+
+                                    {/* ── Dynamic Fields from API ── */}
+                                    {dynamicFields.map((field, idx) => (
+                                        <div key={`dyn-${idx}`}>
+                                            <label className="block text-xs font-medium text-gray-400 mb-2">{field.label} {field.required && '*'}</label>
+                                            <input
+                                                type={field.key === 'provider_qty' ? 'number' : 'text'}
+                                                value={field.key === 'provider_qty' ? providerQty : (fieldData[field.key] || '')}
+                                                onChange={(e) => {
+                                                    if (field.key === 'provider_qty') setProviderQty(e.target.value);
+                                                    else setFieldData({...fieldData, [field.key]: e.target.value});
+                                                }}
+                                                placeholder={`Masukkan ${field.label}`}
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500/50 transition-colors"
+                                            />
+                                            {field.key === 'provider_qty' && selectedVariant.provider_meta && (
+                                                <p className="text-[10px] text-gray-500 mt-1">Min: {formatRp(selectedVariant.provider_meta.min_qty)} | Max: {formatRp(selectedVariant.provider_meta.max_qty)}</p>
+                                            )}
+                                        </div>
+                                    ))}
+
+                                    {selectedVariant?.validation?.available && (
+                                        <div className="pt-2">
+                                            <button
+                                                onClick={handleValidateAccount}
+                                                disabled={isValidating}
+                                                className="w-full bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 py-3 rounded-xl text-sm font-bold transition flex justify-center items-center gap-2"
+                                            >
+                                                {isValidating ? <Loader2 size={16} className="animate-spin" /> : 'Cek ID / Validasi Akun'}
+                                            </button>
+                                            {validatedAccount && (
+                                                <div className="mt-3 p-3 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center gap-2">
+                                                    <CheckCircle2 size={16} className="text-green-400" />
+                                                    <span className="text-sm font-bold text-green-400">Tujuan: {validatedAccount.account_name || validatedAccount.display_name}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
 
                                     {/* Metode Pembayaran — QRIS via FinCloud */}
                                     {selectedVariant?.price > 0 && !isServiceProduct && (
@@ -704,11 +825,11 @@ const ProductPage = () => {
                                     <div className="bg-white/3 border border-white/5 rounded-xl p-4 mb-5 text-sm">
                                         <div className="flex justify-between text-gray-400 mb-1">
                                             <span>{selectedVariant?.name}</span>
-                                            <span>{formatRp(selectedVariant?.price)}</span>
+                                            <span>{formatRp(computedPrice)}</span>
                                         </div>
                                         <div className="flex justify-between text-white font-bold border-t border-white/10 pt-2 mt-2">
                                             <span>Total</span>
-                                            <span className="text-purple-400">{formatRp(selectedVariant?.price)}<span className="text-gray-500 font-normal text-xs"> + fee QRIS</span></span>
+                                            <span className="text-purple-400">{formatRp(computedPrice)}<span className="text-gray-500 font-normal text-xs"> + fee QRIS</span></span>
                                         </div>
                                     </div>
                                 )}
