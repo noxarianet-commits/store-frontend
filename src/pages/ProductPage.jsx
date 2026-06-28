@@ -381,22 +381,21 @@ const ProductPage = () => {
             if (maxQty && pQty > maxQty) return notifyWarning(`Nominal maksimal adalah ${formatRp(maxQty)}`);
         }
 
-        // Cek mandatory fields
-        if (selectedVariant?.required_fields) {
-            for (const f of selectedVariant.required_fields) {
-                if (f.required && f.key !== 'provider_qty' && !fieldData[f.key]) {
-                    return notifyWarning(`${f.label} wajib diisi!`);
-                }
+        // Cek mandatory fields (use dynamicFields which merges required_fields + validation)
+        for (const f of dynamicFields) {
+            if (f.required && f.key !== 'provider_qty' && !fieldData[f.key]) {
+                return notifyWarning(`${f.label} wajib diisi!`);
             }
         }
 
         setIsSubmitting(true);
         try {
+            const noteTarget = fieldData.note || fieldData.customer_id || '';
             const noteStr = isOpenDenom 
-                ? JSON.stringify({ target: fieldData.note || '', provider_qty: parseInt(providerQty) || 0 })
+                ? JSON.stringify({ target: noteTarget, provider_qty: parseInt(providerQty) || 0 })
                 : (selectedVariant?.order_process === 'smm' 
-                    ? JSON.stringify({ target: fieldData.target || fieldData.note || '', opt_smm: [], comment_smm: '' }) 
-                    : fieldData.note || '');
+                    ? JSON.stringify({ target: fieldData.target || noteTarget, opt_smm: [], comment_smm: '' }) 
+                    : noteTarget);
 
             const res = await api.post('/payments/create', {
                 product_id: product.id?.toString(),
