@@ -337,6 +337,13 @@ const ProductPage = () => {
                 if (foundProduct) {
                     if (foundProduct.is_active === false) foundProduct.status = 'sold_out';
                     else if (foundProduct.is_active === true) foundProduct.status = 'available';
+                    // Normalize variant prices: ensure `price` is always set
+                    if (foundProduct.variants) {
+                        foundProduct.variants = foundProduct.variants.map(v => ({
+                            ...v,
+                            price: v.price || v.sell_price || 0,
+                        }));
+                    }
                     setProduct(foundProduct);
                     // Auto-select first in-stock variant, fallback to first variant
                     const firstInStock = foundProduct.variants?.find(v => v.stock > 0);
