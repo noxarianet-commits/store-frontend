@@ -99,9 +99,8 @@ const ProductPage = () => {
 
     // Payment result (setelah createPayment berhasil)
     const [paymentResult, setPaymentResult] = useState(null);
-
-    // Polling status
     const [orderStatus, setOrderStatus] = useState(null);
+    const [showAllVariants, setShowAllVariants] = useState(false);
     const pollingRef = useRef(null);
     const completedAlertShown = useRef(false);
     const hasRestored = useRef(false);
@@ -610,7 +609,7 @@ const ProductPage = () => {
                             <div>
                                 <h2 className="text-base font-bold text-white mb-5">Pilih Paket</h2>
                                 <div className="space-y-3 mb-6">
-                                    {[...(product.variants || [])].sort((a, b) => (a.price || a.sell_price || 0) - (b.price || b.sell_price || 0)).map((variant, idx) => {
+                                    {[...(product.variants || [])].sort((a, b) => (a.price || a.sell_price || 0) - (b.price || b.sell_price || 0)).slice(0, showAllVariants ? undefined : 10).map((variant, idx) => {
                                         const outOfStock = isVariantOutOfStock(variant);
                                         const processConfig = ORDER_PROCESS_CONFIG[variant.order_process] || null;
                                         return (
@@ -662,6 +661,15 @@ const ProductPage = () => {
                                         );
                                     })}
                                 </div>
+
+                                {product.variants?.length > 10 && (
+                                    <button
+                                        onClick={() => setShowAllVariants(!showAllVariants)}
+                                        className="w-full py-3 mb-6 flex items-center justify-center gap-2 text-sm font-medium text-purple-400 hover:text-purple-300 hover:bg-purple-400/10 rounded-xl transition-colors border border-purple-400/20 hover:border-purple-400/40"
+                                    >
+                                        {showAllVariants ? 'Sembunyikan' : `Lihat Semua Varian (${product.variants.length})`}
+                                    </button>
+                                )}
 
                                 {/* Features */}
                                 {product.features && product.features.length > 0 && (

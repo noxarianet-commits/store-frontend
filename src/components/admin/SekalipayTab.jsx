@@ -6,7 +6,8 @@ const SekalipayTab = ({
     sekalipaySearch, setSekalipaySearch,
     handleSync, handleGlobalMarkup, handleMarkupUpdate, handleToggleProduct,
     syncInProgress, globalMarkupValue, setGlobalMarkupValue,
-    expandedProduct, setExpandedProduct
+    expandedProduct, setExpandedProduct,
+    handleToggleVariantHidden
 }) => {
     const filtered = sekalipayProducts.filter(p =>
         p.name?.toLowerCase().includes(sekalipaySearch.toLowerCase()) ||
@@ -186,17 +187,23 @@ const SekalipayTab = ({
                                             {isExpanded && (
                                                 <div className="border-t border-white/5 p-4">
                                                     <div className="grid grid-cols-12 gap-2 mb-2 px-2">
-                                                        <span className="col-span-4 text-[9px] text-gray-600 uppercase tracking-widest font-bold">Varian</span>
+                                                        <span className="col-span-3 text-[9px] text-gray-600 uppercase tracking-widest font-bold">Varian</span>
                                                         <span className="col-span-2 text-[9px] text-gray-600 uppercase tracking-widest font-bold text-right">Harga Dasar</span>
                                                         <span className="col-span-2 text-[9px] text-gray-600 uppercase tracking-widest font-bold text-right">Markup</span>
                                                         <span className="col-span-2 text-[9px] text-gray-600 uppercase tracking-widest font-bold text-right">Harga Jual</span>
-                                                        <span className="col-span-2 text-[9px] text-gray-600 uppercase tracking-widest font-bold text-right">Stok</span>
+                                                        <span className="col-span-1 text-[9px] text-gray-600 uppercase tracking-widest font-bold text-right">Stok</span>
+                                                        <span className="col-span-2 text-[9px] text-gray-600 uppercase tracking-widest font-bold text-center">Aksi</span>
                                                     </div>
                                                     <div className="space-y-1">
                                                         {(product.variants || []).map(variant => (
-                                                            <div key={variant.id} className="grid grid-cols-12 gap-2 items-center bg-white/[0.02] rounded-xl px-2 py-2 hover:bg-white/5 transition-all">
-                                                                <div className="col-span-4">
-                                                                    <p className="text-xs text-white font-medium truncate">{variant.name}</p>
+                                                            <div key={variant.id} className={`grid grid-cols-12 gap-2 items-center rounded-xl px-2 py-2 transition-all ${
+                                                                variant.is_hidden ? 'bg-red-500/5 opacity-60' : 'bg-white/[0.02] hover:bg-white/5'
+                                                            }`}>
+                                                                <div className="col-span-3">
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        {variant.is_hidden && <span className="text-[8px] bg-red-500/15 text-red-400 px-1 py-0.5 rounded font-bold uppercase">Hidden</span>}
+                                                                        <p className={`text-xs font-medium truncate ${variant.is_hidden ? 'text-gray-500 line-through' : 'text-white'}`}>{variant.name}</p>
+                                                                    </div>
                                                                     <p className="text-[9px] text-gray-600">{variant.sku || '—'}</p>
                                                                 </div>
                                                                 <p className="col-span-2 text-xs text-gray-400 text-right">Rp {variant.base_price?.toLocaleString('id-ID')}</p>
@@ -215,10 +222,19 @@ const SekalipayTab = ({
                                                                     />
                                                                 </div>
                                                                 <p className="col-span-2 text-xs text-green-400 font-bold text-right">Rp {variant.sell_price?.toLocaleString('id-ID')}</p>
-                                                                <div className="col-span-2 text-right">
+                                                                <div className="col-span-1 text-right">
                                                                     <span className={`text-xs font-bold ${variant.stock > 0 ? 'text-white' : 'text-red-400'}`}>
                                                                         {variant.stock > 0 ? variant.stock : 'Habis'}
                                                                     </span>
+                                                                </div>
+                                                                <div className="col-span-2 flex justify-center">
+                                                                    <button
+                                                                        onClick={() => handleToggleVariantHidden(product.id, variant.id)}
+                                                                        className={`p-1.5 rounded-lg transition-all text-xs ${variant.is_hidden ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'bg-green-500/10 text-green-400 hover:bg-green-500/20'}`}
+                                                                        title={variant.is_hidden ? 'Tampilkan varian' : 'Sembunyikan varian'}
+                                                                    >
+                                                                        {variant.is_hidden ? <EyeOff size={13} /> : <Eye size={13} />}
+                                                                    </button>
                                                                 </div>
                                                             </div>
                                                         ))}

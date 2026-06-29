@@ -221,6 +221,16 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleToggleVariantHidden = async (productId, variantId) => {
+        try {
+            const res = await api.patch(`/admin/sekalipay/products/${productId}/variant/${variantId}/toggle-hidden`);
+            await fetchSekalipay();
+            notifySuccess(res.data.is_hidden ? 'Varian disembunyikan!' : 'Varian ditampilkan!');
+        } catch (err) {
+            notifyError(err.response?.data?.error || 'Gagal mengubah visibilitas varian');
+        }
+    };
+
     const handleToggleFeatured = async (productId) => {
         try {
             const res = await api.patch(`/admin/sekalipay/products/${productId}/featured`);
@@ -336,6 +346,7 @@ const AdminDashboard = () => {
                             syncInProgress={syncInProgress}
                             globalMarkupValue={globalMarkupValue} setGlobalMarkupValue={setGlobalMarkupValue}
                             expandedProduct={expandedProduct} setExpandedProduct={setExpandedProduct}
+                            handleToggleVariantHidden={handleToggleVariantHidden}
                         />
                     )}
                     {activeTab === 'revenue' && <RevenueTab orders={orders} settings={settings} updateSetting={updateSetting} />}

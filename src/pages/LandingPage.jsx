@@ -1,19 +1,74 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Megaphone, X } from 'lucide-react';
+import { Megaphone, X, Loader2 } from 'lucide-react';
 import api from '../api';
 import HeroSection from '../components/home/HeroSection';
-import CategoryGrid from '../components/home/CategoryGrid';
-import FeaturedProducts from '../components/home/FeaturedProducts';
-import CategoryProducts from '../components/home/CategoryProducts';
+import CategoryTabs from '../components/home/CategoryTabs';
+import ProductCard from '../components/home/ProductCard';
 import TestimonialCarousel from '../components/home/TestimonialCarousel';
+
+/**
+ * Filter products by active tab and search query.
+ * @param {Array} products - All products
+ * @param {string} activeTab - Active category tab ID
+ * @param {string} searchQuery - Search query string
+ * @returns {Array} Filtered products
+ */
+function filterProducts(products, activeTab, searchQuery) {
+    let filtered = products;
+
+    // Filter by category tab
+    switch (activeTab) {
+        case 'featured':
+            filtered = filtered.filter(p => p.is_featured);
+            break;
+        case 'aplikasi-premium':
+            filtered = filtered.filter(p => p.category === 'Aplikasi Premium');
+            break;
+        case 'game':
+            filtered = filtered.filter(p => p.category === 'Game');
+            break;
+        case 'e-wallet':
+            filtered = filtered.filter(p => p.category === 'E-Wallet');
+            break;
+        case 'all':
+        default:
+            break;
+    }
+
+    // Filter by search query
+    if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        filtered = filtered.filter(p =>
+            p.name?.toLowerCase().includes(q) ||
+            p.category?.toLowerCase().includes(q)
+        );
+    }
+
+    return filtered;
+}
+
+/**
+ * Compute product counts per tab for badge display.
+ * @param {Array} products - All products
+ * @returns {object} Counts keyed by tab ID
+ */
+function computeCounts(products) {
+    return {
+        all: products.length,
+        featured: products.filter(p => p.is_featured).length,
+        'aplikasi-premium': products.filter(p => p.category === 'Aplikasi Premium').length,
+        game: products.filter(p => p.category === 'Game').length,
+        'e-wallet': products.filter(p => p.category === 'E-Wallet').length,
+    };
+}
 
 const LandingPage = () => {
     const [homeData, setHomeData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
-    const [activeCategory, setActiveCategory] = useState(null);
+    const [activeTab, setActiveTab] = useState('all');
 
     // Info Modal state
     const [showInfoModal, setShowInfoModal] = useState(false);
@@ -63,18 +118,10 @@ const LandingPage = () => {
         fetchHomeData();
     }, []);
 
-    // Handle category click (Opsi A: scroll to section)
-    const handleCategoryClick = (slug) => {
-        setActiveCategory(prev => (prev === slug ? null : slug));
-    };
-
-    // Filter featured products by search query
-    const filteredFeatured = searchQuery && homeData?.featured_products
-        ? homeData.featured_products.filter(p =>
-            p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (p.category && p.category.toLowerCase().includes(searchQuery.toLowerCase()))
-        )
-        : homeData?.featured_products || [];
+    // All products from home data
+    const allProducts = homeData?.all_products || [];
+    const filteredProducts = filterProducts(allProducts, activeTab, searchQuery);
+    const counts = computeCounts(allProducts);
 
     return (
         <div className="w-full font-sans text-gray-200 min-h-screen">
@@ -127,21 +174,51 @@ const LandingPage = () => {
                     onSearchChange={setSearchQuery}
                 />
 
-                <CategoryGrid
-                    categories={homeData?.categories || []}
-                    activeCategory={activeCategory}
-                    onCategoryClick={handleCategoryClick}
+                <CategoryTabs
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    counts={counts}
                 />
 
-                <CategoryProducts
-                    categorySlug={activeCategory}
-                    onClose={() => setActiveCategory(null)}
-                />
-
-                <FeaturedProducts
-                    products={filteredFeatured}
-                    loading={loading}
-                />
+                {/* ═══ PRODUCT GRID ═══ */}
+                <section className="mb-12">
+                    {loading ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            {Array.from({ length: 10 }).map((_, i) => (
+                                <div key={i} className="bg-[#0E0E0E] border border-purple-500/25 rounded-2xl p-5 flex flex-col items-center text-center animate-pulse">
+                                    <div className="w-12 h-12 rounded-xl bg-white/5 mb-3" />
+                                    <div className="w-10 h-2.5 rounded bg-white/5 mb-2" />
+                                    <div className="w-16 h-3.5 rounded bg-white/5 mb-1" />
+                                    <div className="w-12 h-2 rounded bg-white/5" />
+                                </div>
+                            ))}
+                        </div>
+                    ) : filteredProducts.length === 0 ? (
+                        <div className="text-center py-16">
+                            <p className="text-sm text-gray-500">
+                                {searchQuery
+                                    ? `Tidak ada produk yang cocok dengan "${searchQuery}"`
+                                    : 'Belum ada produk di kategori ini.'}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            {filteredProducts.map((product, index) => (
+                                <motion.div
+                                    key={product.id}
+                                    initial={{ opacity: 0, y: 15 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.02, duration: 0.25 }}
+                                >
+                                    <ProductCard
+                                        product={product}
+                                        showPrice={product.is_service_table}
+                                    />
+                                </motion.div>
+                            ))}
+                        </div>
+                    )}
+                </section>
 
                 <TestimonialCarousel
                     testimonials={homeData?.testimonials || []}
