@@ -9,13 +9,13 @@ import { iconMap, iconColorMap, badgeColorMap, isProductSoldOut } from '../../ut
 const ProductIcon = ({ product, fallbackIcon: FallbackIcon, className = '' }) => {
     const [imageError, setImageError] = useState(false);
     const imageUrl = product.image || product.icon;
-    const iconColor = iconColorMap[product.icon] || 'bg-white/5 text-gray-400';
+    const iconColor = iconColorMap[product.icon] || 'bg-purple-50 text-purple-600 border border-purple-100';
 
     const isUrl = imageUrl && (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('/'));
 
     if (isUrl && !imageError) {
         return (
-            <div className={`w-16 h-16 rounded-2xl overflow-hidden transition-all duration-300 mb-4 mt-1 group-hover:scale-110 group-hover:brightness-125 border border-white/5 bg-white/5 flex items-center justify-center ${className}`}>
+            <div className={`w-16 h-16 rounded-2xl overflow-hidden transition-all duration-300 mb-4 mt-1 group-hover:scale-110 border border-slate-100 bg-slate-50 flex items-center justify-center ${className}`}>
                 <img
                     src={imageUrl}
                     alt={product.name}
@@ -28,7 +28,7 @@ const ProductIcon = ({ product, fallbackIcon: FallbackIcon, className = '' }) =>
     }
 
     return (
-        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 mb-4 mt-1 ${iconColor} group-hover:scale-110 group-hover:brightness-125 ${className}`}>
+        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 mb-4 mt-1 ${iconColor} group-hover:scale-110 ${className}`}>
             <FallbackIcon size={30} />
         </div>
     );
@@ -42,7 +42,7 @@ const ProductIcon = ({ product, fallbackIcon: FallbackIcon, className = '' }) =>
  */
 const ProductCard = ({ product, showPrice = false }) => {
     const IconComp = iconMap[product.icon] || Smartphone;
-    const badgeStyle = badgeColorMap[product.badgeColor] || { bg: 'bg-gray-500/15', text: 'text-gray-400', border: 'border-gray-500/20' };
+    const badgeStyle = badgeColorMap[product.badgeColor] || { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-100' };
     const isSoldOut = isProductSoldOut(product);
 
     // Determine link target
@@ -64,10 +64,10 @@ const ProductCard = ({ product, showPrice = false }) => {
     return (
         <Link
             to={productLink}
-            className={`group relative bg-[#0E0E0E] hover:bg-[#151515] border border-purple-500/25 hover:border-purple-400/50 rounded-2xl p-5 transition-all duration-200 flex flex-col items-center text-center ${isSoldOut ? 'opacity-60' : ''}`}
+            className={`group relative bg-white hover:bg-purple-50/5 border border-purple-100 hover:border-purple-300 rounded-2xl p-5 transition-all duration-300 flex flex-col items-center text-center shadow-[0_2px_8px_rgba(124,58,237,0.02)] hover:shadow-[0_8px_20px_rgba(124,58,237,0.06)] ${isSoldOut ? 'opacity-60' : ''}`}
         >
             {isSoldOut && (
-                <span className="absolute top-3 left-3 text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider border bg-red-500/20 text-red-400 border-red-500/30 z-10">
+                <span className="absolute top-3 left-3 text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider border bg-red-50 text-red-600 border-red-100 z-10">
                     Habis
                 </span>
             )}
@@ -77,19 +77,19 @@ const ProductCard = ({ product, showPrice = false }) => {
                 </span>
             )}
             <ProductIcon product={product} fallbackIcon={IconComp} />
-            <span className="text-[10px] text-gray-400 uppercase tracking-wider mb-1 font-medium">
+            <span className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 font-semibold">
                 {product.category}
             </span>
-            <h3 className="text-sm font-extrabold text-white leading-tight mb-0.5">
+            <h3 className="text-sm font-extrabold text-slate-800 leading-tight mb-0.5 group-hover:text-purple-600 transition-colors">
                 {product.name}
             </h3>
             {product.subtitle && (
-                <p className={`text-[11px] ${showPrice ? 'text-purple-400/90 italic mb-1 px-2 text-[9px]' : 'text-gray-400'}`}>
+                <p className={`text-[11px] ${showPrice ? 'text-purple-600 font-semibold mb-1 px-2 text-[9px]' : 'text-slate-500'}`}>
                     {product.subtitle}
                 </p>
             )}
             {showPrice && (
-                <p className="text-[11px] text-purple-400 font-medium">
+                <p className="text-[11px] text-purple-600 font-bold">
                     {startingPrice > 0 ? `Mulai Rp ${startingPrice.toLocaleString('id-ID')}` : 'Tanya via Chat'}
                 </p>
             )}

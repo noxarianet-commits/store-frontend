@@ -1,25 +1,52 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply text-slate-800 font-sans overflow-x-hidden m-0;
+    background-color: #faf9ff;
+    min-height: 100vh;
+    position: relative;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', 'Inter', sans-serif;
+    letter-spacing: -0.02em;
+  }
+}
+
 @layer utilities {
   .glass {
-    @apply bg-[#0E0E0E] border border-purple-500/25;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
   }
   .glass-card {
-    @apply glass rounded-2xl shadow-xl shadow-purple-900/20 hover:bg-[#151515] hover:border-purple-400/50 transition-all duration-300;
+    @apply glass rounded-2xl shadow-[0_4px_20px_-4px_rgba(124,58,237,0.03)] hover:bg-white/90 hover:shadow-[0_12px_30px_-5px_rgba(124,58,237,0.08)] transition-all duration-300;
+    border-color: rgba(233, 213, 255, 0.35);
   }
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  @apply text-white font-sans overflow-x-hidden m-0;
-  background-color: #060212;
-  min-height: 100vh;
-  position: relative;
+@layer components {
+  /* Forms */
+  .input-field {
+    @apply w-full bg-white border border-slate-200/80 rounded-xl px-4 py-3.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-600/10 focus:border-purple-600 transition-all duration-200 shadow-sm;
+  }
+  
+  /* Buttons */
+  .btn-primary {
+    @apply relative overflow-hidden bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold px-6 py-3.5 rounded-xl shadow-[0_2px_10px_rgba(124,58,237,0.15)] hover:shadow-[0_6px_20px_rgba(124,58,237,0.25)] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2;
+  }
+  
+  .btn-secondary {
+    @apply bg-white border border-purple-200 hover:border-purple-300 text-purple-700 font-semibold px-6 py-3.5 rounded-xl hover:bg-purple-50/20 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 shadow-sm;
+  }
 }
 
 @keyframes marquee {
@@ -48,4 +75,20 @@ body {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Custom Scrollbar for modern look */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(124, 58, 237, 0.1);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 58, 237, 0.25);
 }

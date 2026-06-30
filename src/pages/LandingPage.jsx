@@ -158,11 +158,11 @@ const LandingPage = () => {
             />
 
             {/* ═══ HEADER ═══ */}
-            <nav className="sticky top-0 z-50 bg-[#0A0A0A]/70 backdrop-blur-2xl border-b border-white/[0.06] shadow-[0_4px_30px_rgba(0,0,0,0.3)]">
+            <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-purple-100/50 shadow-sm shadow-purple-600/[0.01]">
                 <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
                     <Link to="/" className="flex items-center gap-2.5">
                         <img src="/logo.png" alt="noxarianet" className="w-9 h-9 rounded-lg object-contain" />
-                        <span className="text-xl font-bold tracking-tight text-white">noxaria<span className="text-transparent bg-clip-text bg-gradient-to-r from-[#a78bfa] to-[#818cf8]">net</span></span>
+                        <span className="text-xl font-bold tracking-tight text-slate-900">noxaria<span className="text-purple-600">net</span></span>
                     </Link>
                 </div>
             </nav>
@@ -185,11 +185,11 @@ const LandingPage = () => {
                     {loading ? (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                             {Array.from({ length: 10 }).map((_, i) => (
-                                <div key={i} className="bg-[#0E0E0E] border border-purple-500/25 rounded-2xl p-5 flex flex-col items-center text-center animate-pulse">
-                                    <div className="w-12 h-12 rounded-xl bg-white/5 mb-3" />
-                                    <div className="w-10 h-2.5 rounded bg-white/5 mb-2" />
-                                    <div className="w-16 h-3.5 rounded bg-white/5 mb-1" />
-                                    <div className="w-12 h-2 rounded bg-white/5" />
+                                <div key={i} className="bg-white border border-purple-100 rounded-2xl p-5 flex flex-col items-center text-center animate-pulse shadow-sm">
+                                    <div className="w-12 h-12 rounded-xl bg-slate-100 mb-3" />
+                                    <div className="w-10 h-2.5 rounded bg-slate-100 mb-2" />
+                                    <div className="w-16 h-3.5 rounded bg-slate-100 mb-1" />
+                                    <div className="w-12 h-2 rounded bg-slate-100" />
                                 </div>
                             ))}
                         </div>
@@ -233,43 +233,43 @@ const LandingPage = () => {
             </main>
 
             {/* ═══ FOOTER ═══ */}
-            <footer className="border-t border-white/5 bg-[#0A0A0A]/80 backdrop-blur-sm">
+            <footer className="border-t border-purple-100 bg-white/80 backdrop-blur-md">
                 <div className="max-w-6xl mx-auto px-6 py-10">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
                         <div>
                             <div className="flex items-center gap-2 mb-4">
                                 <img src="/logo.png" alt="noxarianet" className="w-7 h-7 rounded object-contain" />
-                                <span className="text-lg font-bold text-white">noxaria<span className="text-purple-400">net</span></span>
+                                <span className="text-lg font-bold text-slate-900">noxaria<span className="text-purple-600">net</span></span>
                             </div>
-                            <p className="text-xs text-gray-500 leading-relaxed">
+                            <p className="text-xs text-slate-500 leading-relaxed">
                                 Platform digital andalan untuk upgrade produktivitas dan hiburanmu tanpa bikin dompet boncos.
                             </p>
                         </div>
                         <div>
-                            <h4 className="text-white font-bold text-sm mb-4">Layanan</h4>
-                            <ul className="space-y-2.5 text-xs text-gray-400">
-                                <li><Link to="/garansi" className="hover:text-white transition">Klaim Garansi</Link></li>
-                                <li><Link to="/tos" className="hover:text-white transition">Syarat & Ketentuan</Link></li>
-                                <li><Link to="/cara" className="hover:text-white transition">Cara Order</Link></li>
+                            <h4 className="text-slate-900 font-bold text-sm mb-4">Layanan</h4>
+                            <ul className="space-y-2.5 text-xs text-slate-500">
+                                <li><Link to="/garansi" className="hover:text-purple-600 transition">Klaim Garansi</Link></li>
+                                <li><Link to="/tos" className="hover:text-purple-600 transition">Syarat & Ketentuan</Link></li>
+                                <li><Link to="/cara" className="hover:text-purple-600 transition">Cara Order</Link></li>
                             </ul>
                         </div>
                         <div>
-                            <h4 className="text-white font-bold text-sm mb-4">Hubungi Kami</h4>
-                            <ul className="space-y-2.5 text-xs text-gray-400">
+                            <h4 className="text-slate-900 font-bold text-sm mb-4">Hubungi Kami</h4>
+                            <ul className="space-y-2.5 text-xs text-slate-500">
                                 <li>Kab. Pekalongan, Jawa Tengah, Indonesia.</li>
                                 <li>
-                                    <a href="https://wa.me/6285199605580" target="_blank" rel="noreferrer" className="text-purple-400 hover:text-purple-300 transition font-medium">
+                                    <a href="https://wa.me/6285199605580" target="_blank" rel="noreferrer" className="text-purple-600 hover:text-purple-700 transition font-medium">
                                         +62 851-9960-5580
                                     </a>
                                 </li>
                             </ul>
                             <div className="mt-5">
-                                <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">Metode Pembayaran</p>
-                                <img src="/qris-logo.png" alt="QRIS" className="h-10 object-contain bg-white rounded px-2 py-1" />
+                                <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-2">Metode Pembayaran</p>
+                                <img src="/qris-logo.png" alt="QRIS" className="h-10 object-contain border border-slate-100 bg-white rounded-lg px-2 py-1" />
                             </div>
                         </div>
                     </div>
-                    <div className="text-center text-[11px] text-gray-600 border-t border-white/5 pt-6">
+                    <div className="text-center text-[11px] text-slate-400 border-t border-slate-100 pt-6">
                         © {new Date().getFullYear()} noxarianet Store. All rights reserved.<br />
                         Made with ❤ by noxarianet.
                     </div>

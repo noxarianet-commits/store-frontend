@@ -21,10 +21,10 @@ function formatRp(num) {
 // HELPER — Order Process Label & Color
 // ══════════════════════════════════════════════════════════════════════════
 const ORDER_PROCESS_CONFIG = {
-    auto: { label: 'Instan', color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20' },
-    h2h: { label: 'Instan', color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20' },
-    manual: { label: 'Manual', color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' },
-    smm: { label: 'SMM', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
+    auto: { label: 'Instan', color: 'text-green-600', bg: 'bg-green-50 border-green-100' },
+    h2h: { label: 'Instan', color: 'text-green-600', bg: 'bg-green-50 border-green-100' },
+    manual: { label: 'Manual', color: 'text-yellow-600', bg: 'bg-yellow-50 border-yellow-100' },
+    smm: { label: 'SMM', color: 'text-blue-600', bg: 'bg-blue-50 border-blue-100' },
 };
 
 function isVariantOutOfStock(variant) {
@@ -56,7 +56,7 @@ function CountdownTimer({ expiredAt }) {
 
     if (!expiredAt) return null;
     return (
-        <div className="flex items-center gap-1.5 text-yellow-400 text-xs font-medium">
+        <div className="flex items-center gap-1.5 text-yellow-600 text-xs font-semibold">
             <Clock size={13} />
             <span>Kadaluarsa dalam: <span className="font-mono font-bold">{remaining}</span></span>
         </div>
@@ -149,8 +149,8 @@ const ProductPage = () => {
                 icon: 'success',
                 title: 'Pesanan Selesai!',
                 text: 'Pembayaran berhasil dan pesanan Anda telah diproses.',
-                background: '#0E0E0E',
-                color: '#fff',
+                background: '#ffffff',
+                color: '#1e293b',
                 confirmButtonColor: '#7c3aed',
                 confirmButtonText: 'Lanjutkan'
             });
@@ -449,47 +449,40 @@ const ProductPage = () => {
 
     // ── Loading Skeleton ────────────────────────────────────────────────
     if (loading) return (
-        <div className="min-h-screen font-sans text-gray-200">
-            {/* HEADER Skeleton */}
-            <nav className="sticky top-0 z-50 bg-[#0A0A0A]/95 backdrop-blur-xl border-b border-white/5">
+        <div className="min-h-screen font-sans text-slate-800">
+            <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-purple-100/50 shadow-sm">
                 <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
                     <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-lg bg-white/5 animate-pulse" />
-                        <div className="w-24 h-5 rounded bg-white/5 animate-pulse" />
+                        <div className="w-9 h-9 rounded-lg bg-slate-100 animate-pulse" />
+                        <div className="w-24 h-5 rounded bg-slate-100 animate-pulse" />
                     </div>
                 </div>
             </nav>
-
             <main className="max-w-2xl mx-auto px-4 py-10">
-                {/* Product Header Skeleton */}
                 <div className="mb-8">
-                    <div className="w-20 h-3 rounded bg-white/5 animate-pulse mb-3" />
-                    <div className="w-48 h-7 rounded bg-white/5 animate-pulse" />
+                    <div className="w-20 h-3 rounded bg-slate-100 animate-pulse mb-3" />
+                    <div className="w-48 h-7 rounded bg-slate-100 animate-pulse" />
                 </div>
-
-                {/* Step Progress Skeleton */}
                 <div className="flex items-center gap-2 mb-8">
                     {[1, 2, 3].map((i) => (
                         <Fragment key={i}>
                             <div className="flex items-center gap-2">
-                                <div className="w-7 h-7 rounded-full bg-white/5 animate-pulse" />
-                                <div className="w-16 h-3 rounded bg-white/5 animate-pulse hidden sm:block" />
+                                <div className="w-7 h-7 rounded-full bg-slate-100 animate-pulse" />
+                                <div className="w-16 h-3 rounded bg-slate-100 animate-pulse hidden sm:block" />
                             </div>
-                            {i < 3 && <div className="flex-1 h-px bg-white/5" />}
+                            {i < 3 && <div className="flex-1 h-px bg-slate-100" />}
                         </Fragment>
                     ))}
                 </div>
-
-                {/* Variant Cards Skeleton */}
                 <div className="space-y-3">
                     {[1, 2, 3].map((i) => (
-                        <div key={i} className="bg-white/3 border border-white/5 rounded-2xl p-5 animate-pulse">
+                        <div key={i} className="bg-white border border-purple-100 rounded-2xl p-5 animate-pulse shadow-sm">
                             <div className="flex items-start justify-between">
                                 <div>
-                                    <div className="w-32 h-4 rounded bg-white/5 mb-2" />
-                                    <div className="w-20 h-3 rounded bg-white/5" />
+                                    <div className="w-32 h-4 rounded bg-slate-100 mb-2" />
+                                    <div className="w-20 h-3 rounded bg-slate-100" />
                                 </div>
-                                <div className="w-16 h-6 rounded bg-white/5" />
+                                <div className="w-16 h-6 rounded bg-slate-100" />
                             </div>
                         </div>
                     ))}
@@ -501,8 +494,8 @@ const ProductPage = () => {
     if (!product) return (
         <div className="min-h-screen flex items-center justify-center">
             <div className="text-center">
-                <p className="text-white text-lg font-bold mb-2">Produk tidak ditemukan.</p>
-                <Link to="/" className="text-purple-400 text-sm hover:underline">Kembali ke beranda</Link>
+                <p className="text-slate-800 text-lg font-bold mb-2">Produk tidak ditemukan.</p>
+                <Link to="/" className="text-purple-600 text-sm hover:underline">Kembali ke beranda</Link>
             </div>
         </div>
     );
@@ -513,11 +506,11 @@ const ProductPage = () => {
 
     // Status badge config
     const statusConfig = {
-        PENDING: { label: 'Menunggu Pembayaran', color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20', icon: <Clock size={16} className="text-yellow-400" /> },
-        PROCESSING: { label: 'Sedang Diproses', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20', icon: <Loader2 size={16} className="text-blue-400 animate-spin" /> },
-        COMPLETED: { label: 'Selesai!', color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20', icon: <CheckCircle2 size={16} className="text-green-400" /> },
-        FAILED: { label: 'Gagal', color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20', icon: <AlertCircle size={16} className="text-red-400" /> },
-        CANCELLED: { label: 'Dibatalkan', color: 'text-gray-400', bg: 'bg-white/5 border-white/10', icon: <AlertCircle size={16} className="text-gray-400" /> },
+        PENDING: { label: 'Menunggu Pembayaran', color: 'text-yellow-600', bg: 'bg-yellow-50 border-yellow-100', icon: <Clock size={16} className="text-yellow-600" /> },
+        PROCESSING: { label: 'Sedang Diproses', color: 'text-blue-600', bg: 'bg-blue-50 border-blue-100', icon: <Loader2 size={16} className="text-blue-600 animate-spin" /> },
+        COMPLETED: { label: 'Selesai!', color: 'text-green-600', bg: 'bg-green-50 border-green-100', icon: <CheckCircle2 size={16} className="text-green-600" /> },
+        FAILED: { label: 'Gagal', color: 'text-red-600', bg: 'bg-red-50 border-red-100', icon: <AlertCircle size={16} className="text-red-600" /> },
+        CANCELLED: { label: 'Dibatalkan', color: 'text-slate-500', bg: 'bg-slate-50 border-slate-100', icon: <AlertCircle size={16} className="text-slate-500" /> },
     };
     const currentStatus = statusConfig[orderStatus?.status] || statusConfig['PENDING'];
 
@@ -542,13 +535,13 @@ const ProductPage = () => {
     }
 
     return (
-        <div className="min-h-screen font-sans text-gray-200">
+        <div className="min-h-screen font-sans text-slate-800">
             {/* HEADER */}
-            <nav className="sticky top-0 z-50 bg-[#0A0A0A]/95 backdrop-blur-xl border-b border-white/5">
+            <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-purple-100/50 shadow-sm">
                 <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
                     <Link to="/" className="flex items-center gap-2.5">
                         <img src="/logo.png" alt="noxarianet" className="w-9 h-9 rounded-lg object-contain" />
-                        <span className="text-xl font-bold tracking-tight text-white">noxaria<span className="text-purple-400">net</span></span>
+                        <span className="text-xl font-bold tracking-tight text-slate-900">noxaria<span className="text-purple-600">net</span></span>
                     </Link>
                 </div>
             </nav>
@@ -556,20 +549,20 @@ const ProductPage = () => {
             <main className="max-w-2xl mx-auto px-4 py-10">
                 {/* Product Header */}
                 <div className="mb-8">
-                    <span className="text-xs font-semibold text-purple-400 uppercase tracking-wider">{product.category}</span>
-                    <h1 className="text-2xl font-extrabold text-white mt-1">{product.name}</h1>
+                    <span className="text-xs font-semibold text-purple-600 uppercase tracking-wider">{product.category}</span>
+                    <h1 className="text-2xl font-extrabold text-slate-900 mt-1">{product.name}</h1>
                 </div>
 
                 {/* Sold Out Banner */}
                 {product.status === 'sold_out' && (
-                    <div className="mb-6 bg-red-500/10 border border-red-500/20 rounded-2xl p-4">
+                    <div className="mb-6 bg-red-50 border border-red-100 rounded-2xl p-4">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-red-500/15 rounded-xl flex items-center justify-center shrink-0">
-                                <AlertCircle className="text-red-400" size={22} />
+                            <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center shrink-0">
+                                <AlertCircle className="text-red-600" size={22} />
                             </div>
                             <div>
-                                <p className="text-sm font-bold text-red-400">Stok Habis</p>
-                                <p className="text-xs text-gray-400">Produk ini sedang tidak tersedia. Silakan cek kembali nanti.</p>
+                                <p className="text-sm font-bold text-red-600">Stok Habis</p>
+                                <p className="text-xs text-slate-500">Produk ini sedang tidak tersedia. Silakan cek kembali nanti.</p>
                             </div>
                         </div>
                     </div>
@@ -579,16 +572,16 @@ const ProductPage = () => {
                 <div className="flex items-center gap-2 mb-8">
                     {steps.map((s, i) => (
                         <Fragment key={i}>
-                            <div className={`flex items-center gap-2 ${step > i + 1 ? 'text-purple-400' : step === i + 1 ? 'text-white' : 'text-gray-600'}`}>
+                            <div className={`flex items-center gap-2 ${step > i + 1 ? 'text-purple-600' : step === i + 1 ? 'text-slate-800' : 'text-slate-400'}`}>
                                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border transition-all ${
-                                    step > i + 1 ? 'bg-purple-600 border-purple-600 text-white' : step === i + 1 ? 'border-purple-500 text-purple-400 bg-purple-500/10' : 'border-white/10 text-gray-600'
+                                    step > i + 1 ? 'bg-purple-600 border-purple-600 text-white' : step === i + 1 ? 'border-purple-500 text-purple-600 bg-purple-50' : 'border-slate-200 text-slate-400'
                                 }`}>
                                     {step > i + 1 ? <CheckCircle2 size={14} /> : i + 1}
                                 </div>
                                 <span className="text-xs font-medium hidden sm:block">{s}</span>
                             </div>
                             {i < steps.length - 1 && (
-                                <div className={`flex-1 h-px transition-all ${step > i + 1 ? 'bg-purple-600' : 'bg-white/10'}`} />
+                                <div className={`flex-1 h-px transition-all ${step > i + 1 ? 'bg-purple-500' : 'bg-slate-200'}`} />
                             )}
                         </Fragment>
                     ))}
@@ -602,16 +595,17 @@ const ProductPage = () => {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -16 }}
                         transition={{ duration: 0.25 }}
-                        className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-6"
+                        className="bg-white border border-purple-100 rounded-2xl p-6 shadow-sm"
                     >
                         {/* ════ STEP 1: VARIANT ════ */}
                         {step === 1 && (
                             <div>
-                                <h2 className="text-base font-bold text-white mb-5">Pilih Paket</h2>
-                                <div className="space-y-3 mb-6">
+                                <h2 className="text-base font-bold text-slate-900 mb-5">Pilih Paket</h2>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-6">
                                     {[...(product.variants || [])].sort((a, b) => (a.price || a.sell_price || 0) - (b.price || b.sell_price || 0)).slice(0, showAllVariants ? undefined : 10).map((variant, idx) => {
                                         const outOfStock = isVariantOutOfStock(variant);
                                         const processConfig = ORDER_PROCESS_CONFIG[variant.order_process] || null;
+                                        const isSelected = selectedVariant?.name === variant.name;
                                         return (
                                         <button
                                             key={idx}
@@ -624,39 +618,24 @@ const ProductPage = () => {
                                                 }
                                             }}
                                             disabled={outOfStock}
-                                            className={`w-full flex justify-between items-center p-4 rounded-xl border text-left transition-all ${
+                                            className={`flex flex-col items-center text-center p-3 rounded-xl border transition-all ${
                                                 outOfStock
-                                                    ? 'border-white/5 bg-white/2 opacity-50 cursor-not-allowed'
-                                                    : selectedVariant?.name === variant.name
-                                                        ? 'border-purple-500 bg-purple-500/10'
-                                                        : 'border-white/5 hover:border-white/15 bg-white/2'
+                                                    ? 'border-slate-100 bg-slate-50 opacity-50 cursor-not-allowed'
+                                                    : isSelected
+                                                        ? 'border-purple-500 bg-purple-50 shadow-sm shadow-purple-100'
+                                                        : 'border-slate-200 bg-white hover:border-purple-300 hover:bg-purple-50/30'
                                             }`}
                                         >
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                                                    outOfStock ? 'border-white/10' : selectedVariant?.name === variant.name ? 'border-purple-500' : 'border-white/20'
-                                                }`}>
-                                                    {!outOfStock && selectedVariant?.name === variant.name && (
-                                                        <div className="w-2.5 h-2.5 rounded-full bg-purple-500" />
-                                                    )}
-                                                </div>
-                                                <div className="flex flex-col">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className={`text-sm font-medium ${outOfStock ? 'text-gray-500 line-through' : 'text-white'}`}>{variant.name}</span>
-                                                        {processConfig && (
-                                                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${processConfig.bg} ${processConfig.color}`}>
-                                                                {processConfig.label}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    {outOfStock && (
-                                                        <span className="text-[10px] text-red-400 font-medium">Stok Habis</span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <span className={`text-sm font-bold ${outOfStock ? 'text-gray-500' : 'text-purple-400'}`}>
-                                                {(variant.sell_price || variant.price) > 0 ? formatRp(variant.sell_price || variant.price) : 'Tanya via Chat'}
+                                            <span className={`text-xs font-bold leading-snug mb-1 ${outOfStock ? 'text-slate-400 line-through' : isSelected ? 'text-purple-700' : 'text-slate-700'}`}>{variant.name}</span>
+                                            <span className={`text-xs font-extrabold ${outOfStock ? 'text-slate-400' : isSelected ? 'text-purple-600' : 'text-slate-600'}`}>
+                                                {(variant.sell_price || variant.price) > 0 ? formatRp(variant.sell_price || variant.price) : 'Chat'}
                                             </span>
+                                            {outOfStock && <span className="text-[9px] text-red-500 font-semibold mt-0.5">Habis</span>}
+                                            {processConfig && !outOfStock && (
+                                                <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded border mt-1 ${processConfig.bg} ${processConfig.color}`}>
+                                                    {processConfig.label}
+                                                </span>
+                                            )}
                                         </button>
                                         );
                                     })}
@@ -665,7 +644,7 @@ const ProductPage = () => {
                                 {product.variants?.length > 10 && (
                                     <button
                                         onClick={() => setShowAllVariants(!showAllVariants)}
-                                        className="w-full py-3 mb-6 flex items-center justify-center gap-2 text-sm font-medium text-purple-400 hover:text-purple-300 hover:bg-purple-400/10 rounded-xl transition-colors border border-purple-400/20 hover:border-purple-400/40"
+                                        className="w-full py-3 mb-6 flex items-center justify-center gap-2 text-sm font-medium text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-xl transition-colors border border-purple-200"
                                     >
                                         {showAllVariants ? 'Sembunyikan' : `Lihat Semua Varian (${product.variants.length})`}
                                     </button>
@@ -673,12 +652,12 @@ const ProductPage = () => {
 
                                 {/* Features */}
                                 {product.features && product.features.length > 0 && (
-                                    <div className="border-t border-white/5 pt-5 mb-6">
-                                        <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">Fitur Termasuk</p>
+                                    <div className="border-t border-slate-100 pt-5 mb-6">
+                                        <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Fitur Termasuk</p>
                                         <div className="grid grid-cols-2 gap-2">
                                             {product.features.map((f, i) => (
-                                                <div key={i} className="flex items-center gap-2 text-sm text-gray-300">
-                                                    <CheckCircle2 size={14} className="text-purple-400 shrink-0" />{f}
+                                                <div key={i} className="flex items-center gap-2 text-sm text-slate-600">
+                                                    <CheckCircle2 size={14} className="text-purple-600 shrink-0" />{f}
                                                 </div>
                                             ))}
                                         </div>
@@ -688,7 +667,7 @@ const ProductPage = () => {
                                 <div className="flex gap-3">
                                     <button
                                         onClick={() => { window.scrollTo(0, 0); navigate('/'); }}
-                                        className="w-1/3 bg-white/5 hover:bg-white/10 py-3.5 rounded-xl font-semibold text-white transition-colors border border-white/5 text-sm"
+                                        className="w-1/3 bg-white hover:bg-slate-50 py-3.5 rounded-xl font-semibold text-slate-700 transition-colors border border-slate-200 text-sm"
                                     >Kembali</button>
                                     <button
                                         onClick={() => {
@@ -703,7 +682,7 @@ const ProductPage = () => {
                                         disabled={product.status === 'sold_out' || !selectedVariant || isVariantOutOfStock(selectedVariant)}
                                         className={`w-2/3 font-semibold py-3.5 rounded-xl transition flex items-center justify-center gap-2 text-sm ${
                                             (product.status === 'sold_out' || !selectedVariant || isVariantOutOfStock(selectedVariant))
-                                                ? 'bg-white/5 text-gray-600 cursor-not-allowed border border-white/5'
+                                                ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
                                                 : 'bg-purple-600 hover:bg-purple-700 text-white'
                                         }`}
                                     >
@@ -716,34 +695,34 @@ const ProductPage = () => {
                         {/* ════ STEP 2: FORM ════ */}
                         {step === 2 && (
                             <div>
-                                <h2 className="text-base font-bold text-white mb-5">Informasi Pembeli</h2>
+                                <h2 className="text-base font-bold text-slate-900 mb-5">Informasi Pembeli</h2>
                                 <div className="space-y-4 mb-6">
                                     <div>
-                                        <label className="block text-xs font-medium text-gray-400 mb-2">Nomor WhatsApp (Aktif)</label>
+                                        <label className="block text-xs font-medium text-slate-500 mb-2">Nomor WhatsApp (Aktif)</label>
                                         <input
                                             name="wa_number"
                                             value={formData.wa_number}
                                             onChange={handleFormChange}
                                             placeholder="Contoh: 08123456789"
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500/50 transition-colors"
+                                            className="w-full bg-white border border-slate-200 rounded-xl p-3.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-colors"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium text-gray-400 mb-2">Alamat Email Gmail</label>
+                                        <label className="block text-xs font-medium text-slate-500 mb-2">Alamat Email Gmail</label>
                                         <input
                                             name="email"
                                             type="email"
                                             value={formData.email}
                                             onChange={handleFormChange}
                                             placeholder="Contoh: nama@gmail.com"
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500/50 transition-colors"
+                                            className="w-full bg-white border border-slate-200 rounded-xl p-3.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-colors"
                                         />
                                     </div>
 
                                     {/* ── Dynamic Fields from API ── */}
                                     {dynamicFields.map((field, idx) => (
                                         <div key={`dyn-${idx}`}>
-                                            <label className="block text-xs font-medium text-gray-400 mb-2">{field.label} {field.required && '*'}</label>
+                                            <label className="block text-xs font-medium text-slate-500 mb-2">{field.label} {field.required && '*'}</label>
                                             <input
                                                 type={field.key === 'provider_qty' ? 'number' : 'text'}
                                                 value={field.key === 'provider_qty' ? providerQty : (fieldData[field.key] || '')}
@@ -752,10 +731,10 @@ const ProductPage = () => {
                                                     else setFieldData({...fieldData, [field.key]: e.target.value});
                                                 }}
                                                 placeholder={`Masukkan ${field.label}`}
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500/50 transition-colors"
+                                                className="w-full bg-white border border-slate-200 rounded-xl p-3.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-colors"
                                             />
                                             {field.key === 'provider_qty' && selectedVariant.provider_meta && (
-                                                <p className="text-[10px] text-gray-500 mt-1">Min: {formatRp(selectedVariant.provider_meta.min_qty)} | Max: {formatRp(selectedVariant.provider_meta.max_qty)}</p>
+                                                <p className="text-[10px] text-slate-400 mt-1">Min: {formatRp(selectedVariant.provider_meta.min_qty)} | Max: {formatRp(selectedVariant.provider_meta.max_qty)}</p>
                                             )}
                                         </div>
                                     ))}
@@ -765,32 +744,32 @@ const ProductPage = () => {
                                             <button
                                                 onClick={handleValidateAccount}
                                                 disabled={isValidating}
-                                                className="w-full bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 py-3 rounded-xl text-sm font-bold transition flex justify-center items-center gap-2"
+                                                className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-100 py-3 rounded-xl text-sm font-bold transition flex justify-center items-center gap-2"
                                             >
                                                 {isValidating ? <Loader2 size={16} className="animate-spin" /> : 'Cek ID / Validasi Akun'}
                                             </button>
                                             {validatedAccount && (
-                                                <div className="mt-3 p-3 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center gap-2">
-                                                    <CheckCircle2 size={16} className="text-green-400" />
-                                                    <span className="text-sm font-bold text-green-400">Tujuan: {validatedAccount.account_name || validatedAccount.display_name}</span>
+                                                <div className="mt-3 p-3 bg-green-50 border border-green-100 rounded-xl flex items-center gap-2">
+                                                    <CheckCircle2 size={16} className="text-green-600" />
+                                                    <span className="text-sm font-bold text-green-600">Tujuan: {validatedAccount.account_name || validatedAccount.display_name}</span>
                                                 </div>
                                             )}
                                         </div>
                                     )}
 
-                                    {/* Metode Pembayaran — QRIS via FinCloud */}
+                                    {/* Metode Pembayaran — QRIS */}
                                     {selectedVariant?.price > 0 && !isServiceProduct && (
-                                        <div className="bg-white/3 border border-white/5 rounded-xl p-4">
-                                            <label className="block text-xs font-medium text-gray-400 mb-2">Metode Pembayaran</label>
-                                            <div className="flex items-center gap-3 p-3 rounded-xl border border-purple-500 bg-purple-500/10">
-                                                <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shrink-0">
+                                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-4">
+                                            <label className="block text-xs font-medium text-slate-500 mb-2">Metode Pembayaran</label>
+                                            <div className="flex items-center gap-3 p-3 rounded-xl border border-purple-500 bg-purple-50">
+                                                <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shrink-0 border border-slate-100">
                                                     <span className="text-sm font-black text-black">QR</span>
                                                 </div>
                                                 <div>
-                                                    <span className="block font-bold text-white text-sm">QRIS</span>
-                                                    <span className="text-[11px] text-gray-400">Scan QR via E-Wallet / M-Banking</span>
+                                                    <span className="block font-bold text-slate-800 text-sm">QRIS</span>
+                                                    <span className="text-[11px] text-slate-500">Scan QR via E-Wallet / M-Banking</span>
                                                 </div>
-                                                <CheckCircle2 size={18} className="text-purple-400 ml-auto" />
+                                                <CheckCircle2 size={18} className="text-purple-600 ml-auto" />
                                             </div>
                                         </div>
                                     )}
@@ -800,7 +779,7 @@ const ProductPage = () => {
                                         <div className="space-y-4">
                                             {product.name?.toLowerCase().includes('web') && (
                                                 <div>
-                                                    <label className="block text-xs font-medium text-gray-400 mb-3">Estimasi Budget Anda</label>
+                                                    <label className="block text-xs font-medium text-slate-500 mb-3">Estimasi Budget Anda</label>
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                         {[
                                                             { label: 'Rp 50rb - 500rb', value: '50k-500k' },
@@ -813,21 +792,21 @@ const ProductPage = () => {
                                                                 key={opt.value}
                                                                 type="button"
                                                                 onClick={() => setBudget(opt.value)}
-                                                                className={`p-3 rounded-xl border text-sm font-medium transition-all ${budget === opt.value ? 'border-purple-500 bg-purple-500/10 text-white' : 'border-white/5 bg-white/2 text-gray-400 hover:border-white/15'}`}
+                                                                className={`p-3 rounded-xl border text-sm font-medium transition-all ${budget === opt.value ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-slate-200 bg-white text-slate-600 hover:border-purple-300'}`}
                                                             >{opt.label}</button>
                                                         ))}
                                                     </div>
                                                 </div>
                                             )}
                                             <div>
-                                                <label className="block text-xs font-medium text-gray-400 mb-2">
+                                                <label className="block text-xs font-medium text-slate-500 mb-2">
                                                     {product.name?.toLowerCase().includes('web') ? 'Ceritakan Website Seperti Apa Yang Anda Inginkan' : 'Ceritakan Konsep Script Bot WA Anda'}
                                                 </label>
                                                 <textarea
                                                     value={conceptMsg}
                                                     onChange={(e) => setConceptMsg(e.target.value)}
                                                     placeholder={product.name?.toLowerCase().includes('web') ? 'Contoh: Saya ingin website toko online...' : 'Contoh: Saya ingin bot auto reply...'}
-                                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500/50 h-32 resize-none transition-colors"
+                                                    className="w-full bg-white border border-slate-200 rounded-xl p-3.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 h-32 resize-none transition-colors"
                                                 />
                                             </div>
                                         </div>
@@ -836,14 +815,14 @@ const ProductPage = () => {
 
                                 {/* Order Summary */}
                                 {selectedVariant?.price > 0 && (
-                                    <div className="bg-white/3 border border-white/5 rounded-xl p-4 mb-5 text-sm">
-                                        <div className="flex justify-between text-gray-400 mb-1">
+                                    <div className="bg-purple-50/50 border border-purple-100 rounded-xl p-4 mb-5 text-sm">
+                                        <div className="flex justify-between text-slate-500 mb-1">
                                             <span>{selectedVariant?.name}</span>
                                             <span>{formatRp(computedPrice)}</span>
                                         </div>
-                                        <div className="flex justify-between text-white font-bold border-t border-white/10 pt-2 mt-2">
+                                        <div className="flex justify-between text-slate-800 font-bold border-t border-slate-100 pt-2 mt-2">
                                             <span>Total</span>
-                                            <span className="text-purple-400">{formatRp(computedPrice)}<span className="text-gray-500 font-normal text-xs"> + fee QRIS</span></span>
+                                            <span className="text-purple-600">{formatRp(computedPrice)}<span className="text-slate-400 font-normal text-xs"> + fee QRIS</span></span>
                                         </div>
                                     </div>
                                 )}
@@ -852,7 +831,7 @@ const ProductPage = () => {
                                     <button
                                         onClick={() => { setStep(1); window.scrollTo({ top: 100, behavior: 'smooth' }); }}
                                         disabled={isSubmitting}
-                                        className="w-1/3 bg-white/5 hover:bg-white/10 py-3.5 rounded-xl font-semibold text-white transition-colors border border-white/5 text-sm disabled:opacity-50"
+                                        className="w-1/3 bg-white hover:bg-slate-50 py-3.5 rounded-xl font-semibold text-slate-700 transition-colors border border-slate-200 text-sm disabled:opacity-50"
                                     >Kembali</button>
                                     <button
                                         onClick={() => {
@@ -879,11 +858,11 @@ const ProductPage = () => {
                         {step === 3 && (
                             <div>
                                 {/* Info Tunggu */}
-                                <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-3 mb-5">
-                                    <Info size={18} className="text-blue-400 mt-0.5 shrink-0" />
+                                <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-5">
+                                    <Info size={18} className="text-blue-600 mt-0.5 shrink-0" />
                                     <div>
-                                        <p className="text-blue-300 text-sm font-semibold">Mohon Ditunggu</p>
-                                        <p className="text-blue-300/70 text-xs mt-0.5">Pesanan akan diproses selama 1-5 menit dan detail akun akan dikirim ke WhatsApp Anda. Mohon tetap di halaman ini.</p>
+                                        <p className="text-blue-700 text-sm font-semibold">Mohon Ditunggu</p>
+                                        <p className="text-blue-600/80 text-xs mt-0.5">Pesanan akan diproses selama 1-5 menit dan detail akun akan dikirim ke WhatsApp Anda. Mohon tetap di halaman ini.</p>
                                     </div>
                                 </div>
 
@@ -902,19 +881,18 @@ const ProductPage = () => {
                                 {(orderStatus?.status === 'PENDING' || !orderStatus?.status) && paymentResult && (
                                     <div>
                                         <div className="text-center mb-5">
-                                            <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Pembayaran</p>
-                                            <p className="text-4xl font-extrabold text-white">{formatRp(paymentResult.total || paymentResult.amount)}</p>
+                                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Total Pembayaran</p>
+                                            <p className="text-4xl font-extrabold text-slate-900">{formatRp(paymentResult.total || paymentResult.amount)}</p>
                                             {paymentResult.fee > 0 && (
-                                                <p className="text-xs text-gray-500 mt-1">termasuk fee {formatRp(paymentResult.fee)}</p>
+                                                <p className="text-xs text-slate-400 mt-1">termasuk fee {formatRp(paymentResult.fee)}</p>
                                             )}
                                         </div>
 
-                                        <div className="bg-white/3 border border-white/5 rounded-xl p-5 mb-4 text-center">
-                                            {/* QRIS via FinCloud */}
+                                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-5 mb-4 text-center">
                                             {paymentResult.qr_link ? (
                                                 <div>
-                                                    <p className="text-sm text-gray-400 mb-4">Scan QR Code untuk membayar</p>
-                                                    <div className="bg-white rounded-2xl mx-auto w-52 p-2 mb-4">
+                                                    <p className="text-sm text-slate-500 mb-4">Scan QR Code untuk membayar</p>
+                                                    <div className="bg-white rounded-2xl mx-auto w-52 p-2 mb-4 border border-slate-100">
                                                         <img src={paymentResult.qr_link} alt="QRIS" className="w-full h-auto rounded-xl" />
                                                     </div>
                                                     <div className="flex items-center justify-center gap-3">
@@ -929,7 +907,7 @@ const ProductPage = () => {
                                                                 href={paymentResult.payment_link}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
-                                                                className="inline-flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-gray-300 transition-colors bg-white/5 px-4 py-2 rounded-lg border border-white/10"
+                                                                className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-800 transition-colors bg-white px-4 py-2 rounded-lg border border-slate-200"
                                                             >
                                                                 Lihat Invoice
                                                             </a>
@@ -938,7 +916,7 @@ const ProductPage = () => {
                                                 </div>
                                             ) : paymentResult.payment_link ? (
                                                 <div>
-                                                    <p className="text-sm text-gray-400 mb-4">Klik tombol di bawah untuk melanjutkan pembayaran</p>
+                                                    <p className="text-sm text-slate-500 mb-4">Klik tombol di bawah untuk melanjutkan pembayaran</p>
                                                     <a
                                                         href={paymentResult.payment_link}
                                                         target="_blank"
@@ -957,14 +935,14 @@ const ProductPage = () => {
                                         </div>
 
                                         {/* ID Order */}
-                                        <div className="bg-white/3 border border-white/5 rounded-xl p-3 text-center text-xs text-gray-500 mb-4">
-                                            ID Pesanan: <span className="font-mono text-white font-semibold">{paymentResult.order_id}</span>
-                                            <button onClick={() => copyToClipboard(paymentResult.order_id)} className="ml-2 text-purple-400 hover:text-purple-300">
+                                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-center text-xs text-slate-500 mb-4">
+                                            ID Pesanan: <span className="font-mono text-slate-800 font-semibold">{paymentResult.order_id}</span>
+                                            <button onClick={() => copyToClipboard(paymentResult.order_id)} className="ml-2 text-purple-600 hover:text-purple-700">
                                                 <Copy size={12} />
                                             </button>
                                         </div>
 
-                                        <p className="text-xs text-gray-500 text-center">
+                                        <p className="text-xs text-slate-400 text-center">
                                             Setelah pembayaran berhasil, pesanan akan diproses otomatis. Detail akun dikirim ke WhatsApp Anda.
                                         </p>
                                     </div>
@@ -973,32 +951,31 @@ const ProductPage = () => {
                                 {/* PROCESSING */}
                                 {orderStatus?.status === 'PROCESSING' && (
                                     <div className="text-center py-6">
-                                        <div className="w-16 h-16 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto mb-4">
-                                            <Loader2 size={28} className="text-blue-400 animate-spin" />
+                                        <div className="w-16 h-16 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center mx-auto mb-4">
+                                            <Loader2 size={28} className="text-blue-600 animate-spin" />
                                         </div>
-                                        <p className="text-white font-semibold mb-1">Pembayaran Dikonfirmasi!</p>
-                                        <p className="text-sm text-gray-400">Pesanan Anda sedang diproses otomatis...</p>
-                                        <p className="text-xs text-gray-500 mt-2">ID: <span className="font-mono">{paymentResult?.order_id}</span></p>
+                                        <p className="text-slate-800 font-semibold mb-1">Pembayaran Dikonfirmasi!</p>
+                                        <p className="text-sm text-slate-500">Pesanan Anda sedang diproses otomatis...</p>
+                                        <p className="text-xs text-slate-400 mt-2">ID: <span className="font-mono">{paymentResult?.order_id}</span></p>
                                     </div>
                                 )}
 
                                 {/* COMPLETED */}
                                 {orderStatus?.status === 'COMPLETED' && (
                                     <div className="text-center py-4">
-                                        <div className="w-16 h-16 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-4">
-                                            <CheckCircle2 size={28} className="text-green-400" />
+                                        <div className="w-16 h-16 rounded-full bg-green-50 border border-green-100 flex items-center justify-center mx-auto mb-4">
+                                            <CheckCircle2 size={28} className="text-green-600" />
                                         </div>
-                                        <p className="text-white font-bold text-lg mb-1">Pesanan Selesai!</p>
-                                        <p className="text-sm text-gray-400 mb-5">Detail akun telah dikirim ke WhatsApp <span className="text-white font-semibold">{formData.wa_number}</span>.</p>
+                                        <p className="text-slate-900 font-bold text-lg mb-1">Pesanan Selesai!</p>
+                                        <p className="text-sm text-slate-500 mb-5">Detail akun telah dikirim ke WhatsApp <span className="text-slate-800 font-semibold">{formData.wa_number}</span>.</p>
 
-                                        {/* Tampilkan licenses jika ada */}
                                         {orderStatus.account_details?.licenses?.length > 0 && (
-                                            <div className="bg-white/3 border border-white/5 rounded-xl p-4 mb-5 text-left">
-                                                <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">Detail Akun</p>
+                                            <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 mb-5 text-left">
+                                                <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Detail Akun</p>
                                                 {orderStatus.account_details.licenses.map((lic, i) => (
-                                                    <div key={i} className="flex items-center justify-between bg-white/5 rounded-lg p-3 mb-2 last:mb-0">
-                                                        <span className="font-mono text-white text-sm">{lic}</span>
-                                                        <button onClick={() => copyToClipboard(lic)} className="text-purple-400 hover:text-purple-300 transition-colors ml-2">
+                                                    <div key={i} className="flex items-center justify-between bg-white border border-slate-100 rounded-lg p-3 mb-2 last:mb-0">
+                                                        <span className="font-mono text-slate-800 text-sm">{lic}</span>
+                                                        <button onClick={() => copyToClipboard(lic)} className="text-purple-600 hover:text-purple-700 transition-colors ml-2">
                                                             <Copy size={14} />
                                                         </button>
                                                     </div>
@@ -1006,14 +983,13 @@ const ProductPage = () => {
                                             </div>
                                         )}
 
-                                        {/* Testimoni */}
                                         {!testimonialSubmitted ? (
-                                            <div className="bg-white/3 border border-white/5 rounded-xl p-4 text-left mb-5">
-                                                <label className="block text-xs font-medium text-gray-400 mb-3">Tinggalkan Testimoni (Opsional)</label>
+                                            <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 text-left mb-5">
+                                                <label className="block text-xs font-medium text-slate-500 mb-3">Tinggalkan Testimoni (Opsional)</label>
                                                 <div className="flex gap-1 mb-3">
                                                     {[1, 2, 3, 4, 5].map(star => (
                                                         <button key={star} onClick={() => setRating(star)} className="focus:outline-none">
-                                                            <Star size={20} className={star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-white/10'} />
+                                                            <Star size={20} className={star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-slate-200'} />
                                                         </button>
                                                     ))}
                                                 </div>
@@ -1021,7 +997,7 @@ const ProductPage = () => {
                                                     value={testimonialMsg}
                                                     onChange={(e) => setTestimonialMsg(e.target.value)}
                                                     placeholder="Tuliskan pengalaman Anda..."
-                                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500/50 h-20 resize-none mb-3"
+                                                    className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 h-20 resize-none mb-3"
                                                 />
                                                 <button
                                                     onClick={submitTestimonial}
@@ -1031,9 +1007,9 @@ const ProductPage = () => {
                                                 </button>
                                             </div>
                                         ) : (
-                                            <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4 mb-5 text-center">
-                                                <CheckCircle2 size={20} className="text-green-400 mx-auto mb-1" />
-                                                <p className="text-sm text-green-400 font-medium">Terima kasih atas testimoninya!</p>
+                                            <div className="bg-green-50 border border-green-100 rounded-xl p-4 mb-5 text-center">
+                                                <CheckCircle2 size={20} className="text-green-600 mx-auto mb-1" />
+                                                <p className="text-sm text-green-600 font-medium">Terima kasih atas testimoninya!</p>
                                             </div>
                                         )}
 
@@ -1049,31 +1025,29 @@ const ProductPage = () => {
                                 {/* FAILED */}
                                 {(orderStatus?.status === 'FAILED' || orderStatus?.status === 'CANCELLED') && (
                                     <div className="text-center py-4">
-                                        <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
-                                            <AlertCircle size={28} className="text-red-400" />
+                                        <div className="w-16 h-16 rounded-full bg-red-50 border border-red-100 flex items-center justify-center mx-auto mb-4">
+                                            <AlertCircle size={28} className="text-red-600" />
                                         </div>
-                                        <p className="text-white font-bold text-lg mb-1">Pesanan Gagal</p>
-                                        <p className="text-sm text-gray-400 mb-5">
-                                            {orderStatus?.error_message
-                                                ? `Alasan: ${orderStatus.error_message}`
-                                                : 'Terjadi kesalahan dalam memproses pesanan Anda. Tim admin akan segera dihubungi.'}
+                                        <p className="text-slate-900 font-bold text-lg mb-1">Pesanan Gagal</p>
+                                        <p className="text-sm text-slate-500 mb-5">
+                                            {orderStatus?.error_message ? `Alasan: ${orderStatus.error_message}` : 'Terjadi kesalahan dalam memproses pesanan Anda. Tim admin akan segera dihubungi.'}
                                         </p>
-                                        <p className="text-xs text-gray-500 mb-5">
+                                        <p className="text-xs text-slate-400 mb-5">
                                             Jika sudah membayar, hubungi admin via WhatsApp dengan menyertakan ID Pesanan:&nbsp;
-                                            <span className="font-mono text-white">{paymentResult?.order_id}</span>
+                                            <span className="font-mono text-slate-700">{paymentResult?.order_id}</span>
                                         </p>
                                         <div className="flex gap-3">
                                             <a
                                                 href={`https://wa.me/6285199605580?text=Halo%20admin%2C%20pesanan%20saya%20gagal.%20ID%3A%20${paymentResult?.order_id}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="flex-1 bg-green-600/20 hover:bg-green-600/30 border border-green-500/20 py-3 rounded-xl font-semibold text-green-400 transition-colors text-sm text-center"
+                                                className="flex-1 bg-green-50 hover:bg-green-100 border border-green-100 py-3 rounded-xl font-semibold text-green-600 transition-colors text-sm text-center"
                                             >
                                                 Hubungi Admin
                                             </a>
                                             <button
                                                 onClick={() => { sessionStorage.removeItem(storageKey); window.scrollTo(0, 0); navigate('/'); }}
-                                                className="flex-1 bg-white/5 hover:bg-white/10 py-3 rounded-xl font-semibold text-white transition-colors border border-white/5 text-sm"
+                                                className="flex-1 bg-white hover:bg-slate-50 py-3 rounded-xl font-semibold text-slate-700 transition-colors border border-slate-200 text-sm"
                                             >
                                                 Kembali
                                             </button>
@@ -1094,14 +1068,14 @@ const ProductPage = () => {
                                     <div className="flex flex-col items-center gap-3 mt-4">
                                         <button
                                             onClick={handleSudahBayar}
-                                            className="inline-flex items-center gap-2 text-sm font-bold text-white bg-green-600 hover:bg-green-700 px-6 py-3 rounded-xl transition-all shadow-lg shadow-green-600/20"
+                                            className="inline-flex items-center gap-2 text-sm font-bold text-white bg-green-600 hover:bg-green-700 px-6 py-3 rounded-xl transition-all shadow-md shadow-green-600/10"
                                         >
                                             <CheckCircle2 size={16} /> Saya Sudah Bayar
                                         </button>
                                         <button
                                             onClick={manualRefresh}
                                             disabled={isRefreshing}
-                                            className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors disabled:opacity-50"
+                                            className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-50"
                                         >
                                             <RefreshCw size={12} className={isRefreshing ? 'animate-spin' : ''} /> {isRefreshing ? 'Mengecek...' : 'Refresh status'}
                                         </button>

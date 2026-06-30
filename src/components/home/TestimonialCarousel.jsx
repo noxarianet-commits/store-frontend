@@ -33,18 +33,18 @@ const TestimonialCarousel = ({ testimonials }) => {
 
     return (
         <section className="mb-12">
-            <h2 className="text-xl font-bold text-white text-center mb-6">Apa Kata Mereka?</h2>
-            <div className="relative max-w-lg mx-auto overflow-hidden bg-[#0E0E0E] border border-purple-500/25 rounded-3xl p-6 shadow-lg group">
+            <h2 className="text-xl font-bold text-slate-900 text-center mb-6">Apa Kata Mereka?</h2>
+            <div className="relative max-w-lg mx-auto overflow-hidden bg-white border border-purple-100 rounded-3xl p-6 shadow-[0_4px_20px_-4px_rgba(124,58,237,0.03)] group">
                 {/* Navigation Arrows */}
                 <button
                     onClick={() => setCurrentIdx(prev => (prev === 0 ? testimonials.length - 1 : prev - 1))}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/20 hover:bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all z-10 border border-white/5"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white hover:bg-slate-50 backdrop-blur-md rounded-full flex items-center justify-center text-slate-700 opacity-0 group-hover:opacity-100 transition-all z-10 border border-slate-200/80 shadow-sm"
                 >
                     <ChevronRight className="rotate-180" size={16} />
                 </button>
                 <button
                     onClick={() => setCurrentIdx(prev => (prev === testimonials.length - 1 ? 0 : prev + 1))}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/20 hover:bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all z-10 border border-white/5"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white hover:bg-slate-50 backdrop-blur-md rounded-full flex items-center justify-center text-slate-700 opacity-0 group-hover:opacity-100 transition-all z-10 border border-slate-200/80 shadow-sm"
                 >
                     <ChevronRight size={16} />
                 </button>
@@ -63,16 +63,16 @@ const TestimonialCarousel = ({ testimonials }) => {
                                 <Star
                                     key={i}
                                     size={16}
-                                    className={i < (current?.rating || 5) ? 'fill-yellow-400 text-yellow-400' : 'text-white/10'}
+                                    className={i < (current?.rating || 5) ? 'fill-yellow-400 text-yellow-400' : 'text-slate-200'}
                                 />
                             ))}
                         </div>
                         {(current?.text || current?.message) && (
-                            <p className="text-sm text-gray-300 italic mb-4">
+                            <p className="text-sm text-slate-600 italic mb-4 leading-relaxed">
                                 "{current?.text || current?.message}"
                             </p>
                         )}
-                        <p className="text-xs font-bold text-purple-400">
+                        <p className="text-xs font-bold text-purple-600">
                             {maskName(current?.name || current?.wa_number)}
                         </p>
                     </motion.div>
@@ -84,7 +84,7 @@ const TestimonialCarousel = ({ testimonials }) => {
                         <button
                             key={idx}
                             onClick={() => setCurrentIdx(idx)}
-                            className={`transition-all rounded-full ${currentIdx === idx ? 'w-6 h-1.5 bg-purple-500' : 'w-1.5 h-1.5 bg-white/20 hover:bg-white/40'}`}
+                            className={`transition-all rounded-full ${currentIdx === idx ? 'w-6 h-1.5 bg-purple-600' : 'w-1.5 h-1.5 bg-slate-200 hover:bg-slate-350'}`}
                         />
                     ))}
                 </div>
