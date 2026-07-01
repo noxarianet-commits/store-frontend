@@ -9,6 +9,7 @@ import {
 import api from '../api';
 import Swal from 'sweetalert2';
 import { notifySuccess, notifyError, notifyWarning, showAlert } from '../utils/notify';
+import { normalizePhoneNumber } from '../utils/phoneUtils';
 
 // ══════════════════════════════════════════════════════════════════════════
 // HELPER — Format Rupiah
@@ -396,7 +397,12 @@ const ProductPage = () => {
 
         setIsSubmitting(true);
         try {
-            const noteTarget = fieldData.note || fieldData.customer_id || '';
+            let noteTarget = fieldData.note || fieldData.customer_id || '';
+            // Normalize phone number for e-wallet products (08xxx format required by Sekalipay)
+            const isEwallet = product?.category?.toLowerCase().includes('e-wallet');
+            if (isEwallet) {
+                noteTarget = normalizePhoneNumber(noteTarget);
+            }
             const noteStr = isOpenDenom 
                 ? JSON.stringify({ target: noteTarget, provider_qty: parseInt(providerQty) || 0 })
                 : (selectedVariant?.order_process === 'smm' 
