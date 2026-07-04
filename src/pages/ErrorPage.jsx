@@ -20,8 +20,8 @@ const ErrorPage = () => {
     message = 'Gagal terhubung ke server. Pastikan koneksi internet Anda stabil atau server mungkin sedang down.';
   } else if (type === 'server') {
     icon = <ServerCrash size={64} className="text-red-500 mb-6 mx-auto" />;
-    title = 'Server Sedang Sibuk';
-    message = 'Sedang terjadi kendala pada server kami. Tim teknis sedang memperbaikinya. Silakan coba lagi.';
+    title = 'Server Sedang Dalam Perbaikan';
+    message = 'Sedang terjadi kendala pada server kami. Tim teknis sedang memperbaikinya. Silakan coba lagi nanti.';
   }
 
   return (
