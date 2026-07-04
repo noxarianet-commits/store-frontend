@@ -86,6 +86,7 @@ const ProductPage = () => {
     const [providerQty, setProviderQty] = useState('');
     const [validatedAccount, setValidatedAccount] = useState(null);
     const [isValidating, setIsValidating] = useState(false);
+    const [isWaConfirmed, setIsWaConfirmed] = useState(false);
 
     // Testimonial
     const [testimonialMsg, setTestimonialMsg] = useState('');
@@ -621,6 +622,7 @@ const ProductPage = () => {
                                                     setFieldData({});
                                                     setProviderQty('');
                                                     setValidatedAccount(null);
+                                                    setIsWaConfirmed(false);
                                                 }
                                             }}
                                             disabled={outOfStock}
@@ -707,6 +709,7 @@ const ProductPage = () => {
                                         <label className="block text-xs font-medium text-slate-500 mb-2">Nomor WhatsApp (Aktif)</label>
                                         <input
                                             name="wa_number"
+                                            type="number"
                                             value={formData.wa_number}
                                             onChange={handleFormChange}
                                             placeholder="Contoh: 08123456789"
@@ -833,6 +836,34 @@ const ProductPage = () => {
                                     </div>
                                 )}
 
+                                {/* Peringatan Konfirmasi WA */}
+                                {selectedVariant?.price > 0 && (
+                                    <div className="bg-amber-50/70 border border-amber-200/60 rounded-xl p-4 mb-5">
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-2 bg-amber-100/80 rounded-lg shrink-0 text-amber-700">
+                                                <AlertTriangle size={18} className="animate-pulse" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="text-amber-900 font-bold text-xs uppercase tracking-wider mb-1">Peringatan Konfirmasi</h4>
+                                                <p className="text-amber-800 text-xs leading-relaxed">
+                                                    Harap pastikan nomor WhatsApp Anda <strong>benar dan aktif</strong> karena produk dan bukti transaksi akan dikirim via WhatsApp. Jika terdapat kesalahan pengisian data, hal tersebut <strong>bukan tanggung jawab kami</strong>.
+                                                </p>
+                                                <label className="flex items-center gap-2.5 mt-3.5 cursor-pointer group">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isWaConfirmed}
+                                                        onChange={(e) => setIsWaConfirmed(e.target.checked)}
+                                                        className="w-4 h-4 text-purple-600 border-slate-300 rounded focus:ring-purple-500 focus:ring-2 cursor-pointer transition-all"
+                                                    />
+                                                    <span className="text-xs text-amber-900 font-semibold select-none group-hover:text-amber-950 transition-colors">
+                                                        Saya mengonfirmasi nomor WhatsApp saya benar & aktif
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="flex gap-3">
                                     <button
                                         onClick={() => { setStep(1); window.scrollTo({ top: 100, behavior: 'smooth' }); }}
@@ -844,11 +875,19 @@ const ProductPage = () => {
                                             if (selectedVariant?.price === 0) {
                                                 handleCustomConsultation();
                                             } else {
+                                                if (!isWaConfirmed) {
+                                                    notifyWarning('Harap centang konfirmasi nomor WhatsApp terlebih dahulu!');
+                                                    return;
+                                                }
                                                 submitPayment();
                                             }
                                         }}
                                         disabled={isSubmitting}
-                                        className="w-2/3 bg-purple-600 hover:bg-purple-700 py-3.5 rounded-xl font-semibold text-white transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className={`w-2/3 py-3.5 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
+                                            (selectedVariant?.price > 0 && !isWaConfirmed)
+                                                ? 'bg-purple-600/50 hover:bg-purple-600/50 text-white/80 cursor-pointer'
+                                                : 'bg-purple-600 hover:bg-purple-700 text-white'
+                                        }`}
                                     >
                                         {isSubmitting ? (
                                             <><Loader2 size={16} className="animate-spin" /> Memproses...</>
