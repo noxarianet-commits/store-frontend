@@ -6,8 +6,10 @@ const OrderModal = ({ editingOrder, onClose, onSave }) => {
     const [form, setForm] = useState({
         id: '', product: '', variant: '', price: 0,
         wa_number: '', email: '', testimonial: '',
-        status: 'PENDING', payment_method: ''
+        status: 'PENDING', payment_method: '',
+        account_details: null
     });
+    const [accountDetailsStr, setAccountDetailsStr] = useState('');
 
     useEffect(() => {
         if (editingOrder) {
@@ -20,12 +22,33 @@ const OrderModal = ({ editingOrder, onClose, onSave }) => {
                 email: editingOrder.email || '',
                 testimonial: editingOrder.testimonial || '',
                 status: editingOrder.status || 'PENDING',
-                payment_method: editingOrder.payment_method || ''
+                payment_method: editingOrder.payment_method || '',
+                account_details: editingOrder.account_details || null
             });
+            setAccountDetailsStr(
+                editingOrder.account_details
+                    ? (typeof editingOrder.account_details === 'object'
+                        ? JSON.stringify(editingOrder.account_details, null, 2)
+                        : String(editingOrder.account_details))
+                    : ''
+            );
         }
     }, [editingOrder]);
 
     if (!editingOrder) return null;
+
+    const handleSave = () => {
+        let parsedDetails = null;
+        if (accountDetailsStr.trim()) {
+            try {
+                parsedDetails = JSON.parse(accountDetailsStr);
+            } catch (err) {
+                // If not valid JSON, save as raw string
+                parsedDetails = accountDetailsStr;
+            }
+        }
+        onSave({ ...form, account_details: parsedDetails });
+    };
 
     return (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
@@ -83,6 +106,15 @@ const OrderModal = ({ editingOrder, onClose, onSave }) => {
                         <input value={form.payment_method} onChange={(e) => setForm({ ...form, payment_method: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white" placeholder="Contoh: QRIS" />
                     </div>
                     <div>
+                        <label className="block text-xs text-gray-500 mb-1.5">Detail Akun / Lisensi (Format JSON atau Teks)</label>
+                        <textarea
+                            value={accountDetailsStr}
+                            onChange={(e) => setAccountDetailsStr(e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white h-28 font-mono resize-y focus:outline-none focus:border-purple-500/50"
+                            placeholder='Contoh JSON:&#10;{&#10;  "type": "auto",&#10;  "licenses": ["KEY-XYZ123"]&#10;}&#10;&#10;Atau ketik teks biasa langsung.'
+                        />
+                    </div>
+                    <div>
                         <label className="block text-xs text-gray-500 mb-1.5">Testimonial</label>
                         <textarea value={form.testimonial} onChange={(e) => setForm({ ...form, testimonial: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white h-24 resize-none" />
                     </div>
@@ -90,7 +122,7 @@ const OrderModal = ({ editingOrder, onClose, onSave }) => {
 
                 <div className="p-6 border-t border-white/5 flex justify-end gap-3">
                     <button onClick={onClose} className="px-6 py-3 rounded-xl text-sm text-gray-400 hover:text-white border border-white/10 hover:border-white/20 transition-all">Batal</button>
-                    <button onClick={() => onSave(form)} className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-xl text-sm font-bold transition-all flex items-center gap-2">
+                    <button onClick={handleSave} className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-xl text-sm font-bold transition-all flex items-center gap-2">
                         <Save size={18} /> Simpan
                     </button>
                 </div>

@@ -74,6 +74,9 @@ const ProductPage = () => {
 
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [settings, setSettings] = useState({
+        shop_status: { isOpen: true, message: 'Selamat datang!' }
+    });
 
     // Checkout states
     const [step, setStep] = useState(1);
@@ -317,11 +320,16 @@ const ProductPage = () => {
             try {
                 const isServiceRoute = location.pathname.startsWith('/service/');
 
-                const [sekalipayRes, dbRes, servicesRes] = await Promise.all([
+                const [sekalipayRes, dbRes, servicesRes, settingsRes] = await Promise.all([
                     !isServiceRoute ? api.get('/sekalipay/items').catch(() => ({ data: { data: [] } })) : Promise.resolve({ data: { data: [] } }),
                     !isServiceRoute ? api.get('/products').catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
-                    api.get('/services').catch(() => ({ data: [] }))
+                    api.get('/services').catch(() => ({ data: [] })),
+                    api.get('/settings').catch(() => ({ data: {} }))
                 ]);
+
+                if (settingsRes.data) {
+                    setSettings(settingsRes.data);
+                }
 
                 let foundProduct = null;
                 if (!isServiceRoute && sekalipayRes.data && Array.isArray(sekalipayRes.data.data)) {
@@ -560,6 +568,23 @@ const ProductPage = () => {
                     <h1 className="text-2xl font-extrabold text-slate-900 mt-1">{product.name}</h1>
                 </div>
 
+                {/* Toko Tutup Banner */}
+                {settings.shop_status?.isOpen === false && (
+                    <div className="mb-6 bg-amber-50 border border-amber-100 rounded-2xl p-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center shrink-0">
+                                <AlertTriangle className="text-amber-600" size={22} />
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-amber-800">Toko Sedang Tutup</p>
+                                <p className="text-xs text-slate-500">
+                                    {settings.shop_status.message || 'Mohon maaf, toko kami sedang tutup sementara dan tidak menerima pesanan baru.'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Sold Out Banner */}
                 {product.status === 'sold_out' && (
                     <div className="mb-6 bg-red-50 border border-red-100 rounded-2xl p-4">
@@ -687,14 +712,14 @@ const ProductPage = () => {
                                                 window.scrollTo({ top: 100, behavior: 'smooth' });
                                             }
                                         }}
-                                        disabled={product.status === 'sold_out' || !selectedVariant || isVariantOutOfStock(selectedVariant)}
+                                        disabled={product.status === 'sold_out' || !selectedVariant || isVariantOutOfStock(selectedVariant) || settings.shop_status?.isOpen === false}
                                         className={`w-2/3 font-semibold py-3.5 rounded-xl transition flex items-center justify-center gap-2 text-sm ${
-                                            (product.status === 'sold_out' || !selectedVariant || isVariantOutOfStock(selectedVariant))
+                                            (product.status === 'sold_out' || !selectedVariant || isVariantOutOfStock(selectedVariant) || settings.shop_status?.isOpen === false)
                                                 ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
                                                 : 'bg-purple-600 hover:bg-purple-700 text-white'
                                         }`}
                                     >
-                                        {(product.status === 'sold_out' || !selectedVariant || isVariantOutOfStock(selectedVariant)) ? 'Stok Habis' : isServiceProduct ? <>Hubungi WhatsApp <ChevronRight size={16} /></> : <>Lanjutkan <ChevronRight size={16} /></>}
+                                        {(product.status === 'sold_out' || !selectedVariant || isVariantOutOfStock(selectedVariant)) ? 'Stok Habis' : settings.shop_status?.isOpen === false ? 'Toko Tutup' : isServiceProduct ? <>Hubungi WhatsApp <ChevronRight size={16} /></> : <>Lanjutkan <ChevronRight size={16} /></>}
                                     </button>
                                 </div>
                             </div>
@@ -882,15 +907,17 @@ const ProductPage = () => {
                                                 submitPayment();
                                             }
                                         }}
-                                        disabled={isSubmitting}
+                                        disabled={isSubmitting || settings.shop_status?.isOpen === false}
                                         className={`w-2/3 py-3.5 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
-                                            (selectedVariant?.price > 0 && !isWaConfirmed)
-                                                ? 'bg-purple-600/50 hover:bg-purple-600/50 text-white/80 cursor-pointer'
+                                            (selectedVariant?.price > 0 && !isWaConfirmed) || settings.shop_status?.isOpen === false
+                                                ? 'bg-purple-600/50 hover:bg-purple-600/50 text-white/80'
                                                 : 'bg-purple-600 hover:bg-purple-700 text-white'
                                         }`}
                                     >
                                         {isSubmitting ? (
                                             <><Loader2 size={16} className="animate-spin" /> Memproses...</>
+                                        ) : settings.shop_status?.isOpen === false ? (
+                                            'Toko Tutup'
                                         ) : (
                                             selectedVariant?.price === 0 ? 'Kirim ke WhatsApp' : <>Lanjut Bayar <ChevronRight size={16} /></>
                                         )}

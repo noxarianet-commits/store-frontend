@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Calendar, User, Mail, Edit, Trash2, CreditCard, Search } from 'lucide-react';
+import { notifySuccess } from '../../utils/notify';
 
 const STATUS_CONFIG = {
     PENDING: { label: 'Menunggu', color: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30', dot: 'bg-yellow-400' },
@@ -19,7 +20,10 @@ const OrdersTab = ({ orders = [], openOrderModal, deleteOrder }) => {
             return;
         }
         const q = searchId.trim().toLowerCase();
-        const found = orders.filter(o => o?.id?.toLowerCase().includes(q));
+        const found = orders.filter(o => 
+            o?.id?.toLowerCase().includes(q) || 
+            o?.wa_number?.toLowerCase().includes(q)
+        );
         setSearchResult(found.length > 0 ? found : 'notfound');
     };
 
@@ -47,7 +51,7 @@ const OrdersTab = ({ orders = [], openOrderModal, deleteOrder }) => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
                         <input
                             type="text"
-                            placeholder="Cari ID Order..."
+                            placeholder="Cari ID Order atau No. WhatsApp..."
                             value={searchId}
                             onChange={(e) => setSearchId(e.target.value)}
                             onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
@@ -72,7 +76,7 @@ const OrdersTab = ({ orders = [], openOrderModal, deleteOrder }) => {
                     </div>
                 </div>
                 {searchResult === 'notfound' && (
-                    <p className="text-red-400 text-xs mt-2">Order dengan ID "{searchId}" tidak ditemukan.</p>
+                    <p className="text-red-400 text-xs mt-2">Order dengan ID atau No. WhatsApp "{searchId}" tidak ditemukan.</p>
                 )}
                 {searchResult && searchResult !== 'notfound' && (
                     <p className="text-purple-400 text-xs mt-2">Ditemukan {searchResult.length} order.</p>
@@ -122,6 +126,66 @@ const OrdersTab = ({ orders = [], openOrderModal, deleteOrder }) => {
                                             <p className="text-[10px] text-gray-500 uppercase">Pembayaran</p>
                                             <p className="text-xs sm:text-sm">{order.payment_method}</p>
                                         </div>
+                                    </div>
+                                )}
+                                {order.account_details && (
+                                    <div className="mt-3 p-3.5 bg-purple-500/5 border border-purple-500/10 rounded-2xl space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-[10px] text-purple-400 font-bold uppercase tracking-wider">Detail Akun / Lisensi</p>
+                                            {order.account_details.type && (
+                                                <span className="text-[8px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-1.5 py-0.5 rounded font-mono uppercase">
+                                                    {order.account_details.type}
+                                                </span>
+                                            )}
+                                        </div>
+                                        {(() => {
+                                            const details = order.account_details;
+                                            if (typeof details === 'object' && details !== null) {
+                                                if (Array.isArray(details.licenses) && details.licenses.length > 0) {
+                                                    return (
+                                                        <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                                                            {details.licenses.map((lic, index) => {
+                                                                let licenseText = '';
+                                                                let licenseNote = '';
+                                                                if (lic && typeof lic === 'object') {
+                                                                    licenseText = lic.product_license || lic.license || lic.key || lic.code || JSON.stringify(lic);
+                                                                    licenseNote = lic.note || lic.desc || '';
+                                                                } else {
+                                                                    licenseText = String(lic);
+                                                                }
+                                                                return (
+                                                                    <div key={index} className="flex flex-col gap-1 bg-white/5 border border-white/5 px-2.5 py-2.5 rounded-xl text-xs">
+                                                                        <div className="flex items-center justify-between gap-3 font-mono text-gray-300">
+                                                                            <span className="truncate select-all">{licenseText}</span>
+                                                                            <button 
+                                                                                onClick={() => {
+                                                                                    navigator.clipboard.writeText(licenseText);
+                                                                                    notifySuccess('Lisensi berhasil disalin!');
+                                                                                }}
+                                                                                className="text-purple-400 hover:text-purple-300 text-[10px] uppercase font-bold shrink-0"
+                                                                            >
+                                                                                Copy
+                                                                            </button>
+                                                                        </div>
+                                                                        {licenseNote && (
+                                                                            <p className="text-[10px] text-gray-500 italic mt-0.5">{licenseNote}</p>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    );
+                                                }
+                                                return (
+                                                    <pre className="text-xs font-mono text-gray-400 whitespace-pre-wrap bg-white/5 p-2 rounded-xl border border-white/5 max-h-40 overflow-auto">
+                                                        {JSON.stringify(details, null, 2)}
+                                                    </pre>
+                                                );
+                                            }
+                                            return (
+                                                <p className="text-xs text-gray-300 whitespace-pre-wrap">{String(details)}</p>
+                                            );
+                                        })()}
                                     </div>
                                 )}
                                 {order.testimonial && order.testimonial !== '-' && (

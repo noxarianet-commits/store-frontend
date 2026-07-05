@@ -128,9 +128,19 @@ const LandingPage = () => {
 
             {/* ═══ MARQUEE STATUS ═══ */}
             {settings.shop_status?.message && (
-                <div className="w-full bg-purple-600/10 border-b border-purple-500/10 py-2 overflow-hidden whitespace-nowrap">
-                    <div className="animate-marquee inline-block text-[10px] font-bold text-purple-400 uppercase tracking-[0.2em]">
-                        {Array(6).fill(settings.shop_status.message).join(' \u00A0•\u00A0 ')}
+                <div className={`w-full border-b py-2 overflow-hidden whitespace-nowrap ${
+                    settings.shop_status.isOpen === false 
+                        ? 'bg-red-600/10 border-red-500/10' 
+                        : 'bg-purple-600/10 border-purple-500/10'
+                }`}>
+                    <div className={`animate-marquee inline-block text-[10px] font-bold uppercase tracking-[0.2em] ${
+                        settings.shop_status.isOpen === false ? 'text-red-400' : 'text-purple-400'
+                    }`}>
+                        {Array(6).fill(
+                            settings.shop_status.isOpen === false 
+                                ? `🔴 TOKO SEDANG TUTUP — ${settings.shop_status.message}`
+                                : settings.shop_status.message
+                        ).join(' \u00A0•\u00A0 ')}
                     </div>
                 </div>
             )}
