@@ -386,6 +386,12 @@ const ProductPage = () => {
             notifyWarning('Nomor WA dan Email wajib diisi!');
             return;
         }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+            notifyWarning('Alamat email tidak valid! Harap masukkan email yang benar (contoh: nama@email.com)');
+            return;
+        }
         
         // Cek validasi open denom
         if (isOpenDenom) {
@@ -453,6 +459,12 @@ const ProductPage = () => {
     const handleCustomConsultation = () => {
         if (!formData.wa_number || !formData.email || !conceptMsg) {
             notifyWarning('Mohon lengkapi WA, Email, dan Konsep!');
+            return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+            notifyWarning('Alamat email tidak valid! Harap masukkan email yang benar (contoh: nama@email.com)');
             return;
         }
         const isWebProduct = product.name?.toLowerCase().includes('web') || product.category?.toLowerCase().includes('jasa');
