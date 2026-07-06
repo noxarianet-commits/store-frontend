@@ -561,6 +561,36 @@ const ProductPage = () => {
         });
     }
 
+    // ── Ekstrak Data Akun untuk Ditampilkan ──
+    const displayTexts = [];
+    if (orderStatus?.account_details) {
+        const ad = orderStatus.account_details;
+        const licArr = ad.licenses || [];
+        const rawArr = ad.raw_items || [];
+
+        licArr.forEach(lic => {
+            if (typeof lic === 'string') displayTexts.push(lic);
+            else if (lic?.product_license) displayTexts.push(lic.product_license);
+            else if (lic?.sn) displayTexts.push(lic.sn);
+            else if (typeof lic === 'object') displayTexts.push(JSON.stringify(lic));
+        });
+
+        rawArr.forEach(item => {
+            if (item?.h2h_results?.sn) displayTexts.push(item.h2h_results.sn);
+            else if (item?.h2h_results?.ref_id) displayTexts.push("Ref ID: " + item.h2h_results.ref_id);
+
+            const itemLic = item.licenses || [];
+            itemLic.forEach(lic => {
+                let text = '';
+                if (typeof lic === 'string') text = lic;
+                else if (lic?.product_license) text = lic.product_license;
+                else if (lic?.sn) text = lic.sn;
+                if (text && !displayTexts.includes(text)) displayTexts.push(text);
+            });
+        });
+    }
+    const validTexts = displayTexts.filter(t => t);
+
     return (
         <div className="min-h-screen font-sans text-slate-800">
             {/* HEADER */}
@@ -1053,13 +1083,13 @@ const ProductPage = () => {
                                         <p className="text-slate-900 font-bold text-lg mb-1">Pesanan Selesai!</p>
                                         <p className="text-sm text-slate-500 mb-5">Detail akun telah dikirim ke WhatsApp <span className="text-slate-800 font-semibold">{formData.wa_number}</span>.</p>
 
-                                        {orderStatus.account_details?.licenses?.length > 0 && (
+                                        {validTexts.length > 0 && (
                                             <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 mb-5 text-left">
-                                                <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Detail Akun</p>
-                                                {orderStatus.account_details.licenses.map((lic, i) => (
+                                                <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Detail Akun / Serial Number</p>
+                                                {validTexts.map((lic, i) => (
                                                     <div key={i} className="flex items-center justify-between bg-white border border-slate-100 rounded-lg p-3 mb-2 last:mb-0">
-                                                        <span className="font-mono text-slate-800 text-sm">{lic}</span>
-                                                        <button onClick={() => copyToClipboard(lic)} className="text-purple-600 hover:text-purple-700 transition-colors ml-2">
+                                                        <span className="font-mono text-slate-800 text-sm break-all">{lic}</span>
+                                                        <button onClick={() => copyToClipboard(lic)} className="text-purple-600 hover:text-purple-700 transition-colors ml-2 shrink-0">
                                                             <Copy size={14} />
                                                         </button>
                                                     </div>
