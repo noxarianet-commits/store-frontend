@@ -14,7 +14,6 @@ api.interceptors.request.use(config => {
     return config;
 });
 
-// Add a response interceptor to handle global errors (500, 429, Network Error)
 api.interceptors.response.use(
     response => response,
     error => {
@@ -39,5 +38,9 @@ api.interceptors.response.use(
         return Promise.reject(error);
     }
 );
+
+// Helper methods for Fincloud
+api.getFincloudProducts = (params) => api.get('/fincloud/products', { params });
+api.getFincloudCategories = () => api.get('/fincloud/categories');
 
 export default api;
