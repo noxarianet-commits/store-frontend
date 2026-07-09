@@ -18,8 +18,8 @@ api.interceptors.request.use(config => {
 api.interceptors.response.use(
     response => response,
     error => {
-        // Jangan redirect jika error terjadi di halaman admin atau jika kita sedang berada di halaman error itu sendiri
-        if (window.location.pathname.includes('admin') || window.location.pathname.includes('error')) {
+        const url = error.config?.url || '';
+        if (window.location.pathname.includes('admin') || window.location.pathname.includes('error') || url.includes('/validate')) {
             return Promise.reject(error);
         }
 
