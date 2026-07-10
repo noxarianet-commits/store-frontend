@@ -225,9 +225,12 @@ const ProductPage = () => {
 
     // ── Cek ID / Validate Account ───────────────────────────────────────
     const handleValidateAccount = async () => {
-        if (!selectedVariant || !selectedVariant.validation?.available) return;
+        const sekalipayValVariant = vendor === 'fincloud' ? product?.variants?.find(v => v.validation?.available) : null;
+        const activeVariant = vendor === 'fincloud' ? sekalipayValVariant : selectedVariant;
+
+        if (!activeVariant || !activeVariant.validation?.available) return;
         
-        let customerId = fieldData['customer_id'] || fieldData['note'] || '';
+        let customerId = fieldData['customer_id'] || fieldData['note'] || fieldData['target'] || '';
         let zoneId = fieldData['zone_id'] || '';
 
         if (!customerId) {
@@ -238,7 +241,7 @@ const ProductPage = () => {
         setIsValidating(true);
         try {
             const res = await api.post('/sekalipay/validate', {
-                item_id: selectedVariant.id,
+                item_id: activeVariant.id,
                 customer_id: customerId,
                 zone_id: zoneId || undefined,
             });
@@ -432,7 +435,15 @@ const ProductPage = () => {
 
         setIsSubmitting(true);
         try {
-            let noteTarget = fieldData.note || fieldData.customer_id || fieldData.target || '';
+            let noteTarget = '';
+            if (fieldData.customer_id) {
+                noteTarget = fieldData.customer_id;
+                if (fieldData.zone_id) {
+                    noteTarget += `(${fieldData.zone_id})`;
+                }
+            } else {
+                noteTarget = fieldData.note || fieldData.target || '';
+            }
             // Normalize phone number for e-wallet products (08xxx format required by Sekalipay)
             const isEwallet = product?.category?.toLowerCase().includes('e-wallet');
             if (isEwallet) {
@@ -566,13 +577,19 @@ const ProductPage = () => {
     // ── Compute dynamic fields (merge required_fields and validation.fields) ──
     const dynamicFields = [];
     if (selectedVariant) {
+        const isFincloud = vendor === 'fincloud';
+        const sekalipayValVariant = isFincloud ? product?.variants?.find(v => v.validation?.available) : null;
+
         const reqFields = selectedVariant.required_fields || [];
-        const valFields = selectedVariant.validation?.available ? (selectedVariant.validation.fields || []) : [];
+        const valFields = isFincloud
+            ? (sekalipayValVariant?.validation?.fields || [])
+            : (selectedVariant.validation?.available ? (selectedVariant.validation.fields || []) : []);
+
         const hasCustomerIdInVal = valFields.some(v => v.key === 'customer_id');
 
         reqFields.forEach(rf => {
-            // Hide generic 'note' if validation provides 'customer_id'
-            if (rf.key === 'note' && hasCustomerIdInVal) return;
+            // Hide generic 'note' or 'target' if validation provides 'customer_id'
+            if ((rf.key === 'note' || rf.key === 'target') && hasCustomerIdInVal) return;
             // Hide required field if validation already covers this exact key
             if (valFields.some(vf => vf.key === rf.key)) return;
             dynamicFields.push(rf);

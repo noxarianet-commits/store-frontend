@@ -63,7 +63,7 @@ const BuyerDataForm = ({
                     </div>
                 ))}
 
-                {selectedVariant?.validation?.available && vendor === 'sekalipay' && (
+                {(selectedVariant?.validation?.available || (vendor === 'fincloud' && dynamicFields.some(f => f.key === 'customer_id'))) && (
                     <div className="pt-2">
                         <button
                             onClick={handleValidateAccount}
