@@ -199,11 +199,12 @@ const ProductPage = () => {
         }
     }
 
-    // ── Download QR (canvas-based for cross-origin) ───────────────────
+    // ── Download QR (fetch atau fallback ke new tab jika CORS blocked) ───────────────
     const downloadQR = async (qrUrl) => {
         try {
-            // Coba fetch dulu
-            const response = await fetch(qrUrl, { mode: 'cors' });
+            // Try direct fetch (works jika server kirim CORS headers)
+            const response = await fetch(qrUrl);
+            if (!response.ok) throw new Error('Fetch failed');
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -215,39 +216,10 @@ const ProductPage = () => {
             window.URL.revokeObjectURL(url);
             notifySuccess('QR Code berhasil didownload!');
         } catch (e) {
-            // Fallback: buka di canvas lalu download
-            try {
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.naturalWidth;
-                    canvas.height = img.naturalHeight;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
-                    canvas.toBlob((blob) => {
-                        if (blob) {
-                            const url = window.URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = `QR-${paymentResult?.order_id || 'pembayaran'}.png`;
-                            document.body.appendChild(a);
-                            a.click();
-                            document.body.removeChild(a);
-                            window.URL.revokeObjectURL(url);
-                            notifySuccess('QR Code berhasil didownload!');
-                        }
-                    }, 'image/png');
-                };
-                img.onerror = () => {
-                    // Last fallback: buka di tab baru
-                    window.open(qrUrl, '_blank');
-                    notifyWarning('Tidak bisa download otomatis. Silakan klik kanan gambar → Save Image.');
-                };
-                img.src = qrUrl;
-            } catch (err) {
-                window.open(qrUrl, '_blank');
-            }
+            // CORS blocked atau fetch gagal: fallback ke new tab
+            console.warn('Download failed (likely CORS), opening in new tab:', e);
+            window.open(qrUrl, '_blank');
+            notifyWarning('Download otomatis diblokir browser. QR dibuka di tab baru, klik kanan → Save Image.');
         }
     };
 

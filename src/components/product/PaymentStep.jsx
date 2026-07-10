@@ -122,7 +122,7 @@ const PaymentStep = ({
                         <div className="flex justify-center mb-4">
                             {paymentResult.qr_link ? (
                                 <div className="p-3 bg-white border-2 border-dashed border-purple-200 rounded-2xl shadow-sm relative group cursor-pointer" onClick={() => downloadQR(paymentResult.qr_link)}>
-                                    <img src={paymentResult.qr_link} alt="QRIS" className="w-56 h-56 object-contain" crossOrigin="anonymous" />
+                                    <img src={paymentResult.qr_link} alt="QRIS" className="w-56 h-56 object-contain" />
                                     <div className="absolute inset-0 bg-black/60 rounded-2xl flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                         <Download size={32} className="text-white mb-2" />
                                         <span className="text-white text-sm font-bold">Simpan QR</span>
