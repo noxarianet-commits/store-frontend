@@ -9,6 +9,7 @@ import AdminLoginForm from '../components/admin/AdminLoginForm';
 import WelcomeMarquee from '../components/admin/WelcomeMarquee';
 import DashboardTab from '../components/admin/DashboardTab';
 import SekalipayTab from '../components/admin/SekalipayTab';
+import FincloudTab from '../components/admin/FincloudTab';
 import RevenueTab from '../components/admin/RevenueTab';
 import ProductsTab from '../components/admin/ProductsTab';
 import ProductModal from '../components/admin/ProductModal';
@@ -33,6 +34,11 @@ const AdminDashboard = () => {
     const [sekalipaySync, setSekalipaySync] = useState(null);
     const [sekalipayLoading, setSekalipayLoading] = useState(false);
     const [sekalipaySearch, setSekalipaySearch] = useState('');
+    const [fincloudProducts, setFincloudProducts] = useState([]);
+    const [fincloudBalance, setFincloudBalance] = useState(null);
+    const [fincloudSync, setFincloudSync] = useState(null);
+    const [fincloudLoading, setFincloudLoading] = useState(false);
+    const [fincloudSearch, setFincloudSearch] = useState('');
     const [expandedProduct, setExpandedProduct] = useState(null);
     const [syncInProgress, setSyncInProgress] = useState(false);
     const [globalMarkupValue, setGlobalMarkupValue] = useState('');
@@ -82,10 +88,26 @@ const AdminDashboard = () => {
         setSekalipayLoading(false);
     }, []);
 
+        const fetchFincloud = useCallback(async () => {
+        setFincloudLoading(true);
+        try {
+            const [prodRes, balRes, syncRes] = await Promise.all([
+                api.get('/admin/fincloud/products').catch(() => ({ data: [] })),
+                api.get('/admin/fincloud/balance').catch(() => ({ data: null })),
+                api.get('/admin/fincloud/sync-status').catch(() => ({ data: null }))
+            ]);
+            setFincloudProducts(prodRes.data);
+            setFincloudBalance(balRes.data);
+            setFincloudSync(syncRes.data);
+        } catch (e) { console.error('Gagal fetch fincloud:', e); }
+        setFincloudLoading(false);
+    }, []);
+
     const fetchData = async () => {
         setLoading(true);
         await Promise.all([fetchOrders(), fetchServices(), fetchSettings()]);
         if (activeTab === 'sekalipay') await fetchSekalipay();
+        if (activeTab === 'fincloud') await fetchFincloud();
         if (activeTab === 'featured') await fetchFeaturedProducts();
         setLoading(false);
     };
@@ -126,6 +148,13 @@ const AdminDashboard = () => {
             return () => clearTimeout(timer);
         }
     }, [activeTab, isLogin, fetchFeaturedProducts]);
+
+        useEffect(() => {
+        if (isLogin && activeTab === 'fincloud') {
+            const timer = setTimeout(() => fetchFincloud(), 0);
+            return () => clearTimeout(timer);
+        }
+    }, [activeTab, isLogin, fetchFincloud]);
 
     // ---- Auth ----
     const handleLogin = async (e) => {
@@ -241,6 +270,62 @@ const AdminDashboard = () => {
         }
     };
 
+        // ---- Fincloud handlers ----
+    const handleFincloudSync = async () => {
+        setSyncInProgress(true);
+        try {
+            const res = await api.post('/admin/fincloud/sync');
+            notifySuccess(`Sync berhasil: ${res.data.syncedProducts || 0} produk disinkronkan`);
+            await fetchFincloud();
+        } catch (err) {
+            notifyError(err.response?.data?.error || 'Sync gagal');
+        }
+        setSyncInProgress(false);
+    };
+
+    const handleFincloudGlobalMarkup = async () => {
+        const val = parseInt(globalMarkupValue);
+        if (isNaN(val) || val < 0) { notifyWarning('Masukkan nilai markup yang valid'); return; }
+        try {
+            const res = await api.post('/admin/fincloud/global-markup', { markup: val });
+            notifySuccess(res.data.message);
+            setGlobalMarkupValue('');
+            await fetchFincloud();
+        } catch (err) {
+            notifyError(err.response?.data?.error || 'Gagal menerapkan markup');
+        }
+    };
+
+    const handleFincloudMarkupUpdate = async (sku, markup) => {
+        try {
+            await api.patch(`/admin/fincloud/products/${sku}/markup`, { markup });
+            await fetchFincloud();
+            notifySuccess('Markup Fincloud berhasil diupdate!');
+        } catch (err) {
+            notifyError(err.response?.data?.error || 'Gagal update markup');
+        }
+    };
+
+    const handleFincloudToggleProduct = async (sku) => {
+        try {
+            await api.patch(`/admin/fincloud/products/${sku}/toggle`);
+            await fetchFincloud();
+            notifySuccess('Status produk berhasil diubah!');
+        } catch (err) {
+            notifyError(err.response?.data?.error || 'Gagal toggle produk');
+        }
+    };
+
+    const handleFincloudToggleBrandHidden = async (brand, is_hidden) => {
+        try {
+            const res = await api.patch(`/admin/fincloud/products/brand/${encodeURIComponent(brand)}/toggle`, { is_hidden });
+            await fetchFincloud();
+            notifySuccess(res.data.message || `Brand ${brand} berhasil diubah statusnya`);
+        } catch (err) {
+            notifyError(err.response?.data?.error || 'Gagal mengubah status brand');
+        }
+    };
+
     // ---- Product CRUD ----
     const openProductModal = (product = null) => {
         setEditingProduct(product);
@@ -347,6 +432,19 @@ const AdminDashboard = () => {
                             globalMarkupValue={globalMarkupValue} setGlobalMarkupValue={setGlobalMarkupValue}
                             expandedProduct={expandedProduct} setExpandedProduct={setExpandedProduct}
                             handleToggleVariantHidden={handleToggleVariantHidden}
+                        />
+                    )}
+                                        {activeTab === 'fincloud' && (
+                        <FincloudTab
+                            fincloudProducts={fincloudProducts} fincloudBalance={fincloudBalance}
+                            fincloudSync={fincloudSync} fincloudLoading={fincloudLoading}
+                            fincloudSearch={fincloudSearch} setFincloudSearch={setFincloudSearch}
+                            handleSync={handleFincloudSync} handleGlobalMarkup={handleFincloudGlobalMarkup}
+                            handleMarkupUpdate={handleFincloudMarkupUpdate} handleToggleProduct={handleFincloudToggleProduct}
+                            syncInProgress={syncInProgress}
+                            globalMarkupValue={globalMarkupValue} setGlobalMarkupValue={setGlobalMarkupValue}
+                            expandedProduct={expandedProduct} setExpandedProduct={setExpandedProduct}
+                            handleToggleBrandHidden={handleFincloudToggleBrandHidden}
                         />
                     )}
                     {activeTab === 'revenue' && <RevenueTab orders={orders} settings={settings} updateSetting={updateSetting} />}

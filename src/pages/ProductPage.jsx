@@ -10,13 +10,13 @@ import api from '../api';
 import Swal from 'sweetalert2';
 import { notifySuccess, notifyError, notifyWarning, showAlert } from '../utils/notify';
 import { normalizePhoneNumber } from '../utils/phoneUtils';
+import { formatRp } from '../utils/currencyUtils';
 
-// ══════════════════════════════════════════════════════════════════════════
-// HELPER — Format Rupiah
-// ══════════════════════════════════════════════════════════════════════════
-function formatRp(num) {
-    return `Rp ${Number(num).toLocaleString('id-ID')}`;
-}
+// New Modular Components
+import ServerSelector from '../components/product/ServerSelector';
+import VariantSelector from '../components/product/VariantSelector';
+import BuyerDataForm from '../components/product/BuyerDataForm';
+import PaymentStep from '../components/product/PaymentStep';
 
 // ══════════════════════════════════════════════════════════════════════════
 // HELPER — Order Process Label & Color
@@ -78,6 +78,10 @@ const ProductPage = () => {
         shop_status: { isOpen: true, message: 'Selamat datang!' }
     });
 
+    // Multi-Vendor State
+    const [vendor, setVendor] = useState('sekalipay'); // 'sekalipay' | 'fincloud'
+    const [fincloudVariants, setFincloudVariants] = useState([]);
+
     // Checkout states
     const [step, setStep] = useState(1);
     const [selectedVariant, setSelectedVariant] = useState(null);
@@ -120,6 +124,7 @@ const ProductPage = () => {
                 const parsed = JSON.parse(saved);
                 // Restore step & data dari posisi terakhir user
                 if (parsed.step) setStep(parsed.step);
+                if (parsed.vendor) setVendor(parsed.vendor);
                 if (parsed.selectedVariant) setSelectedVariant(parsed.selectedVariant);
                 if (parsed.formData) setFormData(parsed.formData);
                 if (parsed.fieldData) setFieldData(parsed.fieldData);
@@ -140,11 +145,11 @@ const ProductPage = () => {
         if (!hasRestored.current) return;
         try {
             sessionStorage.setItem(storageKey, JSON.stringify({
-                step, selectedVariant, formData, fieldData, providerQty, validatedAccount, paymentResult, orderStatus,
+                step, vendor, selectedVariant, formData, fieldData, providerQty, validatedAccount, paymentResult, orderStatus,
                 testimonialSubmitted
             }));
         } catch (e) { /* ignore */ }
-    }, [step, selectedVariant, formData, fieldData, providerQty, validatedAccount, paymentResult, orderStatus, testimonialSubmitted]);
+    }, [step, vendor, selectedVariant, formData, fieldData, providerQty, validatedAccount, paymentResult, orderStatus, testimonialSubmitted]);
 
     // ── SweetAlert when COMPLETED ──────────────────────────────────────
     useEffect(() => {
@@ -194,11 +199,12 @@ const ProductPage = () => {
         }
     }
 
-    // ── Download QR (canvas-based for cross-origin) ───────────────────
+    // ── Download QR (fetch atau fallback ke new tab jika CORS blocked) ───────────────
     const downloadQR = async (qrUrl) => {
         try {
-            // Coba fetch dulu
-            const response = await fetch(qrUrl, { mode: 'cors' });
+            // Try direct fetch (works jika server kirim CORS headers)
+            const response = await fetch(qrUrl);
+            if (!response.ok) throw new Error('Fetch failed');
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -210,47 +216,21 @@ const ProductPage = () => {
             window.URL.revokeObjectURL(url);
             notifySuccess('QR Code berhasil didownload!');
         } catch (e) {
-            // Fallback: buka di canvas lalu download
-            try {
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.naturalWidth;
-                    canvas.height = img.naturalHeight;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
-                    canvas.toBlob((blob) => {
-                        if (blob) {
-                            const url = window.URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = `QR-${paymentResult?.order_id || 'pembayaran'}.png`;
-                            document.body.appendChild(a);
-                            a.click();
-                            document.body.removeChild(a);
-                            window.URL.revokeObjectURL(url);
-                            notifySuccess('QR Code berhasil didownload!');
-                        }
-                    }, 'image/png');
-                };
-                img.onerror = () => {
-                    // Last fallback: buka di tab baru
-                    window.open(qrUrl, '_blank');
-                    notifyWarning('Tidak bisa download otomatis. Silakan klik kanan gambar → Save Image.');
-                };
-                img.src = qrUrl;
-            } catch (err) {
-                window.open(qrUrl, '_blank');
-            }
+            // CORS blocked atau fetch gagal: fallback ke new tab
+            console.warn('Download failed (likely CORS), opening in new tab:', e);
+            window.open(qrUrl, '_blank');
+            notifyWarning('Download otomatis diblokir browser. QR dibuka di tab baru, klik kanan → Save Image.');
         }
     };
 
     // ── Cek ID / Validate Account ───────────────────────────────────────
     const handleValidateAccount = async () => {
-        if (!selectedVariant || !selectedVariant.validation?.available) return;
+        const sekalipayValVariant = vendor === 'fincloud' ? product?.variants?.find(v => v.validation?.available) : null;
+        const activeVariant = vendor === 'fincloud' ? sekalipayValVariant : selectedVariant;
+
+        if (!activeVariant || !activeVariant.validation?.available) return;
         
-        let customerId = fieldData['customer_id'] || fieldData['note'] || '';
+        let customerId = fieldData['customer_id'] || fieldData['note'] || fieldData['target'] || '';
         let zoneId = fieldData['zone_id'] || '';
 
         if (!customerId) {
@@ -261,7 +241,7 @@ const ProductPage = () => {
         setIsValidating(true);
         try {
             const res = await api.post('/sekalipay/validate', {
-                item_id: selectedVariant.id,
+                item_id: activeVariant.id,
                 customer_id: customerId,
                 zone_id: zoneId || undefined,
             });
@@ -346,15 +326,46 @@ const ProductPage = () => {
                 if (foundProduct) {
                     if (foundProduct.is_active === false) foundProduct.status = 'sold_out';
                     else if (foundProduct.is_active === true) foundProduct.status = 'available';
-                    // Normalize variant prices: ensure `price` is always set
+                    
+                    // Normalize variant prices and sort by price low to high
                     if (foundProduct.variants) {
-                        foundProduct.variants = foundProduct.variants.map(v => ({
-                            ...v,
-                            price: v.price || v.sell_price || 0,
-                        }));
+                        foundProduct.variants = foundProduct.variants
+                            .map(v => ({
+                                ...v,
+                                price: v.price || v.sell_price || 0,
+                                vendor: 'sekalipay'
+                            }))
+                            .sort((a, b) => a.price - b.price);
                     }
                     setProduct(foundProduct);
-                    // Auto-select first in-stock variant, fallback to first variant
+                    
+                    // Fetch Fincloud matching variants if not a service route
+                    if (!isServiceRoute) {
+                        try {
+                            const fincloudRes = await api.getFincloudProducts({ search: foundProduct.name, per_page: 200 });
+                            if (fincloudRes.data?.data && fincloudRes.data.data.length > 0) {
+                                const mappedFincloud = fincloudRes.data.data
+                                    .map(v => ({
+                                        id: v.sku, // map sku to id for frontend logic
+                                        sku: v.sku,
+                                        name: v.name,
+                                        price: v.price,
+                                        sell_price: v.price,
+                                        stock: 9999, // Fincloud assumes available if returned
+                                        order_process: 'auto',
+                                        vendor: 'fincloud',
+                                        required_fields: [{ key: 'target', label: 'Nomor Tujuan / User ID', required: true }],
+                                        validation: {}
+                                    }))
+                                    .sort((a, b) => a.price - b.price);
+                                setFincloudVariants(mappedFincloud);
+                            }
+                        } catch (e) {
+                            console.error('Failed to load Fincloud variants', e);
+                        }
+                    }
+                    
+                    // Auto-select first in-stock variant based on current vendor state (we default to sekalipay)
                     const firstInStock = foundProduct.variants?.find(v => v.stock > 0);
                     setSelectedVariant(firstInStock || foundProduct.variants?.[0] || null);
                 }
@@ -366,6 +377,18 @@ const ProductPage = () => {
         };
         fetchProduct();
     }, [id, location.pathname]);
+
+    // Auto-select first variant on vendor switch
+    useEffect(() => {
+        if (!product) return;
+        const currentVariants = vendor === 'fincloud' ? fincloudVariants : product.variants;
+        if (currentVariants && currentVariants.length > 0) {
+            const cheapestInStock = currentVariants.find(v => v.stock > 0) || currentVariants[0];
+            setSelectedVariant(cheapestInStock);
+        } else {
+            setSelectedVariant(null);
+        }
+    }, [vendor, product, fincloudVariants]);
 
     const handleFormChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -412,7 +435,15 @@ const ProductPage = () => {
 
         setIsSubmitting(true);
         try {
-            let noteTarget = fieldData.note || fieldData.customer_id || '';
+            let noteTarget = '';
+            if (fieldData.customer_id) {
+                noteTarget = fieldData.customer_id;
+                if (fieldData.zone_id) {
+                    noteTarget += `(${fieldData.zone_id})`;
+                }
+            } else {
+                noteTarget = fieldData.note || fieldData.target || '';
+            }
             // Normalize phone number for e-wallet products (08xxx format required by Sekalipay)
             const isEwallet = product?.category?.toLowerCase().includes('e-wallet');
             if (isEwallet) {
@@ -425,8 +456,10 @@ const ProductPage = () => {
                     : noteTarget);
 
             const res = await api.post('/payments/create', {
+                vendor: vendor,
                 product_id: product.id?.toString(),
-                variant_id: selectedVariant?.id,
+                variant_id: vendor === 'sekalipay' ? selectedVariant?.id : undefined,
+                sku: vendor === 'fincloud' ? selectedVariant?.sku : undefined,
                 variant_name: selectedVariant?.name,
                 product_name: product.name,
                 amount: computedPrice,
@@ -544,13 +577,19 @@ const ProductPage = () => {
     // ── Compute dynamic fields (merge required_fields and validation.fields) ──
     const dynamicFields = [];
     if (selectedVariant) {
+        const isFincloud = vendor === 'fincloud';
+        const sekalipayValVariant = isFincloud ? product?.variants?.find(v => v.validation?.available) : null;
+
         const reqFields = selectedVariant.required_fields || [];
-        const valFields = selectedVariant.validation?.available ? (selectedVariant.validation.fields || []) : [];
+        const valFields = isFincloud
+            ? (sekalipayValVariant?.validation?.fields || [])
+            : (selectedVariant.validation?.available ? (selectedVariant.validation.fields || []) : []);
+
         const hasCustomerIdInVal = valFields.some(v => v.key === 'customer_id');
 
         reqFields.forEach(rf => {
-            // Hide generic 'note' if validation provides 'customer_id'
-            if (rf.key === 'note' && hasCustomerIdInVal) return;
+            // Hide generic 'note' or 'target' if validation provides 'customer_id'
+            if ((rf.key === 'note' || rf.key === 'target') && hasCustomerIdInVal) return;
             // Hide required field if validation already covers this exact key
             if (valFields.some(vf => vf.key === rf.key)) return;
             dynamicFields.push(rf);
@@ -671,63 +710,20 @@ const ProductPage = () => {
                         transition={{ duration: 0.25 }}
                         className="bg-white border border-purple-100 rounded-2xl p-6 shadow-sm"
                     >
-                        {/* ════ STEP 1: VARIANT ════ */}
                         {step === 1 && (
                             <div>
+                                <ServerSelector vendor={vendor} setVendor={setVendor} hasFincloud={fincloudVariants.length > 0} />
                                 <h2 className="text-base font-bold text-slate-900 mb-5">Pilih Paket</h2>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-6">
-                                    {[...(product.variants || [])].sort((a, b) => (a.price || a.sell_price || 0) - (b.price || b.sell_price || 0)).slice(0, showAllVariants ? undefined : 10).map((variant, idx) => {
-                                        const outOfStock = isVariantOutOfStock(variant);
-                                        const processConfig = ORDER_PROCESS_CONFIG[variant.order_process] || null;
-                                        const isSelected = selectedVariant?.name === variant.name;
-                                        return (
-                                        <button
-                                            key={idx}
-                                            onClick={() => {
-                                                if (!outOfStock) {
-                                                    setSelectedVariant(variant);
-                                                    setFieldData({});
-                                                    setProviderQty('');
-                                                    setValidatedAccount(null);
-                                                    setIsWaConfirmed(false);
-                                                }
-                                            }}
-                                            disabled={outOfStock}
-                                            className={`flex flex-col items-center text-center p-3 rounded-xl border transition-all ${
-                                                outOfStock
-                                                    ? 'border-slate-100 bg-slate-50 opacity-50 cursor-not-allowed'
-                                                    : isSelected
-                                                        ? 'border-purple-500 bg-purple-50 shadow-sm shadow-purple-100'
-                                                        : 'border-slate-200 bg-white hover:border-purple-300 hover:bg-purple-50/30'
-                                            }`}
-                                        >
-                                            <span className={`text-xs font-bold leading-snug mb-1 ${outOfStock ? 'text-slate-400 line-through' : isSelected ? 'text-purple-700' : 'text-slate-700'}`}>{variant.name}</span>
-                                            <span className={`text-xs font-extrabold ${outOfStock ? 'text-slate-400' : isSelected ? 'text-purple-600' : 'text-slate-600'}`}>
-                                                {(variant.sell_price || variant.price) > 0 ? formatRp(variant.sell_price || variant.price) : 'Chat'}
-                                            </span>
-                                            {outOfStock && <span className="text-[9px] text-red-500 font-semibold mt-0.5">Habis</span>}
-                                            {processConfig && !outOfStock && (
-                                                <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded border mt-1 ${processConfig.bg} ${processConfig.color}`}>
-                                                    {processConfig.label}
-                                                </span>
-                                            )}
-                                        </button>
-                                        );
-                                    })}
-                                </div>
-
-                                {product.variants?.length > 10 && (
-                                    <button
-                                        onClick={() => setShowAllVariants(!showAllVariants)}
-                                        className="w-full py-3 mb-6 flex items-center justify-center gap-2 text-sm font-medium text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-xl transition-colors border border-purple-200"
-                                    >
-                                        {showAllVariants ? 'Sembunyikan' : `Lihat Semua Varian (${product.variants.length})`}
-                                    </button>
-                                )}
-
+                                <VariantSelector 
+                                    variants={vendor === 'fincloud' ? fincloudVariants : product.variants} 
+                                    selectedVariant={selectedVariant} 
+                                    setSelectedVariant={setSelectedVariant}
+                                    showAllVariants={showAllVariants}
+                                    setShowAllVariants={setShowAllVariants}
+                                />
                                 {/* Features */}
                                 {product.features && product.features.length > 0 && (
-                                    <div className="border-t border-slate-100 pt-5 mb-6">
+                                    <div className="border-t border-slate-100 pt-5 mb-6 mt-6">
                                         <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Fitur Termasuk</p>
                                         <div className="grid grid-cols-2 gap-2">
                                             {product.features.map((f, i) => (
@@ -738,7 +734,6 @@ const ProductPage = () => {
                                         </div>
                                     </div>
                                 )}
-
                                 <div className="flex gap-3">
                                     <button
                                         onClick={() => { window.scrollTo(0, 0); navigate('/'); }}
@@ -754,141 +749,36 @@ const ProductPage = () => {
                                                 window.scrollTo({ top: 100, behavior: 'smooth' });
                                             }
                                         }}
-                                        disabled={product.status === 'sold_out' || !selectedVariant || isVariantOutOfStock(selectedVariant) || settings.shop_status?.isOpen === false}
+                                        disabled={product.status === 'sold_out' || !selectedVariant || (selectedVariant.stock === 0) || settings.shop_status?.isOpen === false}
                                         className={`w-2/3 font-semibold py-3.5 rounded-xl transition flex items-center justify-center gap-2 text-sm ${
-                                            (product.status === 'sold_out' || !selectedVariant || isVariantOutOfStock(selectedVariant) || settings.shop_status?.isOpen === false)
+                                            (product.status === 'sold_out' || !selectedVariant || (selectedVariant.stock === 0) || settings.shop_status?.isOpen === false)
                                                 ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
                                                 : 'bg-purple-600 hover:bg-purple-700 text-white'
                                         }`}
                                     >
-                                        {(product.status === 'sold_out' || !selectedVariant || isVariantOutOfStock(selectedVariant)) ? 'Stok Habis' : settings.shop_status?.isOpen === false ? 'Toko Tutup' : isServiceProduct ? <>Hubungi WhatsApp <ChevronRight size={16} /></> : <>Lanjutkan <ChevronRight size={16} /></>}
+                                        {(product.status === 'sold_out' || !selectedVariant || (selectedVariant.stock === 0)) ? 'Stok Habis' : settings.shop_status?.isOpen === false ? 'Toko Tutup' : isServiceProduct ? <>Hubungi WhatsApp <ChevronRight size={16} /></> : <>Lanjutkan <ChevronRight size={16} /></>}
                                     </button>
                                 </div>
                             </div>
                         )}
 
-                        {/* ════ STEP 2: FORM ════ */}
                         {step === 2 && (
                             <div>
-                                <h2 className="text-base font-bold text-slate-900 mb-5">Informasi Pembeli</h2>
-                                <div className="space-y-4 mb-6">
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-500 mb-2">Nomor WhatsApp (Aktif)</label>
-                                        <input
-                                            name="wa_number"
-                                            type="number"
-                                            value={formData.wa_number}
-                                            onChange={handleFormChange}
-                                            placeholder="Contoh: 08123456789"
-                                            className="w-full bg-white border border-slate-200 rounded-xl p-3.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-colors"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-500 mb-2">Alamat Email Gmail</label>
-                                        <input
-                                            name="email"
-                                            type="email"
-                                            value={formData.email}
-                                            onChange={handleFormChange}
-                                            placeholder="Contoh: nama@gmail.com"
-                                            className="w-full bg-white border border-slate-200 rounded-xl p-3.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-colors"
-                                        />
-                                    </div>
-
-                                    {/* ── Dynamic Fields from API ── */}
-                                    {dynamicFields.map((field, idx) => (
-                                        <div key={`dyn-${idx}`}>
-                                            <label className="block text-xs font-medium text-slate-500 mb-2">{field.label} {field.required && '*'}</label>
-                                            <input
-                                                type={field.key === 'provider_qty' ? 'number' : 'text'}
-                                                value={field.key === 'provider_qty' ? providerQty : (fieldData[field.key] || '')}
-                                                onChange={(e) => {
-                                                    if (field.key === 'provider_qty') setProviderQty(e.target.value);
-                                                    else setFieldData({...fieldData, [field.key]: e.target.value});
-                                                }}
-                                                placeholder={`Masukkan ${field.label}`}
-                                                className="w-full bg-white border border-slate-200 rounded-xl p-3.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-colors"
-                                            />
-                                            {field.key === 'provider_qty' && selectedVariant.provider_meta && (
-                                                <p className="text-[10px] text-slate-400 mt-1">Min: {formatRp(selectedVariant.provider_meta.min_qty)} | Max: {formatRp(selectedVariant.provider_meta.max_qty)}</p>
-                                            )}
-                                        </div>
-                                    ))}
-
-                                    {selectedVariant?.validation?.available && (
-                                        <div className="pt-2">
-                                            <button
-                                                onClick={handleValidateAccount}
-                                                disabled={isValidating}
-                                                className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-100 py-3 rounded-xl text-sm font-bold transition flex justify-center items-center gap-2"
-                                            >
-                                                {isValidating ? <Loader2 size={16} className="animate-spin" /> : 'Cek ID / Validasi Akun'}
-                                            </button>
-                                            {validatedAccount && (
-                                                <div className="mt-3 p-3 bg-green-50 border border-green-100 rounded-xl flex items-center gap-2">
-                                                    <CheckCircle2 size={16} className="text-green-600" />
-                                                    <span className="text-sm font-bold text-green-600">Tujuan: {validatedAccount.account_name || validatedAccount.display_name}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Metode Pembayaran — QRIS */}
-                                    {selectedVariant?.price > 0 && !isServiceProduct && (
-                                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-4">
-                                            <label className="block text-xs font-medium text-slate-500 mb-2">Metode Pembayaran</label>
-                                            <div className="flex items-center gap-3 p-3 rounded-xl border border-purple-500 bg-purple-50">
-                                                <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shrink-0 border border-slate-100">
-                                                    <span className="text-sm font-black text-black">QR</span>
-                                                </div>
-                                                <div>
-                                                    <span className="block font-bold text-slate-800 text-sm">QRIS</span>
-                                                    <span className="text-[11px] text-slate-500">Scan QR via E-Wallet / M-Banking</span>
-                                                </div>
-                                                <CheckCircle2 size={18} className="text-purple-600 ml-auto" />
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Custom service fields */}
-                                    {selectedVariant?.price === 0 && (
-                                        <div className="space-y-4">
-                                            {product.name?.toLowerCase().includes('web') && (
-                                                <div>
-                                                    <label className="block text-xs font-medium text-slate-500 mb-3">Estimasi Budget Anda</label>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                                        {[
-                                                            { label: 'Rp 50rb - 500rb', value: '50k-500k' },
-                                                            { label: 'Rp 500rb - 1jt', value: '500k-1jt' },
-                                                            { label: 'Rp 1jt - 2jt', value: '1jt-2jt' },
-                                                            { label: 'Rp 2jt - 5jt', value: '2jt-5jt' },
-                                                            { label: 'Diatas Rp 5jt', value: 'Diatas 5jt' }
-                                                        ].map(opt => (
-                                                            <button
-                                                                key={opt.value}
-                                                                type="button"
-                                                                onClick={() => setBudget(opt.value)}
-                                                                className={`p-3 rounded-xl border text-sm font-medium transition-all ${budget === opt.value ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-slate-200 bg-white text-slate-600 hover:border-purple-300'}`}
-                                                            >{opt.label}</button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                            <div>
-                                                <label className="block text-xs font-medium text-slate-500 mb-2">
-                                                    {product.name?.toLowerCase().includes('web') ? 'Ceritakan Website Seperti Apa Yang Anda Inginkan' : 'Ceritakan Konsep Script Bot WA Anda'}
-                                                </label>
-                                                <textarea
-                                                    value={conceptMsg}
-                                                    onChange={(e) => setConceptMsg(e.target.value)}
-                                                    placeholder={product.name?.toLowerCase().includes('web') ? 'Contoh: Saya ingin website toko online...' : 'Contoh: Saya ingin bot auto reply...'}
-                                                    className="w-full bg-white border border-slate-200 rounded-xl p-3.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 h-32 resize-none transition-colors"
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
+                                <BuyerDataForm
+                                    formData={formData}
+                                    handleFormChange={handleFormChange}
+                                    dynamicFields={dynamicFields}
+                                    fieldData={fieldData}
+                                    setFieldData={setFieldData}
+                                    providerQty={providerQty}
+                                    setProviderQty={setProviderQty}
+                                    selectedVariant={selectedVariant}
+                                    handleValidateAccount={handleValidateAccount}
+                                    isValidating={isValidating}
+                                    validatedAccount={validatedAccount}
+                                    vendor={vendor}
+                                />
+                                
                                 {/* Order Summary */}
                                 {selectedVariant?.price > 0 && (
                                     <div className="bg-purple-50/50 border border-purple-100 rounded-xl p-4 mb-5 text-sm">
@@ -968,234 +858,27 @@ const ProductPage = () => {
                             </div>
                         )}
 
-                        {/* ════ STEP 3: PEMBAYARAN ════ */}
                         {step === 3 && (
-                            <div>
-                                {/* Info Tunggu */}
-                                <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-5">
-                                    <Info size={18} className="text-blue-600 mt-0.5 shrink-0" />
-                                    <div>
-                                        <p className="text-blue-700 text-sm font-semibold">Mohon Ditunggu</p>
-                                        <p className="text-blue-600/80 text-xs mt-0.5">Pesanan akan diproses selama 1-5 menit dan detail akun akan dikirim ke WhatsApp Anda. Mohon tetap di halaman ini.</p>
-                                    </div>
-                                </div>
-
-                                {/* Status Badge */}
-                                <div className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border mb-5 ${currentStatus.bg}`}>
-                                    {currentStatus.icon}
-                                    <span className={`text-sm font-semibold ${currentStatus.color}`}>{currentStatus.label}</span>
-                                    {(orderStatus?.status === 'PENDING' || orderStatus?.status === 'PROCESSING') && (
-                                        <div className="ml-auto flex items-center gap-1.5 text-gray-500 text-xs">
-                                            <Wifi size={12} className="animate-pulse" /> live
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* PENDING — tampilkan instruksi bayar */}
-                                {(orderStatus?.status === 'PENDING' || !orderStatus?.status) && paymentResult && (
-                                    <div>
-                                        <div className="text-center mb-5">
-                                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Total Pembayaran</p>
-                                            <p className="text-4xl font-extrabold text-slate-900">{formatRp(paymentResult.total || paymentResult.amount)}</p>
-                                            {paymentResult.fee > 0 && (
-                                                <p className="text-xs text-slate-400 mt-1">termasuk fee {formatRp(paymentResult.fee)}</p>
-                                            )}
-                                        </div>
-
-                                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-5 mb-4 text-center">
-                                            {paymentResult.qr_link ? (
-                                                <div>
-                                                    <p className="text-sm text-slate-500 mb-4">Scan QR Code untuk membayar</p>
-                                                    <div className="bg-white rounded-2xl mx-auto w-52 p-2 mb-4 border border-slate-100">
-                                                        <img src={paymentResult.qr_link} alt="QRIS" className="w-full h-auto rounded-xl" />
-                                                    </div>
-                                                    <div className="flex items-center justify-center gap-3">
-                                                        <button
-                                                            onClick={() => downloadQR(paymentResult.qr_link)}
-                                                            className="inline-flex items-center gap-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-all"
-                                                        >
-                                                            <Download size={14} /> Download QR
-                                                        </button>
-                                                        {paymentResult.payment_link && (
-                                                            <a
-                                                                href={paymentResult.payment_link}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-800 transition-colors bg-white px-4 py-2 rounded-lg border border-slate-200"
-                                                            >
-                                                                Lihat Invoice
-                                                            </a>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ) : paymentResult.payment_link ? (
-                                                <div>
-                                                    <p className="text-sm text-slate-500 mb-4">Klik tombol di bawah untuk melanjutkan pembayaran</p>
-                                                    <a
-                                                        href={paymentResult.payment_link}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors text-sm mt-3"
-                                                    >
-                                                        Lihat Invoice <ChevronRight size={16} />
-                                                    </a>
-                                                </div>
-                                            ) : null}
-                                        </div>
-
-                                        {/* Countdown */}
-                                        <div className="flex justify-center mb-4">
-                                            <CountdownTimer expiredAt={paymentResult.expired_at} />
-                                        </div>
-
-                                        {/* ID Order */}
-                                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-center text-xs text-slate-500 mb-4">
-                                            ID Pesanan: <span className="font-mono text-slate-800 font-semibold">{paymentResult.order_id}</span>
-                                            <button onClick={() => copyToClipboard(paymentResult.order_id)} className="ml-2 text-purple-600 hover:text-purple-700">
-                                                <Copy size={12} />
-                                            </button>
-                                        </div>
-
-                                        <p className="text-xs text-slate-400 text-center">
-                                            Setelah pembayaran berhasil, pesanan akan diproses otomatis. Detail akun dikirim ke WhatsApp Anda.
-                                        </p>
-                                    </div>
-                                )}
-
-                                {/* PROCESSING */}
-                                {orderStatus?.status === 'PROCESSING' && (
-                                    <div className="text-center py-6">
-                                        <div className="w-16 h-16 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center mx-auto mb-4">
-                                            <Loader2 size={28} className="text-blue-600 animate-spin" />
-                                        </div>
-                                        <p className="text-slate-800 font-semibold mb-1">Pembayaran Dikonfirmasi!</p>
-                                        <p className="text-sm text-slate-500">Pesanan Anda sedang diproses otomatis...</p>
-                                        <p className="text-xs text-slate-400 mt-2">ID: <span className="font-mono">{paymentResult?.order_id}</span></p>
-                                    </div>
-                                )}
-
-                                {/* COMPLETED */}
-                                {orderStatus?.status === 'COMPLETED' && (
-                                    <div className="text-center py-4">
-                                        <div className="w-16 h-16 rounded-full bg-green-50 border border-green-100 flex items-center justify-center mx-auto mb-4">
-                                            <CheckCircle2 size={28} className="text-green-600" />
-                                        </div>
-                                        <p className="text-slate-900 font-bold text-lg mb-1">Pesanan Selesai!</p>
-                                        <p className="text-sm text-slate-500 mb-5">Detail akun telah dikirim ke WhatsApp <span className="text-slate-800 font-semibold">{formData.wa_number}</span>.</p>
-
-                                        {validTexts.length > 0 && (
-                                            <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 mb-5 text-left">
-                                                <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Detail Akun / Serial Number</p>
-                                                {validTexts.map((lic, i) => (
-                                                    <div key={i} className="flex items-center justify-between bg-white border border-slate-100 rounded-lg p-3 mb-2 last:mb-0">
-                                                        <span className="font-mono text-slate-800 text-sm break-all">{lic}</span>
-                                                        <button onClick={() => copyToClipboard(lic)} className="text-purple-600 hover:text-purple-700 transition-colors ml-2 shrink-0">
-                                                            <Copy size={14} />
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-
-                                        {!testimonialSubmitted ? (
-                                            <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 text-left mb-5">
-                                                <label className="block text-xs font-medium text-slate-500 mb-3">Tinggalkan Testimoni (Opsional)</label>
-                                                <div className="flex gap-1 mb-3">
-                                                    {[1, 2, 3, 4, 5].map(star => (
-                                                        <button key={star} onClick={() => setRating(star)} className="focus:outline-none">
-                                                            <Star size={20} className={star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-slate-200'} />
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                                <textarea
-                                                    value={testimonialMsg}
-                                                    onChange={(e) => setTestimonialMsg(e.target.value)}
-                                                    placeholder="Tuliskan pengalaman Anda..."
-                                                    className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 h-20 resize-none mb-3"
-                                                />
-                                                <button
-                                                    onClick={submitTestimonial}
-                                                    className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2.5 rounded-xl text-sm font-bold transition-all"
-                                                >
-                                                    Kirim Testimoni
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <div className="bg-green-50 border border-green-100 rounded-xl p-4 mb-5 text-center">
-                                                <CheckCircle2 size={20} className="text-green-600 mx-auto mb-1" />
-                                                <p className="text-sm text-green-600 font-medium">Terima kasih atas testimoninya!</p>
-                                            </div>
-                                        )}
-
-                                        <button
-                                            onClick={() => { sessionStorage.removeItem(storageKey); window.scrollTo(0, 0); navigate('/'); }}
-                                            className="w-full bg-purple-600 hover:bg-purple-700 py-3.5 rounded-xl font-semibold text-white transition-colors text-sm"
-                                        >
-                                            Kembali ke Beranda
-                                        </button>
-                                    </div>
-                                )}
-
-                                {/* FAILED */}
-                                {(orderStatus?.status === 'FAILED' || orderStatus?.status === 'CANCELLED') && (
-                                    <div className="text-center py-4">
-                                        <div className="w-16 h-16 rounded-full bg-red-50 border border-red-100 flex items-center justify-center mx-auto mb-4">
-                                            <AlertCircle size={28} className="text-red-600" />
-                                        </div>
-                                        <p className="text-slate-900 font-bold text-lg mb-1">Pesanan Gagal</p>
-                                        <p className="text-sm text-slate-500 mb-5">
-                                            {orderStatus?.error_message ? `Alasan: ${orderStatus.error_message}` : 'Terjadi kesalahan dalam memproses pesanan Anda. Tim admin akan segera dihubungi.'}
-                                        </p>
-                                        <p className="text-xs text-slate-400 mb-5">
-                                            Jika sudah membayar, hubungi admin via WhatsApp dengan menyertakan ID Pesanan:&nbsp;
-                                            <span className="font-mono text-slate-700">{paymentResult?.order_id}</span>
-                                        </p>
-                                        <div className="flex gap-3">
-                                            <a
-                                                href={`https://wa.me/6285199605580?text=Halo%20admin%2C%20pesanan%20saya%20gagal.%20ID%3A%20${paymentResult?.order_id}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex-1 bg-green-50 hover:bg-green-100 border border-green-100 py-3 rounded-xl font-semibold text-green-600 transition-colors text-sm text-center"
-                                            >
-                                                Hubungi Admin
-                                            </a>
-                                            <button
-                                                onClick={() => { sessionStorage.removeItem(storageKey); window.scrollTo(0, 0); navigate('/'); }}
-                                                className="flex-1 bg-white hover:bg-slate-50 py-3 rounded-xl font-semibold text-slate-700 transition-colors border border-slate-200 text-sm"
-                                            >
-                                                Kembali
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Trust Badge */}
-                                {orderStatus?.status !== 'COMPLETED' && orderStatus?.status !== 'FAILED' && (
-                                    <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mt-5">
-                                        <Shield size={14} className="text-green-500" />
-                                        <span>Transaksi Aman & Bergaransi oleh noxarianet</span>
-                                    </div>
-                                )}
-
-                                {/* Manual refresh + Sudah Bayar */}
-                                {(orderStatus?.status === 'PENDING' || orderStatus?.status === 'PROCESSING') && (
-                                    <div className="flex flex-col items-center gap-3 mt-4">
-                                        <button
-                                            onClick={handleSudahBayar}
-                                            className="inline-flex items-center gap-2 text-sm font-bold text-white bg-green-600 hover:bg-green-700 px-6 py-3 rounded-xl transition-all shadow-md shadow-green-600/10"
-                                        >
-                                            <CheckCircle2 size={16} /> Saya Sudah Bayar
-                                        </button>
-                                        <button
-                                            onClick={manualRefresh}
-                                            disabled={isRefreshing}
-                                            className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-50"
-                                        >
-                                            <RefreshCw size={12} className={isRefreshing ? 'animate-spin' : ''} /> {isRefreshing ? 'Mengecek...' : 'Refresh status'}
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
+                            <PaymentStep
+                                orderStatus={orderStatus}
+                                paymentResult={paymentResult}
+                                isRefreshing={isRefreshing}
+                                manualRefresh={manualRefresh}
+                                downloadQR={downloadQR}
+                                copied={copied}
+                                copyToClipboard={copyToClipboard}
+                                handleSudahBayar={handleSudahBayar}
+                                validTexts={validTexts}
+                                setStep={setStep}
+                                product={product}
+                                rating={rating}
+                                setRating={setRating}
+                                testimonialMsg={testimonialMsg}
+                                setTestimonialMsg={setTestimonialMsg}
+                                isSubmitting={isSubmitting}
+                                submitTestimonial={submitTestimonial}
+                                testimonialSubmitted={testimonialSubmitted}
+                            />
                         )}
                     </motion.div>
                 </AnimatePresence>
