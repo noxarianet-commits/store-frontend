@@ -326,6 +326,18 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleFincloudBulkMarkup = async (updates) => {
+        try {
+            const res = await api.patch('/admin/fincloud/products/bulk-markup', { updates });
+            await fetchFincloud();
+            notifySuccess(res.data.message || `${res.data.updatedCount} markup berhasil disimpan!`);
+            return { success: true };
+        } catch (err) {
+            notifyError(err.response?.data?.error || 'Gagal menyimpan markup');
+            return { success: false };
+        }
+    };
+
     // ---- Product CRUD ----
     const openProductModal = (product = null) => {
         setEditingProduct(product);
@@ -445,6 +457,7 @@ const AdminDashboard = () => {
                             globalMarkupValue={globalMarkupValue} setGlobalMarkupValue={setGlobalMarkupValue}
                             expandedProduct={expandedProduct} setExpandedProduct={setExpandedProduct}
                             handleToggleBrandHidden={handleFincloudToggleBrandHidden}
+                            handleBulkMarkup={handleFincloudBulkMarkup}
                         />
                     )}
                     {activeTab === 'revenue' && <RevenueTab orders={orders} settings={settings} updateSetting={updateSetting} />}

@@ -1,14 +1,28 @@
-import { Search, Loader2, Package, CheckCircle2, DollarSign, Zap, ChevronDown, Eye, EyeOff } from 'lucide-react';
+import { Search, Loader2, Package, CheckCircle2, DollarSign, Zap, ChevronDown, Eye, EyeOff, Save } from 'lucide-react';
 import { useState } from 'react';
 
 const FincloudTab = ({
     fincloudProducts, fincloudBalance, fincloudSync, fincloudLoading,
     fincloudSearch, setFincloudSearch,
     handleSync, handleGlobalMarkup, handleMarkupUpdate, handleToggleProduct,
+    handleBulkMarkup,
     syncInProgress, globalMarkupValue, setGlobalMarkupValue,
     expandedProduct, setExpandedProduct, handleToggleBrandHidden
 }) => {
     const [localMarkup, setLocalMarkup] = useState({});
+    const [savingAll, setSavingAll] = useState(false);
+
+    const handleSaveAll = async () => {
+        const updates = Object.entries(localMarkup).map(([sku, markup]) => ({
+            sku,
+            markup: parseInt(markup) || 0,
+        }));
+        if (updates.length === 0) return;
+        setSavingAll(true);
+        const res = await handleBulkMarkup(updates);
+        setSavingAll(false);
+        if (res?.success) setLocalMarkup({});
+    };
 
     const filtered = fincloudProducts.filter(p =>
         p.name?.toLowerCase().includes(fincloudSearch.toLowerCase()) ||
@@ -106,15 +120,25 @@ const FincloudTab = ({
                         <Package size={18} className="text-purple-400" />
                         Manajemen Harga Fincloud
                     </h3>
-                    <div className="relative w-full sm:w-auto">
-                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Cari produk / sku..."
-                            value={fincloudSearch}
-                            onChange={(e) => setFincloudSearch(e.target.value)}
-                            className="w-full sm:w-64 bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors"
-                        />
+                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                        <button
+                            onClick={handleSaveAll}
+                            disabled={savingAll || Object.keys(localMarkup).length === 0}
+                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-purple-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
+                        >
+                            {savingAll ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                            Save All ({Object.keys(localMarkup).length})
+                        </button>
+                        <div className="relative w-full sm:w-auto">
+                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Cari produk / sku..."
+                                value={fincloudSearch}
+                                onChange={(e) => setFincloudSearch(e.target.value)}
+                                className="w-full sm:w-64 bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors"
+                            />
+                        </div>
                     </div>
                 </div>
 

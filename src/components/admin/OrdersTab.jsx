@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Calendar, User, Mail, Edit, Trash2, CreditCard, Search } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Calendar, User, Mail, Edit, Trash2, CreditCard, Search, Package, ChevronLeft, ChevronRight } from 'lucide-react';
 import { notifySuccess } from '../../utils/notify';
 
 const STATUS_CONFIG = {
@@ -10,9 +10,17 @@ const STATUS_CONFIG = {
     CANCELLED: { label: 'Dibatalkan', color: 'bg-gray-500/15 text-gray-400 border-gray-500/30', dot: 'bg-gray-400' },
 };
 
+const VENDOR_CONFIG = {
+    sekalipay: { label: 'Sekalipay', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+    fincloud: { label: 'Fincloud', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+};
+
+const PAGE_SIZE = 20;
+
 const OrdersTab = ({ orders = [], openOrderModal, deleteOrder }) => {
     const [searchId, setSearchId] = useState('');
     const [searchResult, setSearchResult] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
 
     const handleSearch = () => {
         if (!searchId.trim()) {
@@ -32,7 +40,18 @@ const OrdersTab = ({ orders = [], openOrderModal, deleteOrder }) => {
         setSearchResult(null);
     };
 
+    // Reset to page 1 when search result changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchResult]);
+
     const displayOrders = searchResult === 'notfound' ? [] : (searchResult || orders);
+    
+    // Pagination
+    const totalPages = Math.ceil(displayOrders.length / PAGE_SIZE);
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    const endIndex = startIndex + PAGE_SIZE;
+    const paginatedOrders = displayOrders.slice(startIndex, endIndex);
 
     if (orders.length === 0) {
         return (
@@ -83,8 +102,10 @@ const OrdersTab = ({ orders = [], openOrderModal, deleteOrder }) => {
                 )}
             </div>
 
-            {displayOrders.map(order => {
+            {paginatedOrders.map(order => {
                 const statusCfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.PENDING;
+                const vendor = order.vendor || 'sekalipay';
+                const vendorCfg = VENDOR_CONFIG[vendor] || VENDOR_CONFIG.sekalipay;
                 return (
                     <div key={order.id} className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-4 sm:p-6 hover:border-white/10 transition-all group">
                         <div className="flex flex-col lg:flex-row justify-between gap-4 lg:gap-6">
@@ -94,6 +115,10 @@ const OrdersTab = ({ orders = [], openOrderModal, deleteOrder }) => {
                                     <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusCfg.color}`}>
                                         <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
                                         {statusCfg.label}
+                                    </span>
+                                    <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full border ${vendorCfg.color}`}>
+                                        <Package size={10} />
+                                        {vendorCfg.label}
                                     </span>
                                     <span className="text-[10px] text-gray-500 flex items-center gap-1 ml-auto sm:ml-0">
                                         <Calendar size={12} /> {new Date(order.timestamp).toLocaleString('id-ID')}
@@ -214,6 +239,36 @@ const OrdersTab = ({ orders = [], openOrderModal, deleteOrder }) => {
                     </div>
                 );
             })}
+
+            {/* Pagination Controls */}
+            {displayOrders.length > 0 && (
+                <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-4">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="text-sm text-gray-400">
+                            Menampilkan {startIndex + 1}-{Math.min(endIndex, displayOrders.length)} dari {displayOrders.length} order
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="flex items-center gap-1 px-3 py-2 bg-white/5 hover:bg-white/10 disabled:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl transition-all text-xs font-bold"
+                            >
+                                <ChevronLeft size={14} /> Prev
+                            </button>
+                            <span className="text-sm text-gray-300 px-3">
+                                Halaman {currentPage} dari {totalPages}
+                            </span>
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="flex items-center gap-1 px-3 py-2 bg-white/5 hover:bg-white/10 disabled:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl transition-all text-xs font-bold"
+                            >
+                                Next <ChevronRight size={14} />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
