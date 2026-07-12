@@ -301,7 +301,7 @@ const ProductPage = () => {
                 const isServiceRoute = location.pathname.startsWith('/service/');
 
                 const [sekalipayRes, dbRes, servicesRes, settingsRes] = await Promise.all([
-                    !isServiceRoute ? api.get('/sekalipay/items').catch(() => ({ data: { data: [] } })) : Promise.resolve({ data: { data: [] } }),
+                    !isServiceRoute ? api.get('/sekalipay/items', { params: { per_page: 200 } }).catch(() => ({ data: { data: [] } })) : Promise.resolve({ data: { data: [] } }),
                     !isServiceRoute ? api.get('/products').catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
                     api.get('/services').catch(() => ({ data: [] })),
                     api.get('/settings').catch(() => ({ data: {} }))
@@ -598,6 +598,17 @@ const ProductPage = () => {
         valFields.forEach(vf => {
             dynamicFields.push(vf);
         });
+
+        // ── Fallback if dynamicFields is empty ──
+        if (dynamicFields.length === 0) {
+            const cat = product?.category?.toLowerCase() || '';
+            if (cat.includes('e-wallet') || cat.includes('ewallet')) {
+                dynamicFields.push({ key: 'note', label: 'Nomor Tujuan (HP)', required: true });
+            } else if (cat.includes('game') || cat.includes('top up') || cat.includes('topup')) {
+                dynamicFields.push({ key: 'customer_id', label: 'User ID', required: true });
+                dynamicFields.push({ key: 'zone_id', label: 'Server ID', required: false });
+            }
+        }
     }
 
     // ── Ekstrak Data Akun untuk Ditampilkan ──
