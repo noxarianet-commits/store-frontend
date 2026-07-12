@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Save, Eye, EyeOff, ImageIcon, Upload, Loader2, LogOut } from 'lucide-react';
+import { Save, Eye, EyeOff, MessageSquare, Loader2, LogOut } from 'lucide-react';
 import api from '../../api';
 import { notifySuccess, notifyError } from '../../utils/notify';
 
@@ -7,31 +7,9 @@ const SettingsTab = ({
     settings, setSettings, updateSetting,
     passwordForm, setPasswordForm, handleChangePassword
 }) => {
-    const [uploadingBanner, setUploadingBanner] = useState(false);
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showSettingsPassword, setShowSettingsPassword] = useState(false);
-    const handleInfoImageUpload = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const formData = new FormData();
-        formData.append('banner', file);
-
-        setUploadingBanner(true);
-        try {
-            const res = await api.post('/banners', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            const newUrl = res.data.url;
-            await updateSetting('info_modal_image', newUrl);
-            notifySuccess('Gambar popup berhasil diupdate!');
-        } catch (err) {
-            notifyError('Gagal upload gambar popup');
-        } finally {
-            setUploadingBanner(false);
-        }
-    };
 
     return (
         <div className="space-y-6">
@@ -66,16 +44,16 @@ const SettingsTab = ({
                 </div>
             </div>
 
-            {/* Info Modal Image */}
+            {/* Info Modal Text */}
             <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-6">
                     <div>
                         <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                            <ImageIcon size={20} className="text-purple-400" />
+                            <MessageSquare size={20} className="text-purple-400" />
                             Popup Info Penting
                         </h3>
                         <p className="text-xs text-gray-500 mt-1">
-                            Kelola popup yang muncul saat pengguna membuka halaman utama
+                            Kelola teks popup yang muncul saat pengguna membuka halaman utama
                         </p>
                     </div>
                     <div className="flex flex-col items-center gap-1">
@@ -91,53 +69,20 @@ const SettingsTab = ({
                     </div>
                 </div>
 
-                {/* Mode info */}
-                <div className={`mb-6 p-3 rounded-xl border text-xs leading-relaxed flex items-start gap-2 ${settings.info_modal_active !== false ? 'bg-green-500/5 border-green-500/20 text-green-300' : 'bg-yellow-500/5 border-yellow-500/20 text-yellow-300'}`}>
-                    <span className="text-base flex-shrink-0">{settings.info_modal_active !== false ? '🖼️' : '💬'}</span>
-                    <span>
-                        {settings.info_modal_active !== false
-                            ? <><strong>Mode Gambar (Aktif):</strong> Popup menampilkan gambar yang Anda upload di bawah ini, beserta tombol Join WA dan Tutup.</>
-                            : <><strong>Mode Simpel (Nonaktif):</strong> Popup hanya menampilkan tombol Gabung Grup WhatsApp dan Tutup, tanpa gambar.</>
-                        }
-                    </span>
-                </div>
-
-                <div className="flex flex-col md:flex-row gap-8 items-start">
-                    <div className={`w-full md:w-1/3 aspect-[3/4] bg-white/5 rounded-2xl overflow-hidden border relative group transition-all ${settings.info_modal_active !== false ? 'border-white/10' : 'border-white/5 opacity-40'}`}>
-                        <img
-                            src={settings.info_modal_image}
-                            alt="Info Modal"
-                            className="w-full h-full object-contain"
-                        />
-                        {uploadingBanner && (
-                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                                <Loader2 size={32} className="text-purple-500 animate-spin" />
-                            </div>
-                        )}
-                        {settings.info_modal_active === false && (
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest bg-black/60 px-3 py-1.5 rounded-lg">Tidak Digunakan</span>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="flex-1 space-y-4">
-                        <div className="p-4 bg-purple-500/5 border border-purple-500/10 rounded-xl">
-                            <p className="text-xs text-purple-300 leading-relaxed">
-                                Rekomendasi rasio 3:4 (Contoh: 600x800px atau 720x960px). Gambar akan otomatis terupdate di halaman depan setelah diupload.
-                            </p>
-                        </div>
-
-                        <input type="file" accept="image/*" id="infoModalInput" className="hidden" onChange={handleInfoImageUpload} />
-
-                        <button
-                            onClick={() => document.getElementById('infoModalInput').click()}
-                            className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg shadow-purple-600/10 transition-all flex items-center justify-center gap-2"
-                        >
-                            <Upload size={18} /> Ganti Gambar Popup
-                        </button>
-
-                    </div>
+                <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-2">Pesan Popup</label>
+                    <textarea
+                        value={settings.info_modal_text || ''}
+                        onChange={(e) => setSettings({ ...settings, info_modal_text: e.target.value })}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white h-24 focus:outline-none focus:border-purple-500/50"
+                        placeholder="Masukkan teks popup di sini (misal: Bergabunglah dengan grup WhatsApp kami...)"
+                    />
+                    <button
+                        onClick={() => updateSetting('info_modal_text', settings.info_modal_text)}
+                        className="bg-purple-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 mt-4"
+                    >
+                        <Save size={18} /> Simpan Teks Popup
+                    </button>
                 </div>
             </div>
 
