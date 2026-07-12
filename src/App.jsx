@@ -8,6 +8,7 @@ import CaraOrder from './pages/CaraOrder';
 import WebsiteOrderPage from './pages/WebsiteOrderPage';
 import AdminDashboard from './pages/AdminDashboard';
 import NotFound from './pages/NotFound';
+import FAQPage from './pages/FAQPage';
 import ErrorPage from './pages/ErrorPage';
 import FloatingButtons from './components/FloatingButtons';
 import ScrollToTop from './components/ScrollToTop';
@@ -28,6 +29,7 @@ function App() {
         <Route path="/cara" element={<CaraOrder />} />
         <Route path="/website-order" element={<WebsiteOrderPage />} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        <Route path="/faq" element={<FAQPage />} />
         <Route path="/error" element={<ErrorPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

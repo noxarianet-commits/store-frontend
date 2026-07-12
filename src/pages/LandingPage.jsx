@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Megaphone, X, Loader2 } from 'lucide-react';
+import { Megaphone, X, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import api from '../api';
 import HeroSection from '../components/home/HeroSection';
 import CategoryTabs from '../components/home/CategoryTabs';
@@ -234,6 +234,8 @@ const LandingPage = () => {
                     testimonials={homeData?.testimonials || []}
                 />
 
+                <FAQSection />
+
                 {/* ═══ DESCRIPTION ═══ */}
                 <div className="mb-12 text-center">
                     <p className="text-xs text-gray-500 leading-relaxed max-w-lg mx-auto">
@@ -261,6 +263,7 @@ const LandingPage = () => {
                                 <li><Link to="/garansi" className="hover:text-purple-600 transition">Klaim Garansi</Link></li>
                                 <li><Link to="/tos" className="hover:text-purple-600 transition">Syarat & Ketentuan</Link></li>
                                 <li><Link to="/cara" className="hover:text-purple-600 transition">Cara Order</Link></li>
+                                <li><Link to="/faq" className="hover:text-purple-600 transition">FAQ</Link></li>
                             </ul>
                         </div>
                         <div>
@@ -286,6 +289,83 @@ const LandingPage = () => {
                 </div>
             </footer>
         </div>
+    );
+};
+
+/** Five FAQs shown on the home page with accordion interaction. */
+const HOME_FAQS = [
+    { id: 1, q: 'Apa itu noxarianet store?', a: 'noxarianet store adalah platform layanan digital yang menyediakan transfer e-wallet, aplikasi premium, top up game, dan berbagai kebutuhan digital lainnya dengan proses cepat, aman, dan praktis.' },
+    { id: 2, q: 'Apakah DANA yang belum Premium bisa transfer?', a: 'Bisa. Kamu dapat transfer ke sesama DANA maupun ke berbagai e-wallet lainnya melalui layanan noxarianet store tanpa perlu upgrade ke DANA Premium.' },
+    { id: 3, q: 'Bagaimana proses transaksinya?', a: 'Semua transaksi diproses secara otomatis melalui sistem sehingga lebih cepat, praktis, dan meminimalkan kesalahan.' },
+    { id: 4, q: 'Pembayarannya bagaimana?', a: 'Pembayaran menggunakan QRIS Otomatis (Dynamic QRIS) sehingga lebih mudah, aman, dan praktis tanpa perlu konfirmasi manual.' },
+    { id: 5, q: 'Berapa lama proses transaksi?', a: 'Sebagian besar transaksi diproses dalam hitungan detik hingga beberapa menit, tergantung jenis layanan dan kondisi sistem.' },
+];
+
+const FAQSection = () => {
+    const [openId, setOpenId] = useState(null);
+    const toggle = (id) => setOpenId(prev => (prev === id ? null : id));
+
+    return (
+        <section className="mb-14">
+            {/* Section header */}
+            <div className="flex items-center justify-between mb-5">
+                <div>
+                    <h2 className="text-lg font-extrabold text-slate-900">Pertanyaan Umum</h2>
+                    <p className="text-xs text-slate-500 mt-0.5">FAQ seputar layanan kami</p>
+                </div>
+                <Link
+                    to="/faq"
+                    className="text-xs font-semibold text-purple-600 hover:text-purple-700 transition flex items-center gap-1"
+                >
+                    Lihat semua →
+                </Link>
+            </div>
+
+            {/* Accordion items */}
+            <div className="space-y-2.5">
+                {HOME_FAQS.map((item) => {
+                    const isOpen = openId === item.id;
+                    return (
+                        <div
+                            key={item.id}
+                            className={`border rounded-2xl overflow-hidden transition-all duration-200 bg-white ${
+                                isOpen ? 'border-purple-300 shadow-sm shadow-purple-100' : 'border-slate-200 hover:border-purple-200'
+                            }`}
+                        >
+                            <button
+                                id={`home-faq-${item.id}`}
+                                onClick={() => toggle(item.id)}
+                                aria-expanded={isOpen}
+                                className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left"
+                            >
+                                <span className={`font-semibold text-sm leading-snug ${isOpen ? 'text-purple-700' : 'text-slate-800'}`}>
+                                    {item.q}
+                                </span>
+                                <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
+                                    isOpen ? 'bg-purple-100 text-purple-600' : 'bg-slate-100 text-slate-400'
+                                }`}>
+                                    {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                </span>
+                            </button>
+                            <AnimatePresence initial={false}>
+                                {isOpen && (
+                                    <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        transition={{ duration: 0.2, ease: 'easeInOut' }}
+                                    >
+                                        <div className="px-5 pb-4 pt-3 text-sm text-slate-600 leading-relaxed border-t border-slate-100">
+                                            {item.a}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    );
+                })}
+            </div>
+        </section>
     );
 };
 
