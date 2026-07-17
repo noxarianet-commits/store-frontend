@@ -20,8 +20,8 @@ const CATEGORY_TABS = [
  */
 const CategoryTabs = ({ activeTab, onTabChange, counts = {} }) => {
     return (
-        <section className="mb-8">
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+        <section className="mb-6">
+            <div className="flex items-center gap-1.5 md:gap-2 overflow-x-auto no-scrollbar pb-1">
                 {CATEGORY_TABS.map((tab) => {
                     const isActive = activeTab === tab.id;
                     const count = counts[tab.id];
@@ -30,24 +30,24 @@ const CategoryTabs = ({ activeTab, onTabChange, counts = {} }) => {
                         <button
                             key={tab.id}
                             onClick={() => onTabChange(tab.id)}
-                            className={`relative whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-200 border ${
+                            className={`relative whitespace-nowrap px-3.5 py-2 md:px-5 md:py-2.5 rounded-full text-xs md:text-sm font-bold transition-colors duration-300 border ${
                                 isActive
-                                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-purple-600 shadow-md shadow-purple-600/15'
+                                    ? 'text-white border-purple-600/20 shadow-sm'
                                     : 'bg-white text-slate-600 border-slate-200/80 hover:bg-slate-50 hover:text-slate-950 hover:border-slate-300 shadow-sm'
                             }`}
                         >
                             {isActive && (
                                 <motion.div
                                     layoutId="activeTabBg"
-                                    className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full -z-10"
-                                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                                    className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full"
+                                    transition={{ type: 'spring', stiffness: 350, damping: 32 }}
                                 />
                             )}
-                            <span className="relative z-10 flex items-center gap-1.5">
+                            <span className="relative z-10 flex items-center gap-1 md:gap-1.5">
                                 {tab.label}
                                 {count !== undefined && (
-                                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
-                                        isActive ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-500'
+                                    <span className={`text-[9px] md:text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                                        isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
                                     }`}>
                                         {count}
                                     </span>

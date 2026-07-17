@@ -84,11 +84,17 @@ const LandingPage = () => {
         setShowInfoModal(false);
     };
 
+    const handleDismiss24h = () => {
+        const expiryTime = Date.now() + 24 * 60 * 60 * 1000;
+        localStorage.setItem('info_modal_dismissed_until', expiryTime.toString());
+        setShowInfoModal(false);
+    };
+
     const handleJoinWA = (e) => {
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         if (isMobile) {
             e.preventDefault();
-            window.location.href = 'https://chat.whatsapp.com/Ea2f1OiVk4m3d0B8Wt85oB';
+            window.location.href = 'https://chat.whatsapp.com/CbKJDpk99Hm0ItiWhDY7Kb?s=cl&p=a&ilr=4&amv=3';
         }
     };
 
@@ -100,8 +106,12 @@ const LandingPage = () => {
                 const res = await api.get('/home');
                 setHomeData(res.data);
 
-                // Selalu tampilkan jika admin mengaktifkannya (bypass local storage yang dulu)
-                setShowInfoModal(true);
+                // Cek apakah user memilih untuk dismiss selama 24 jam
+                const dismissedUntil = localStorage.getItem('info_modal_dismissed_until');
+                const now = Date.now();
+                if (!dismissedUntil || now > parseInt(dismissedUntil, 10)) {
+                    setShowInfoModal(true);
+                }
             } catch (err) {
                 console.error('Failed to fetch home data', err);
             } finally {
@@ -117,7 +127,7 @@ const LandingPage = () => {
     const counts = computeCounts(allProducts);
 
     return (
-        <div className="w-full font-sans text-gray-200 min-h-screen">
+        <div className="w-full font-sans text-gray-200 min-h-screen bg-grid-pattern">
 
             {/* ═══ MARQUEE STATUS ═══ */}
             {settings.shop_status?.message && (
@@ -143,6 +153,7 @@ const LandingPage = () => {
                 show={showInfoModal && settings.info_modal_active !== false}
                 settings={settings}
                 onClose={handleCloseInfoModal}
+                onDismiss24h={handleDismiss24h}
                 onJoinWA={handleJoinWA}
             />
 
@@ -352,36 +363,39 @@ const FAQSection = () => {
  * InfoModal — Reusable info popup modal.
  * Text only mode.
  */
-const InfoModal = ({ show, settings, onClose, onJoinWA }) => {
-    const waLink = 'https://chat.whatsapp.com/Ea2f1OiVk4m3d0B8Wt85oB';
+const InfoModal = ({ show, settings, onClose, onDismiss24h, onJoinWA }) => {
+    const waLink = 'https://chat.whatsapp.com/CbKJDpk99Hm0ItiWhDY7Kb?s=cl&p=a&ilr=4&amv=3';
     const WaSvg = () => (
-        <svg className="w-5 h-5 fill-current flex-shrink-0" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.029 18.88c-1.161 0-2.305-.292-3.318-.844l-3.677.964.984-3.595c-.607-1.052-.927-2.246-.926-3.468.001-5.824 4.74-10.563 10.564-10.563 5.826 0 10.564 4.738 10.564 10.562s-4.738 10.564-10.564 10.564z"/></svg>
+        <svg className="w-4 h-4 fill-current flex-shrink-0" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.591 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.029 18.88c-1.161 0-2.305-.292-3.318-.844l-3.677.964.984-3.595c-.607-1.052-.927-2.246-.926-3.468.001-5.824 4.74-10.563 10.564-10.563 5.826 0 10.564 4.738 10.564 10.562s-4.738 10.564-10.564 10.564z"/></svg>
     );
 
     return (
         <AnimatePresence>
             {show && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-                    <motion.div initial={{ opacity: 0, scale: 0.9, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 30 }} transition={{ type: 'spring', stiffness: 300, damping: 25 }} className="relative w-full max-w-[320px] bg-white rounded-[28px] p-6 shadow-2xl">
-                        <button onClick={onClose} className="absolute top-4 right-4 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all">
-                            <X size={18} />
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+                    <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} transition={{ type: 'spring', stiffness: 320, damping: 26 }} className="relative w-full max-w-[290px] bg-white rounded-3xl p-5 shadow-2xl">
+                        <button onClick={onClose} className="absolute top-3.5 right-3.5 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all">
+                            <X size={16} />
                         </button>
-                        <div className="flex flex-col items-center text-center mb-6 mt-1">
-                            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-purple-500/30">
-                                <Megaphone className="text-white" size={28} />
+                        <div className="flex flex-col items-center text-center mb-4 mt-1">
+                            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center mb-3 shadow-md shadow-purple-500/20">
+                                <Megaphone className="text-white" size={22} />
                             </div>
-                            <h2 className="text-xl font-extrabold text-gray-900">Info Penting! 📢</h2>
-                            <p className="text-sm text-gray-500 mt-1.5 leading-relaxed px-2">
+                            <h2 className="text-lg font-extrabold text-gray-900">Info Penting! 📢</h2>
+                            <p className="text-xs text-gray-600 mt-2 leading-relaxed px-1">
                                 {settings?.info_modal_text || 'Bergabunglah dengan grup WhatsApp kami untuk mendapatkan info promo, update produk, dan penawaran eksklusif terbaru!'}
                             </p>
                         </div>
-                        <div className="border-t border-gray-100 mb-5" />
-                        <div className="flex flex-col gap-3">
-                            <a href={waLink} target="_blank" rel="noreferrer" onClick={onJoinWA} className="w-full py-4 px-4 rounded-2xl bg-[#25D366] text-white font-bold hover:bg-[#1da851] active:scale-95 transition-all text-sm flex items-center justify-center gap-2.5 shadow-lg shadow-[#25D366]/30">
+                        <div className="border-t border-gray-100 mb-4" />
+                        <div className="flex flex-col gap-2.5 items-center w-full">
+                            <a href={waLink} target="_blank" rel="noreferrer" onClick={onJoinWA} className="w-full py-3 px-4 rounded-xl bg-[#25D366] text-white font-bold hover:bg-[#1da851] active:scale-95 transition-all text-xs flex items-center justify-center gap-2 shadow-md shadow-[#25D366]/20">
                                 <WaSvg /> Gabung Grup WhatsApp
                             </a>
-                            <button onClick={onClose} className="w-full py-3.5 px-4 rounded-2xl border-2 border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 hover:border-gray-300 active:scale-95 transition-all text-sm">Tutup</button>
+                            <button onClick={onClose} className="w-full py-2.5 px-4 rounded-xl border border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 hover:border-gray-300 active:scale-95 transition-all text-xs">Tutup</button>
+                            <button onClick={onDismiss24h} className="text-[11px] text-gray-400 hover:text-purple-600 transition-colors underline mt-0.5">
+                                Jangan tampilkan lagi selama 24 jam
+                            </button>
                         </div>
                     </motion.div>
                 </div>
