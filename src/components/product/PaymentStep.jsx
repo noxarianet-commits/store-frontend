@@ -59,8 +59,28 @@ const PaymentStep = ({
     testimonialSubmitted
 }) => {
     const statusConfig = {
-        PENDING: { label: 'Menunggu Pembayaran', color: 'text-yellow-600', bg: 'bg-yellow-50 border-yellow-100', icon: <Clock size={16} className="text-yellow-600" /> },
-        PROCESSING: { label: 'Sedang Diproses', color: 'text-blue-600', bg: 'bg-blue-50 border-blue-100', icon: <Loader2 size={16} className="text-blue-600 animate-spin" /> },
+        PENDING: { 
+            label: 'Menunggu Pembayaran', 
+            color: 'text-yellow-600', 
+            bg: 'bg-yellow-50 border-yellow-100', 
+            icon: (
+                <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
+                    <Loader2 size={16} className="text-yellow-600 animate-spin absolute" />
+                    <Clock size={10} className="text-yellow-600" />
+                </div>
+            )
+        },
+        PROCESSING: { 
+            label: 'Sedang Diproses', 
+            color: 'text-blue-600', 
+            bg: 'bg-blue-50 border-blue-100', 
+            icon: (
+                <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
+                    <Loader2 size={16} className="text-blue-600 animate-spin absolute" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-ping" />
+                </div>
+            )
+        },
         COMPLETED: { label: 'Selesai!', color: 'text-green-600', bg: 'bg-green-50 border-green-100', icon: <CheckCircle2 size={16} className="text-green-600" /> },
         FAILED: { label: 'Gagal', color: 'text-red-600', bg: 'bg-red-50 border-red-100', icon: <AlertCircle size={16} className="text-red-600" /> },
         CANCELLED: { label: 'Dibatalkan', color: 'text-slate-500', bg: 'bg-slate-50 border-slate-100', icon: <AlertCircle size={16} className="text-slate-500" /> },
@@ -71,13 +91,19 @@ const PaymentStep = ({
     return (
         <div>
             {/* Info Tunggu */}
-            <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-5">
-                <Info size={18} className="text-blue-600 mt-0.5 shrink-0" />
-                <div>
-                    <p className="text-blue-700 text-sm font-semibold">Mohon Ditunggu</p>
-                    <p className="text-blue-600/80 text-xs mt-0.5">Pesanan akan diproses selama 1-5 menit dan detail akun akan dikirim ke Email Anda. Mohon tetap di halaman ini.</p>
+            {(orderStatus?.status === 'PENDING' || orderStatus?.status === 'PROCESSING' || !orderStatus?.status) && (
+                <div className="flex items-start gap-3 bg-blue-50/80 border border-blue-100/70 rounded-xl px-4 py-3 mb-5 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-indigo-500/5 to-blue-500/5 animate-pulse pointer-events-none" />
+                    <div className="relative flex items-center justify-center shrink-0 mt-0.5 w-5 h-5">
+                        <div className="absolute inset-0 rounded-full bg-blue-400/20 animate-ping" />
+                        <Loader2 size={16} className="text-blue-600 animate-spin relative z-10" />
+                    </div>
+                    <div className="relative z-10">
+                        <p className="text-blue-700 text-sm font-semibold">Mohon Ditunggu</p>
+                        <p className="text-blue-600/80 text-xs mt-0.5">Pesanan akan diproses selama 1-5 menit dan detail akun akan dikirim ke Email Anda. Mohon tetap di halaman ini.</p>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Status Badge */}
             <div className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border mb-5 ${currentStatus.bg}`}>
@@ -440,9 +466,28 @@ const PaymentStep = ({
                     </div>
                     <h3 className="text-lg font-bold text-red-800 mb-1">Pesanan {orderStatus?.status === 'FAILED' ? 'Gagal' : 'Dibatalkan'}</h3>
                     <p className="text-sm text-red-700 mb-4">{orderStatus?.error_message || 'Terjadi kesalahan atau pesanan dibatalkan/kadaluarsa.'}</p>
+                    
+                    {/* Hubungi Admin Button */}
+                    <a
+                        href={`https://wa.me/6285199605580?text=${encodeURIComponent(
+                            `Halo admin, pesanan saya ${orderStatus?.status === 'FAILED' ? 'Gagal' : 'Dibatalkan'}.\n\n` +
+                            `Detail Pesanan:\n` +
+                            `- ID Pesanan: ${orderStatus?.order_id || paymentResult?.order_id || '-'}\n` +
+                            `- Invoice: ${orderStatus?.pg_invoice || '-'}\n` +
+                            `- Produk: ${product?.name || orderStatus?.product_name || '-'}\n` +
+                            `- Varian: ${orderStatus?.variant_name || '-'}\n` +
+                            `- Alasan: ${orderStatus?.error_message || 'Tidak diketahui'}`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 rounded-xl transition-colors shadow-sm mb-3 text-sm"
+                    >
+                        Hubungi Admin via WhatsApp
+                    </a>
+
                     <button
                         onClick={() => { setStep(1); window.location.href = '/'; }}
-                        className="w-full bg-white border border-red-200 hover:bg-red-50 text-red-700 font-bold py-3.5 rounded-xl transition-colors shadow-sm"
+                        className="w-full bg-white border border-red-200 hover:bg-red-50 text-red-700 font-bold py-3.5 rounded-xl transition-colors shadow-sm text-sm"
                     >Kembali ke Beranda</button>
                 </div>
             )}

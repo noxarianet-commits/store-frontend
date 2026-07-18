@@ -786,10 +786,19 @@ const ProductPage = () => {
                     {steps.map((s, i) => (
                         <Fragment key={i}>
                             <div className={`flex items-center gap-2 ${step > i + 1 ? 'text-purple-600' : step === i + 1 ? 'text-slate-800' : 'text-slate-400'}`}>
-                                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border transition-all ${
-                                    step > i + 1 ? 'bg-purple-600 border-purple-600 text-white' : step === i + 1 ? 'border-purple-500 text-purple-600 bg-purple-50' : 'border-slate-200 text-slate-400'
+                                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border transition-all relative ${
+                                    step > i + 1 ? 'bg-purple-600 border-purple-600 text-white' : step === i + 1 ? 'border-purple-500 text-purple-600 bg-purple-50 ring-2 ring-purple-500/20' : 'border-slate-200 text-slate-400'
                                 }`}>
-                                    {step > i + 1 ? <CheckCircle2 size={14} /> : i + 1}
+                                    {step > i + 1 ? (
+                                        <CheckCircle2 size={14} />
+                                    ) : step === i + 1 ? (
+                                        <>
+                                            <span className="absolute inset-0 rounded-full border border-purple-400 animate-ping opacity-75 pointer-events-none" />
+                                            <span className="relative">{i + 1}</span>
+                                        </>
+                                    ) : (
+                                        i + 1
+                                    )}
                                 </div>
                                 <span className="text-xs font-medium hidden sm:block">{s}</span>
                             </div>
