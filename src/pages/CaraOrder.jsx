@@ -33,7 +33,7 @@ const CaraOrder = () => {
                         <div className="w-8 h-8 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center font-bold shrink-0">2</div>
                         <div>
                             <h3 className="text-slate-800 font-bold mb-2">Isi Data Pesanan</h3>
-                            <p className="text-sm text-slate-500 leading-relaxed">Pilih durasi paket (misal: 1 Bulan, 3 Bulan) dan masukkan Nomor WhatsApp aktif Anda. Nomor ini digunakan untuk mengirim detail akun atau notifikasi pesanan.</p>
+                            <p className="text-sm text-slate-500 leading-relaxed">Masukkan Nomor WhatsApp aktif dan alamat Email aktif Anda. Email ini digunakan untuk mengirimkan detail akun/lisensi dan notifikasi status pesanan secara otomatis.</p>
                         </div>
                     </div>
 
@@ -51,7 +51,7 @@ const CaraOrder = () => {
                         <div className="w-8 h-8 rounded-full bg-green-50 text-green-600 flex items-center justify-center font-bold shrink-0">4</div>
                         <div>
                             <h3 className="text-slate-800 font-bold mb-2">Selesai! Terima Pesanan</h3>
-                            <p className="text-sm text-slate-500 leading-relaxed">Jika pembayaran otomatis (QRIS), akun akan langsung muncul di layar dan dikirim ke WhatsApp Anda. Untuk pembayaran manual/layanan jasa, silakan chat admin menggunakan tombol konfirmasi yang disediakan.</p>
+                            <p className="text-sm text-slate-500 leading-relaxed">Jika pembayaran otomatis (QRIS), detail akun/lisensi akan langsung muncul di layar dan dikirim secara otomatis ke Email Anda. Untuk pembayaran manual/layanan jasa, silakan chat admin menggunakan tombol konfirmasi yang disediakan.</p>
                         </div>
                     </div>
                 </div>

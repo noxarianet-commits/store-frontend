@@ -155,17 +155,106 @@ const ProductPage = () => {
     useEffect(() => {
         if (orderStatus?.status === 'COMPLETED' && !completedAlertShown.current) {
             completedAlertShown.current = true;
-            Swal.fire({
-                icon: 'success',
-                title: 'Pesanan Selesai!',
-                text: 'Pembayaran berhasil dan pesanan Anda telah diproses.',
-                background: '#ffffff',
-                color: '#1e293b',
-                confirmButtonColor: '#7c3aed',
-                confirmButtonText: 'Lanjutkan'
-            });
+            
+            const isService = product?.is_service_table || product?.category?.toLowerCase().includes('jasa');
+            
+            if (isService) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Pesanan Selesai!',
+                    text: 'Pembayaran berhasil dan pesanan Anda telah diproses.',
+                    background: '#ffffff',
+                    color: '#1e293b',
+                    confirmButtonColor: '#7c3aed',
+                    confirmButtonText: 'Lanjutkan'
+                });
+            } else {
+                let currentRating = 5;
+                
+                Swal.fire({
+                    title: 'Pesanan Selesai!',
+                    html: `
+                        <div class="text-center font-sans">
+                            <p class="text-sm text-slate-500 mb-5">Pembayaran berhasil dan pesanan Anda telah diproses.</p>
+                            <div class="border-t border-slate-100 pt-5 mt-3">
+                                <h4 class="text-sm font-bold text-slate-800 mb-3 flex items-center justify-center gap-1.5">
+                                    ⭐ Beri Penilaian
+                                </h4>
+                                <div class="flex justify-center gap-2 mb-4" id="swal-rating-container">
+                                    <button type="button" data-val="1" class="swal-star-btn text-yellow-400 text-3xl focus:outline-none transition-transform hover:scale-110">★</button>
+                                    <button type="button" data-val="2" class="swal-star-btn text-yellow-400 text-3xl focus:outline-none transition-transform hover:scale-110">★</button>
+                                    <button type="button" data-val="3" class="swal-star-btn text-yellow-400 text-3xl focus:outline-none transition-transform hover:scale-110">★</button>
+                                    <button type="button" data-val="4" class="swal-star-btn text-yellow-400 text-3xl focus:outline-none transition-transform hover:scale-110">★</button>
+                                    <button type="button" data-val="5" class="swal-star-btn text-yellow-400 text-3xl focus:outline-none transition-transform hover:scale-110">★</button>
+                                </div>
+                                <textarea 
+                                    id="swal-testi-msg" 
+                                    placeholder="Bagaimana pelayanan kami? Tulis testimoni Anda di sini..." 
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-800 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 h-24 resize-none"
+                                ></textarea>
+                            </div>
+                        </div>
+                    `,
+                    background: '#ffffff',
+                    color: '#1e293b',
+                    confirmButtonColor: '#7c3aed',
+                    confirmButtonText: 'Kirim & Lanjutkan',
+                    showCancelButton: true,
+                    cancelButtonText: 'Lewati',
+                    cancelButtonColor: '#94a3b8',
+                    didOpen: () => {
+                        const stars = document.querySelectorAll('.swal-star-btn');
+                        const updateStars = (val) => {
+                            currentRating = val;
+                            stars.forEach((star, index) => {
+                                if (index < val) {
+                                    star.innerHTML = '★';
+                                    star.classList.add('text-yellow-400');
+                                    star.classList.remove('text-slate-300');
+                                } else {
+                                    star.innerHTML = '☆';
+                                    star.classList.remove('text-yellow-400');
+                                    star.classList.add('text-slate-300');
+                                }
+                            });
+                        };
+                        
+                        stars.forEach(star => {
+                            star.addEventListener('click', () => {
+                                const val = parseInt(star.getAttribute('data-val'));
+                                updateStars(val);
+                            });
+                        });
+                        
+                        updateStars(5);
+                    },
+                    preConfirm: () => {
+                        const text = document.getElementById('swal-testi-msg').value;
+                        return { rating: currentRating, text };
+                    }
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        const { rating: finalRating, text: finalTesti } = result.value || {};
+                        if (finalTesti && finalTesti.trim()) {
+                            try {
+                                await api.post('/testimonials', {
+                                    name: formData.wa_number || 'Customer',
+                                    text: finalTesti,
+                                    product: product?.name || '',
+                                    rating: finalRating,
+                                    order_id: paymentResult?.order_id || null
+                                });
+                                setTestimonialSubmitted(true);
+                                notifySuccess('Terima kasih atas testimoninya!');
+                            } catch (err) {
+                                notifyError('Tidak bisa menyimpan testimoni.');
+                            }
+                        }
+                    }
+                });
+            }
         }
-    }, [orderStatus?.status]);
+    }, [orderStatus?.status, product, formData.wa_number, paymentResult]);
 
     // ── Polling status order setelah payment dibuat ──────────────────────
     useEffect(() => {
@@ -257,7 +346,7 @@ const ProductPage = () => {
     const handleSudahBayar = () => {
         showAlert({
             title: 'Mohon Ditunggu',
-            text: 'Pesanan Anda sedang diproses dan akan dikirimkan via WA secara otomatis setelah proses pesanan selesai.',
+            text: 'Pesanan Anda sedang diproses dan akan dikirimkan via Email secara otomatis setelah proses pesanan selesai.',
             confirmText: 'Baik',
         });
     };
@@ -788,6 +877,7 @@ const ProductPage = () => {
                                     isValidating={isValidating}
                                     validatedAccount={validatedAccount}
                                     vendor={vendor}
+                                    product={product}
                                 />
                                 
                                 {/* Order Summary */}
@@ -814,7 +904,7 @@ const ProductPage = () => {
                                             <div className="flex-1 min-w-0">
                                                 <h4 className="text-amber-900 font-bold text-xs uppercase tracking-wider mb-1">Peringatan Konfirmasi</h4>
                                                 <p className="text-amber-800 text-xs leading-relaxed">
-                                                    Harap pastikan nomor WhatsApp Anda <strong>benar dan aktif</strong> karena produk dan bukti transaksi akan dikirim via WhatsApp. Jika terdapat kesalahan pengisian data, hal tersebut <strong>bukan tanggung jawab kami</strong>.
+                                                    Harap pastikan nomor WhatsApp dan alamat Email Anda <strong>benar dan aktif</strong> karena produk dan bukti transaksi akan dikirim via WhatsApp & Email. Jika terdapat kesalahan pengisian data, hal tersebut <strong>bukan tanggung jawab kami</strong>.
                                                 </p>
                                                 <label className="flex items-center gap-2.5 mt-3.5 cursor-pointer group">
                                                     <input
@@ -824,7 +914,7 @@ const ProductPage = () => {
                                                         className="w-4 h-4 text-purple-600 border-slate-300 rounded focus:ring-purple-500 focus:ring-2 cursor-pointer transition-all"
                                                     />
                                                     <span className="text-xs text-amber-900 font-semibold select-none group-hover:text-amber-950 transition-colors">
-                                                        Saya mengonfirmasi nomor WhatsApp saya benar & aktif
+                                                        Saya mengkonfirmasi nomor WhatsApp & alamat Email saya benar & aktif
                                                     </span>
                                                 </label>
                                             </div>
@@ -844,7 +934,7 @@ const ProductPage = () => {
                                                 handleCustomConsultation();
                                             } else {
                                                 if (!isWaConfirmed) {
-                                                    notifyWarning('Harap centang konfirmasi nomor WhatsApp terlebih dahulu!');
+                                                    notifyWarning('Harap centang konfirmasi nomor WhatsApp & alamat Email terlebih dahulu!');
                                                     return;
                                                 }
                                                 submitPayment();

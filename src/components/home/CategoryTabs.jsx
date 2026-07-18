@@ -30,11 +30,10 @@ const CategoryTabs = ({ activeTab, onTabChange, counts = {} }) => {
                         <button
                             key={tab.id}
                             onClick={() => onTabChange(tab.id)}
-                            className={`relative whitespace-nowrap px-3.5 py-2 md:px-5 md:py-2.5 rounded-full text-xs md:text-sm font-bold transition-colors duration-300 border ${
-                                isActive
-                                    ? 'text-white border-purple-600/20 shadow-sm'
-                                    : 'bg-white text-slate-600 border-slate-200/80 hover:bg-slate-50 hover:text-slate-950 hover:border-slate-300 shadow-sm'
-                            }`}
+                            className={`relative whitespace-nowrap px-3.5 py-2 md:px-5 md:py-2.5 rounded-full text-xs md:text-sm font-bold transition-colors duration-300 border ${isActive
+                                ? 'text-white border-purple-600/20 shadow-sm'
+                                : 'bg-white text-slate-600 border-slate-200/80 hover:bg-slate-50 hover:text-slate-950 hover:border-slate-300 shadow-sm'
+                                }`}
                         >
                             {isActive && (
                                 <motion.div
@@ -46,9 +45,8 @@ const CategoryTabs = ({ activeTab, onTabChange, counts = {} }) => {
                             <span className="relative z-10 flex items-center gap-1 md:gap-1.5">
                                 {tab.label}
                                 {count !== undefined && (
-                                    <span className={`text-[9px] md:text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
-                                        isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
-                                    }`}>
+                                    <span className={`text-[9px] md:text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+                                        }`}>
                                         {count}
                                     </span>
                                 )}

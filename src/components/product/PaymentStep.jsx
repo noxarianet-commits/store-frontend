@@ -75,7 +75,7 @@ const PaymentStep = ({
                 <Info size={18} className="text-blue-600 mt-0.5 shrink-0" />
                 <div>
                     <p className="text-blue-700 text-sm font-semibold">Mohon Ditunggu</p>
-                    <p className="text-blue-600/80 text-xs mt-0.5">Pesanan akan diproses selama 1-5 menit dan detail akun akan dikirim ke WhatsApp Anda. Mohon tetap di halaman ini.</p>
+                    <p className="text-blue-600/80 text-xs mt-0.5">Pesanan akan diproses selama 1-5 menit dan detail akun akan dikirim ke Email Anda. Mohon tetap di halaman ini.</p>
                 </div>
             </div>
 
@@ -152,16 +152,90 @@ const PaymentStep = ({
                 </div>
             )}
 
+            {/* PENDING tanpa paymentResult — waiting confirmation */}
+            {(orderStatus?.status === 'PENDING' || !orderStatus?.status) && !paymentResult && (
+                <div className="relative rounded-2xl overflow-hidden mb-6 border border-yellow-100">
+                    <div className="absolute inset-0 bg-gradient-to-br from-yellow-50 via-amber-50/40 to-orange-50" />
+                    <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl overflow-hidden">
+                        <div className="h-full w-full bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-300 animate-pulse" />
+                    </div>
+                    <div className="relative text-center py-10 px-6">
+                        <div className="relative w-24 h-24 mx-auto mb-5">
+                            <div className="absolute inset-0 rounded-full border-4 border-yellow-200/40 animate-ping" style={{animationDuration:'2.2s'}} />
+                            <div className="absolute inset-2 rounded-full border-4 border-amber-200/30 animate-ping" style={{animationDuration:'3s',animationDelay:'0.6s'}} />
+                            <div className="absolute inset-4 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center shadow-lg shadow-yellow-200/60">
+                                <Clock size={24} className="text-white" />
+                            </div>
+                        </div>
+                        <h3 className="text-lg font-extrabold text-slate-800 mb-1">Menunggu Konfirmasi Pembayaran</h3>
+                        <p className="text-sm text-slate-500 mb-5 px-4">Sistem sedang mendeteksi pembayaran Anda. Mohon tetap di halaman ini.</p>
+                        <div className="flex items-center justify-center gap-1.5">
+                            <div className="w-2 h-2 rounded-full bg-yellow-400 animate-bounce" style={{animationDelay:'0ms'}} />
+                            <div className="w-2 h-2 rounded-full bg-amber-500 animate-bounce" style={{animationDelay:'180ms'}} />
+                            <div className="w-2 h-2 rounded-full bg-orange-400 animate-bounce" style={{animationDelay:'360ms'}} />
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* PROCESSING */}
             {orderStatus?.status === 'PROCESSING' && (
-                <div className="text-center py-10 bg-slate-50 rounded-2xl border border-slate-100 mb-6 relative overflow-hidden">
-                    <div className="absolute inset-0 border-2 border-transparent border-t-purple-200/50 rounded-2xl"></div>
-                    <div className="w-16 h-16 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mx-auto mb-4 relative">
-                        <div className="absolute inset-0 rounded-full border-4 border-blue-200/30 animate-ping"></div>
-                        <Loader2 size={32} className="animate-spin relative z-10" />
+                <div className="relative rounded-2xl overflow-hidden mb-6 border border-blue-100">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50/40 to-purple-50" />
+                    <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl overflow-hidden">
+                        <div className="h-full w-full bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 animate-pulse" />
                     </div>
-                    <h3 className="text-lg font-bold text-slate-800 mb-1">Sedang Diproses</h3>
-                    <p className="text-sm text-slate-500 px-6">Pesanan sedang diproses. Detail lebih lanjut akan dikirim melalui WhatsApp.</p>
+                    <div className="relative text-center py-10 px-6">
+                        {/* Animated rings + icon */}
+                        <div className="relative w-24 h-24 mx-auto mb-5">
+                            <div className="absolute inset-0 rounded-full border-4 border-blue-200/40 animate-ping" style={{animationDuration:'2.2s'}} />
+                            <div className="absolute inset-2 rounded-full border-4 border-purple-200/30 animate-ping" style={{animationDuration:'3s',animationDelay:'0.7s'}} />
+                            <div className="absolute inset-4 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-200/60">
+                                <Loader2 size={26} className="text-white animate-spin" />
+                            </div>
+                        </div>
+
+                        <h3 className="text-lg font-extrabold text-slate-800 mb-1">Pesanan Sedang Diproses</h3>
+                        <p className="text-sm text-slate-500 mb-6 px-4">Pembayaran dikonfirmasi! Detail akun akan segera dikirim ke Email Anda.</p>
+
+                        {/* Progress Steps */}
+                        <div className="flex items-start justify-center gap-0 mb-5">
+                            <div className="flex flex-col items-center">
+                                <div className="w-8 h-8 rounded-full bg-green-100 border-2 border-green-400 flex items-center justify-center">
+                                    <CheckCircle2 size={15} className="text-green-500" />
+                                </div>
+                                <span className="text-[10px] text-green-600 font-semibold mt-1.5">Bayar</span>
+                            </div>
+                            <div className="w-10 h-0.5 bg-green-300 mt-4" />
+                            <div className="flex flex-col items-center">
+                                <div className="w-8 h-8 rounded-full bg-green-100 border-2 border-green-400 flex items-center justify-center">
+                                    <CheckCircle2 size={15} className="text-green-500" />
+                                </div>
+                                <span className="text-[10px] text-green-600 font-semibold mt-1.5">Verifikasi</span>
+                            </div>
+                            <div className="w-10 h-0.5 bg-gradient-to-r from-green-300 to-blue-400 mt-4" />
+                            <div className="flex flex-col items-center">
+                                <div className="w-8 h-8 rounded-full bg-blue-500 border-2 border-blue-600 flex items-center justify-center shadow-md shadow-blue-200/50">
+                                    <Loader2 size={14} className="text-white animate-spin" />
+                                </div>
+                                <span className="text-[10px] text-blue-600 font-bold mt-1.5">Proses</span>
+                            </div>
+                            <div className="w-10 h-0.5 bg-slate-200 mt-4" />
+                            <div className="flex flex-col items-center">
+                                <div className="w-8 h-8 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center">
+                                    <span className="text-slate-300 text-sm">✉️</span>
+                                </div>
+                                <span className="text-[10px] text-slate-400 font-semibold mt-1.5">Kirim Email</span>
+                            </div>
+                        </div>
+
+                        {/* Bouncing dots */}
+                        <div className="flex items-center justify-center gap-1.5">
+                            <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{animationDelay:'0ms'}} />
+                            <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{animationDelay:'180ms'}} />
+                            <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style={{animationDelay:'360ms'}} />
+                        </div>
+                    </div>
                 </div>
             )}
 
@@ -219,39 +293,6 @@ const PaymentStep = ({
                 </div>
             )}
 
-            {/* TESTIMONIAL FORM */}
-            {orderStatus?.status === 'COMPLETED' && product && !product.is_service_table && !testimonialSubmitted && (
-                <div className="bg-white border border-slate-200 rounded-2xl p-5 mt-6 shadow-sm">
-                    <h4 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <Star className="text-yellow-400 fill-yellow-400" size={18} />
-                        Beri Penilaian
-                    </h4>
-                    <div className="flex gap-2 mb-4 justify-center">
-                        {[1, 2, 3, 4, 5].map(star => (
-                            <button
-                                key={star}
-                                onClick={() => setRating(star)}
-                                className={`p-1 transition-transform hover:scale-110 ${star <= rating ? 'text-yellow-400' : 'text-slate-200'}`}
-                            >
-                                <Star size={32} className={star <= rating ? "fill-yellow-400" : ""} />
-                            </button>
-                        ))}
-                    </div>
-                    <textarea
-                        value={testimonialMsg}
-                        onChange={(e) => setTestimonialMsg(e.target.value)}
-                        placeholder="Bagaimana pelayanan kami? Testimoni Anda sangat berarti..."
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-800 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 mb-3 h-24 resize-none"
-                    ></textarea>
-                    <button
-                        onClick={submitTestimonial}
-                        disabled={isSubmitting}
-                        className="w-full bg-slate-900 hover:bg-black text-white font-semibold py-3 rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
-                    >
-                        {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : 'Kirim Penilaian'}
-                    </button>
-                </div>
-            )}
         </div>
     );
 };

@@ -33,58 +33,58 @@ const TestimonialCarousel = ({ testimonials }) => {
 
     return (
         <section className="mb-12">
-            <h2 className="text-xl font-bold text-slate-900 text-center mb-6">Apa Kata Mereka?</h2>
-            <div className="relative max-w-lg mx-auto overflow-hidden bg-white border border-purple-100 rounded-3xl p-6 shadow-[0_4px_20px_-4px_rgba(124,58,237,0.03)] group">
+            <h2 className="text-sm font-bold text-slate-900 text-center mb-4">Apa Kata Mereka?</h2>
+            <div className="relative max-w-sm mx-auto overflow-hidden bg-white border border-purple-100 rounded-2xl px-4 py-4 shadow-[0_2px_12px_-4px_rgba(124,58,237,0.04)] group">
                 {/* Navigation Arrows */}
                 <button
                     onClick={() => setCurrentIdx(prev => (prev === 0 ? testimonials.length - 1 : prev - 1))}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white hover:bg-slate-50 backdrop-blur-md rounded-full flex items-center justify-center text-slate-700 opacity-0 group-hover:opacity-100 transition-all z-10 border border-slate-200/80 shadow-sm"
+                    className="absolute left-1.5 top-1/2 -translate-y-1/2 w-6 h-6 bg-white hover:bg-slate-50 rounded-full flex items-center justify-center text-slate-600 opacity-0 group-hover:opacity-100 transition-all z-10 border border-slate-200/80 shadow-sm"
                 >
-                    <ChevronRight className="rotate-180" size={16} />
+                    <ChevronRight className="rotate-180" size={12} />
                 </button>
                 <button
                     onClick={() => setCurrentIdx(prev => (prev === testimonials.length - 1 ? 0 : prev + 1))}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white hover:bg-slate-50 backdrop-blur-md rounded-full flex items-center justify-center text-slate-700 opacity-0 group-hover:opacity-100 transition-all z-10 border border-slate-200/80 shadow-sm"
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 bg-white hover:bg-slate-50 rounded-full flex items-center justify-center text-slate-600 opacity-0 group-hover:opacity-100 transition-all z-10 border border-slate-200/80 shadow-sm"
                 >
-                    <ChevronRight size={16} />
+                    <ChevronRight size={12} />
                 </button>
 
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={currentIdx}
-                        initial={{ opacity: 0, x: 20 }}
+                        initial={{ opacity: 0, x: 15 }}
                         animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.3 }}
-                        className="flex flex-col items-center text-center px-8"
+                        exit={{ opacity: 0, x: -15 }}
+                        transition={{ duration: 0.25 }}
+                        className="flex flex-col items-center text-center px-5"
                     >
-                        <div className="flex gap-1 mb-4">
+                        <div className="flex gap-0.5 mb-2">
                             {[...Array(5)].map((_, i) => (
                                 <Star
                                     key={i}
-                                    size={16}
+                                    size={12}
                                     className={i < (current?.rating || 5) ? 'fill-yellow-400 text-yellow-400' : 'text-slate-200'}
                                 />
                             ))}
                         </div>
                         {(current?.text || current?.message) && (
-                            <p className="text-sm text-slate-600 italic mb-4 leading-relaxed">
+                            <p className="text-xs text-slate-600 italic mb-2 leading-relaxed">
                                 "{current?.text || current?.message}"
                             </p>
                         )}
-                        <p className="text-xs font-bold text-purple-600">
+                        <p className="text-[11px] font-bold text-purple-600">
                             {maskName(current?.name || current?.wa_number)}
                         </p>
                     </motion.div>
                 </AnimatePresence>
 
                 {/* Dot indicators */}
-                <div className="flex justify-center gap-2 mt-6">
+                <div className="flex justify-center gap-1.5 mt-3">
                     {testimonials.map((_, idx) => (
                         <button
                             key={idx}
                             onClick={() => setCurrentIdx(idx)}
-                            className={`transition-all rounded-full ${currentIdx === idx ? 'w-6 h-1.5 bg-purple-600' : 'w-1.5 h-1.5 bg-slate-200 hover:bg-slate-350'}`}
+                            className={`transition-all rounded-full ${currentIdx === idx ? 'w-4 h-1 bg-purple-600' : 'w-1 h-1 bg-slate-200 hover:bg-slate-300'}`}
                         />
                     ))}
                 </div>

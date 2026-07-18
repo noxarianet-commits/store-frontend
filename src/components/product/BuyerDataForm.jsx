@@ -44,31 +44,60 @@ const BuyerDataForm = ({
                 </div>
 
                 {/* ── Dynamic Fields from API ── */}
-                {dynamicFields.map((field, idx) => (
-                    <div key={`dyn-${idx}`}>
-                        <label className="block text-xs font-medium text-slate-500 mb-2">{field.label} {field.required && '*'}</label>
-                        <input
-                            type={field.key === 'provider_qty' ? 'number' : 'text'}
-                            value={field.key === 'provider_qty' ? providerQty : (fieldData[field.key] || '')}
-                            onChange={(e) => {
-                                if (field.key === 'provider_qty') setProviderQty(e.target.value);
-                                else setFieldData({...fieldData, [field.key]: e.target.value});
-                            }}
-                            placeholder={`Masukkan ${field.label}`}
-                            className="w-full bg-white border border-slate-200 rounded-xl p-3.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-colors"
-                        />
-                        {field.key === 'provider_qty' && selectedVariant?.provider_meta && (
-                            <p className="text-[10px] text-slate-400 mt-1">Min: {formatRp(selectedVariant.provider_meta.min_qty)} | Max: {formatRp(selectedVariant.provider_meta.max_qty)}</p>
-                        )}
-                    </div>
-                ))}
+                {dynamicFields.map((field, idx) => {
+                    const cleanedLabel = field.label.replace(/[:*]/g, '').trim();
+                    
+                    const getPlaceholderText = () => {
+                        const lowerLabel = cleanedLabel.toLowerCase();
+                        
+                        // Check if it's a number/e-wallet/destination target
+                        if (
+                            lowerLabel.includes('nomor') || 
+                            lowerLabel.includes('no') || 
+                            lowerLabel.includes('phone') || 
+                            lowerLabel.includes('gopay') || 
+                            lowerLabel.includes('dana') || 
+                            lowerLabel.includes('ovo') || 
+                            lowerLabel.includes('linkaja') || 
+                            lowerLabel.includes('shopeepay')
+                        ) {
+                            // Extract just the target name (e.g. "Gopay" instead of "Nomor Gopay")
+                            const targetName = cleanedLabel.replace(/^[nN]omor\s+/i, '').replace(/^[nN]o\s+/i, '');
+                            return `Masukkan nomor tujuan (${targetName})`;
+                        }
+                        
+                        // Default fallback
+                        return `Masukkan ${cleanedLabel}`;
+                    };
+
+                    return (
+                        <div key={`dyn-${idx}`}>
+                            <label className="block text-xs font-medium text-slate-500 mb-2">
+                                {cleanedLabel} {field.required && '*'}
+                            </label>
+                            <input
+                                type={field.key === 'provider_qty' ? 'number' : 'text'}
+                                value={field.key === 'provider_qty' ? providerQty : (fieldData[field.key] || '')}
+                                onChange={(e) => {
+                                    if (field.key === 'provider_qty') setProviderQty(e.target.value);
+                                    else setFieldData({...fieldData, [field.key]: e.target.value});
+                                }}
+                                placeholder={getPlaceholderText()}
+                                className="w-full bg-white border border-slate-200 rounded-xl p-3.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-colors"
+                            />
+                            {field.key === 'provider_qty' && selectedVariant?.provider_meta && (
+                                <p className="text-[10px] text-slate-400 mt-1">Min: {formatRp(selectedVariant.provider_meta.min_qty)} | Max: {formatRp(selectedVariant.provider_meta.max_qty)}</p>
+                            )}
+                        </div>
+                    );
+                })}
 
                 {(selectedVariant?.validation?.available || dynamicFields.some(f => f.key === 'customer_id')) && (
                     <div className="pt-2">
                         <button
                             onClick={handleValidateAccount}
                             disabled={isValidating}
-                            className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-100 py-3 rounded-xl text-sm font-bold transition flex justify-center items-center gap-2"
+                            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md shadow-blue-200/50 py-3.5 rounded-xl text-sm font-bold transition-all duration-200 flex justify-center items-center gap-2 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:pointer-events-none"
                         >
                             {isValidating ? <Loader2 size={16} className="animate-spin" /> : 'Cek ID / Validasi Akun'}
                         </button>

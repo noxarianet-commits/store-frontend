@@ -19,12 +19,12 @@ const TOS = () => {
                 </div>
                 <div className="bg-white border border-purple-100 rounded-3xl p-6 md:p-8 space-y-6 text-sm text-slate-600 leading-relaxed shadow-sm hover:border-purple-200 transition-colors">
                     <p>
-                        Selamat datang di <strong>noxarianet</strong>. Berikut adalah syarat dan ketentuan yang berlaku untuk setiap pembelian di website kami.
+                        Selamat datang di <strong>Noxarianet Store</strong>. Berikut adalah syarat dan ketentuan yang berlaku untuk setiap pembelian di website kami.
                     </p>
                     
                     <div className="space-y-4">
                         <h2 className="text-slate-800 font-bold text-base">1. Ketentuan Umum</h2>
-                        <p>Noxarianet adalah platform penyedia produk digital (akun premium, tools, script bot, dll). Semua transaksi dilakukan secara digital tanpa pengiriman fisik.</p>
+                        <p>Noxarianet Store adalah platform penyedia produk digital (akun premium, tools, script bot, dll). Semua transaksi dilakukan secara digital tanpa pengiriman fisik.</p>
                     </div>
 
                     <div className="space-y-4">

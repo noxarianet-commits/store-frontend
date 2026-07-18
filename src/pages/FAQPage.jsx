@@ -6,13 +6,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 const ALL_FAQS = [
     {
         id: 1,
-        q: 'Apa itu noxarianet store?',
-        a: 'noxarianet store adalah platform layanan digital yang menyediakan transfer e-wallet, aplikasi premium, top up game, dan berbagai kebutuhan digital lainnya dengan proses cepat, aman, dan praktis.',
+        q: 'Apa itu Noxarianet Store?',
+        a: 'Noxarianet Store adalah platform layanan digital yang menyediakan transfer e-wallet, aplikasi premium, top up game, dan berbagai kebutuhan digital lainnya dengan proses cepat, aman, dan praktis.',
     },
     {
         id: 2,
         q: 'Apakah DANA yang belum Premium bisa transfer?',
-        a: 'Bisa. Kamu dapat transfer ke sesama DANA maupun ke berbagai e-wallet lainnya melalui layanan noxarianet store tanpa perlu upgrade ke DANA Premium.',
+        a: 'Bisa. Kamu dapat transfer ke sesama DANA maupun ke berbagai e-wallet lainnya melalui layanan Noxarianet Store tanpa perlu upgrade ke DANA Premium.',
     },
     {
         id: 3,
@@ -31,7 +31,7 @@ const ALL_FAQS = [
     },
     {
         id: 6,
-        q: 'Apakah data transaksi aman di noxarianet store?',
+        q: 'Apakah data transaksi aman di Noxarianet Store?',
         a: 'Ya. Data transaksi pelanggan dijaga dengan baik dan hanya digunakan untuk keperluan proses transaksi. Privasi pelanggan menjadi prioritas kami.',
     },
     {
@@ -109,7 +109,7 @@ const FAQPage = () => {
                     <h1 className="text-3xl font-extrabold text-slate-900">FAQ</h1>
                 </div>
                 <p className="text-sm text-slate-500 mb-8 ml-[52px]">
-                    Pertanyaan yang sering diajukan seputar layanan noxarianet store.
+                    Pertanyaan yang sering diajukan seputar layanan Noxarianet Store.
                 </p>
 
                 {/* FAQ List */}

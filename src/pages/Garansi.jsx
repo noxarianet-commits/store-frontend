@@ -19,7 +19,7 @@ const Garansi = () => {
                 </div>
                 <div className="bg-white border border-purple-100 rounded-3xl p-6 md:p-8 space-y-6 text-sm text-slate-600 leading-relaxed shadow-sm hover:border-purple-200 transition-colors">
                     <p>
-                        Seluruh produk digital premium yang dijual di <strong>noxarianet</strong> bergaransi sesuai dengan durasi yang dibeli, kecuali dinyatakan lain pada deskripsi produk.
+                        Seluruh produk digital premium yang dijual di <strong>Noxarianet Store</strong> bergaransi sesuai dengan durasi yang dibeli, kecuali dinyatakan lain pada deskripsi produk.
                     </p>
                     <div className="space-y-4">
                         <h2 className="text-slate-800 font-bold text-base">Cara Melakukan Klaim Garansi:</h2>
@@ -39,7 +39,7 @@ const Garansi = () => {
                         </ul>
                     </div>
                     <div className="mt-8 pt-6 border-t border-slate-100 text-xs">
-                        <p>Dengan membeli di noxarianet, Anda dianggap menyetujui seluruh aturan garansi ini.</p>
+                        <p>Dengan membeli di Noxarianet Store, Anda dianggap menyetujui seluruh aturan garansi ini.</p>
                     </div>
                 </div>
             </div>

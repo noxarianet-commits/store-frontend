@@ -4,7 +4,6 @@ import { ArrowUp, X } from 'lucide-react';
 
 const FloatingButtons = () => {
   const [showTopBtn, setShowTopBtn] = useState(false);
-  const [bubbleText, setBubbleText] = useState('');
   const [showBubble, setShowBubble] = useState(false);
   const [bubbleClosed, setBubbleClosed] = useState(localStorage.getItem('waBubbleClosed') === 'true');
   const location = useLocation();
@@ -17,40 +16,15 @@ const FloatingButtons = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Show bubble once after 3 seconds, then stay visible (no repeating animation)
   useEffect(() => {
     if (bubbleClosed) return;
 
-    let isMounted = true;
-    const fullText = "Halo, ada yang bisa dibantu?";
+    const timer = setTimeout(() => {
+      setShowBubble(true);
+    }, 3000);
 
-    const runCycle = async () => {
-      while (isMounted) {
-        setShowBubble(false);
-        setBubbleText('');
-        await new Promise(r => setTimeout(r, 10000));
-        if (!isMounted) break;
-
-        setShowBubble(true);
-        for (let i = 1; i <= fullText.length; i++) {
-          if (!isMounted) break;
-          setBubbleText(fullText.substring(0, i));
-          await new Promise(r => setTimeout(r, 50));
-        }
-
-        if (!isMounted) break;
-        await new Promise(r => setTimeout(r, 4000));
-        if (!isMounted) break;
-
-        for (let i = fullText.length; i >= 0; i--) {
-          if (!isMounted) break;
-          setBubbleText(fullText.substring(0, i));
-          await new Promise(r => setTimeout(r, 30));
-        }
-      }
-    };
-
-    runCycle();
-    return () => { isMounted = false; };
+    return () => clearTimeout(timer);
   }, [bubbleClosed]);
 
   const goToTop = () => {
@@ -71,33 +45,45 @@ const FloatingButtons = () => {
   const isLandingPage = location.pathname === '/';
 
   return (
-    <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end gap-5">
+    <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end gap-4">
+      {/* Back to Top */}
       {showTopBtn && (
         <button
           onClick={goToTop}
-          className="w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 border border-white/20"
+          className="w-9 h-9 bg-slate-800/80 hover:bg-slate-900 text-white rounded-full flex items-center justify-center shadow-md transition-all duration-200 hover:scale-105 border border-slate-700/50"
+          title="Kembali ke atas"
         >
-          <ArrowUp size={24} />
+          <ArrowUp size={16} strokeWidth={2.5} />
         </button>
       )}
 
+      {/* WhatsApp CS */}
       {isLandingPage && (
-        <div className="flex items-center gap-3 group relative">
-          <div className={`transition-all duration-300 origin-bottom-right ${showBubble && !bubbleClosed ? 'opacity-100 scale-100' : 'opacity-0 scale-90'} bg-white text-gray-800 text-[10px] sm:text-xs font-bold px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-2xl rounded-br-sm shadow-xl border border-gray-100 cursor-default whitespace-nowrap flex items-center gap-2 pr-10`}>
-            <span>{bubbleText}</span>
-            <span className="animate-pulse font-normal">|</span>
+        <div className="flex items-center gap-2.5 group relative">
+          {/* Chat bubble — appears once, stays static */}
+          <div
+            className={`transition-all duration-500 origin-bottom-right ${
+              showBubble && !bubbleClosed
+                ? 'opacity-100 scale-100 translate-y-0'
+                : 'opacity-0 scale-90 translate-y-2 pointer-events-none'
+            } bg-white text-slate-700 text-xs font-medium px-3.5 py-2 rounded-xl rounded-br-sm shadow-lg border border-slate-100 whitespace-nowrap flex items-center gap-2`}
+          >
+            <span>Ada yang bisa dibantu? 👋</span>
             <button
               onClick={closeBubble}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+              className="ml-1 p-0.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
             >
-              <X size={14} />
+              <X size={12} />
             </button>
           </div>
+
+          {/* CS Avatar */}
           <a
             href={`https://wa.me/${waNumber}?text=${waMessage}`}
             target="_blank"
             rel="noreferrer"
-            className="w-14 h-14 rounded-full overflow-hidden shadow-lg transition-all hover:scale-110 hover:-translate-y-1 border-2 border-green-500 flex-shrink-0 bg-white"
+            className="w-12 h-12 rounded-full overflow-hidden shadow-lg transition-all duration-200 hover:scale-105 hover:-translate-y-0.5 border-2 border-green-500 flex-shrink-0 bg-white"
+            title="Chat dengan Customer Service"
           >
             <img src="/logocs.png" alt="CS Support" className="w-full h-full object-cover" />
           </a>

@@ -91,7 +91,7 @@ const PaymentSuccessPage = () => {
         },
         COMPLETED: {
             label: 'Pesanan Selesai!',
-            sub: 'Detail akun telah dikirim ke WhatsApp Anda.',
+            sub: 'Detail akun telah dikirim ke Email Anda.',
             color: 'text-green-400',
             bg: 'bg-green-500/10 border-green-500/20',
             icon: <CheckCircle2 size={32} className="text-green-400" />,
@@ -229,7 +229,7 @@ const PaymentSuccessPage = () => {
                                             </div>
                                         ))}
                                     </div>
-                                    <p className="text-xs text-gray-500 mt-2 text-center">Detail akun juga dikirim ke WhatsApp Anda.</p>
+                                    <p className="text-xs text-gray-500 mt-2 text-center">Detail akun juga dikirim ke Email Anda.</p>
                                 </div>
                             )}
 

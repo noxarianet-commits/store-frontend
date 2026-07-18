@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Megaphone, X, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Megaphone, X, Loader2, ChevronDown, ChevronUp, ShoppingBag, CheckCircle2 } from 'lucide-react';
 import api from '../api';
 import HeroSection from '../components/home/HeroSection';
 import CategoryTabs from '../components/home/CategoryTabs';
@@ -220,18 +220,36 @@ const LandingPage = () => {
                     )}
                 </section>
 
+                {/* ═══ STATS SECTION ═══ */}
+                <section className="mb-10 max-w-sm mx-auto text-center">
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-purple-600">Statistik Terpercaya</span>
+                    <h3 className="text-sm font-extrabold text-slate-900 mt-1 mb-4">Dipercaya Ribuan Pengguna</h3>
+                    <div className="grid grid-cols-2 gap-3.5">
+                        <div className="bg-white border border-slate-100 rounded-2xl p-3.5 flex flex-col items-center justify-center shadow-[0_2px_10px_-4px_rgba(124,58,237,0.08)]">
+                            <div className="w-9 h-9 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 mb-2">
+                                <ShoppingBag size={18} />
+                            </div>
+                            <span className="text-base font-black text-emerald-600 leading-none">10.000+</span>
+                            <span className="text-[10px] font-semibold text-slate-400 mt-1.5">Total Transaksi</span>
+                        </div>
+                        <div className="bg-white border border-slate-100 rounded-2xl p-3.5 flex flex-col items-center justify-center shadow-[0_2px_10px_-4px_rgba(124,58,237,0.08)]">
+                            <div className="w-9 h-9 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600 mb-2">
+                                <CheckCircle2 size={18} />
+                            </div>
+                            <span className="text-base font-black text-purple-600 leading-none">10.000+</span>
+                            <span className="text-[10px] font-semibold text-slate-400 mt-1.5">Pesanan Berhasil</span>
+                        </div>
+                    </div>
+                </section>
+
                 <TestimonialCarousel
                     testimonials={homeData?.testimonials || []}
                 />
 
                 <FAQSection />
 
-                {/* ═══ DESCRIPTION ═══ */}
-                <div className="mb-12 text-center">
-                    <p className="text-xs text-gray-500 leading-relaxed max-w-lg mx-auto">
-                        Platform digital andalan untuk upgrade produktivitas dan hiburanmu tanpa bikin dompet boncos. Nikmati pengalaman belanja akun premium yang 100% aman, diproses otomatis secara instan, dengan penawaran harga spesial.
-                    </p>
-                </div>
+
+
             </main>
 
             {/* ═══ FOOTER ═══ */}
@@ -243,8 +261,9 @@ const LandingPage = () => {
                                 <img src="/logo.png" alt="noxarianet" className="w-7 h-7 rounded object-contain" />
                                 <span className="text-lg font-bold text-slate-900">noxaria<span className="text-purple-600">net</span></span>
                             </div>
+                            <p className="text-[10px] font-extrabold text-slate-800 uppercase tracking-widest mb-1.5">Ekosistem Layanan Digital Otomatis</p>
                             <p className="text-xs text-slate-500 leading-relaxed">
-                                Platform digital andalan untuk upgrade produktivitas dan hiburanmu tanpa bikin dompet boncos.
+                                Noxarianet Store menyediakan layanan top up e-wallet, aplikasi premium, dan kebutuhan digital lainnya yang diproses secara otomatis, cepat, dan aman dalam satu platform.
                             </p>
                         </div>
                         <div>
@@ -254,6 +273,16 @@ const LandingPage = () => {
                                 <li><Link to="/tos" className="hover:text-purple-600 transition">Syarat & Ketentuan</Link></li>
                                 <li><Link to="/cara" className="hover:text-purple-600 transition">Cara Order</Link></li>
                                 <li><Link to="/faq" className="hover:text-purple-600 transition">FAQ</Link></li>
+                                <li>
+                                    <a 
+                                        href="https://wa.me/6285199605580?text=Halo%20Admin%20Noxarianet%20Store%2C%20saya%20tertarik%20untuk%20membuat%20website.%20Boleh%20minta%20informasi%20lengkap%20mengenai%20paket%2C%20harga%2C%20dan%20estimasi%20waktu%20pembuatannya%3F%20Terima%20kasih." 
+                                        target="_blank" 
+                                        rel="noreferrer" 
+                                        className="hover:text-purple-600 transition font-medium text-purple-600 flex items-center gap-1"
+                                    >
+                                        Buat Website <span className="text-[10px] bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded-md font-bold border border-purple-100">Hot</span>
+                                    </a>
+                                </li>
                             </ul>
                         </div>
                         <div>
@@ -273,8 +302,7 @@ const LandingPage = () => {
                         </div>
                     </div>
                     <div className="text-center text-[11px] text-slate-400 border-t border-slate-100 pt-6">
-                        © {new Date().getFullYear()} noxarianet Store. All rights reserved.<br />
-                        Made with ❤ by noxarianet.
+                        © {new Date().getFullYear()} Noxarianet Store. Seluruh hak cipta dilindungi undang-undang.
                     </div>
                 </div>
             </footer>
@@ -284,8 +312,8 @@ const LandingPage = () => {
 
 /** Five FAQs shown on the home page with accordion interaction. */
 const HOME_FAQS = [
-    { id: 1, q: 'Apa itu noxarianet store?', a: 'noxarianet store adalah platform layanan digital yang menyediakan transfer e-wallet, aplikasi premium, top up game, dan berbagai kebutuhan digital lainnya dengan proses cepat, aman, dan praktis.' },
-    { id: 2, q: 'Apakah DANA yang belum Premium bisa transfer?', a: 'Bisa. Kamu dapat transfer ke sesama DANA maupun ke berbagai e-wallet lainnya melalui layanan noxarianet store tanpa perlu upgrade ke DANA Premium.' },
+    { id: 1, q: 'Apa itu Noxarianet Store?', a: 'Noxarianet Store adalah platform layanan digital yang menyediakan transfer e-wallet, aplikasi premium, top up game, dan berbagai kebutuhan digital lainnya dengan proses cepat, aman, dan praktis.' },
+    { id: 2, q: 'Apakah DANA yang belum Premium bisa transfer?', a: 'Bisa. Kamu dapat transfer ke sesama DANA maupun ke berbagai e-wallet lainnya melalui layanan Noxarianet Store tanpa perlu upgrade ke DANA Premium.' },
     { id: 3, q: 'Bagaimana proses transaksinya?', a: 'Semua transaksi diproses secara otomatis melalui sistem sehingga lebih cepat, praktis, dan meminimalkan kesalahan.' },
     { id: 4, q: 'Pembayarannya bagaimana?', a: 'Pembayaran menggunakan QRIS Otomatis (Dynamic QRIS) sehingga lebih mudah, aman, dan praktis tanpa perlu konfirmasi manual.' },
     { id: 5, q: 'Berapa lama proses transaksi?', a: 'Sebagian besar transaksi diproses dalam hitungan detik hingga beberapa menit, tergantung jenis layanan dan kondisi sistem.' },
@@ -305,15 +333,15 @@ const FAQSection = () => {
                 </div>
                 <Link
                     to="/faq"
-                    className="text-xs font-semibold text-purple-600 hover:text-purple-700 transition flex items-center gap-1"
+                    className="px-3.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-600 border border-purple-100 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm shadow-purple-100/50 hover:scale-[1.02] active:scale-[0.98]"
                 >
-                    Lihat semua →
+                    Lihat Semua →
                 </Link>
             </div>
 
             {/* Accordion items */}
             <div className="space-y-2.5">
-                {HOME_FAQS.map((item) => {
+                {HOME_FAQS.slice(0, 3).map((item) => {
                     const isOpen = openId === item.id;
                     return (
                         <div
