@@ -834,7 +834,7 @@ const ProductPage = () => {
                                         </div>
                                     </div>
                                 )}
-                                <div className="flex gap-3">
+                                <div className="flex gap-3 mt-6">
                                     <button
                                         onClick={() => { window.scrollTo(0, 0); navigate('/'); }}
                                         className="w-1/3 bg-white hover:bg-slate-50 py-3.5 rounded-xl font-semibold text-slate-700 transition-colors border border-slate-200 text-sm"
@@ -922,7 +922,7 @@ const ProductPage = () => {
                                     </div>
                                 )}
 
-                                <div className="flex gap-3">
+                                <div className="flex gap-3 mt-6">
                                     <button
                                         onClick={() => { setStep(1); window.scrollTo({ top: 100, behavior: 'smooth' }); }}
                                         disabled={isSubmitting}

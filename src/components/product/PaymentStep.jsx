@@ -178,102 +178,256 @@ const PaymentStep = ({
                 </div>
             )}
 
-            {/* PROCESSING */}
+            {/* PROCESSING — Premium Loading Experience */}
             {orderStatus?.status === 'PROCESSING' && (
-                <div className="relative rounded-2xl overflow-hidden mb-6 border border-blue-100">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50/40 to-purple-50" />
-                    <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl overflow-hidden">
-                        <div className="h-full w-full bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 animate-pulse" />
+                <div className="relative rounded-2xl overflow-hidden mb-6 border border-indigo-200/60 shadow-lg shadow-indigo-100/40">
+                    {/* Animated gradient background */}
+                    <div className="absolute inset-0" style={{
+                        background: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 25%, #ede9fe 50%, #e0e7ff 75%, #eef2ff 100%)',
+                        backgroundSize: '400% 400%',
+                        animation: 'gradientShift 6s ease infinite'
+                    }} />
+                    
+                    {/* Top progress bar — animated slide */}
+                    <div className="absolute top-0 left-0 right-0 h-1.5 rounded-t-2xl overflow-hidden bg-indigo-100">
+                        <div className="h-full rounded-full" style={{
+                            background: 'linear-gradient(90deg, #818cf8, #a78bfa, #c084fc, #a78bfa, #818cf8)',
+                            backgroundSize: '200% 100%',
+                            animation: 'shimmerBar 2s ease-in-out infinite',
+                            width: '100%'
+                        }} />
                     </div>
-                    <div className="relative text-center py-10 px-6">
-                        {/* Animated rings + icon */}
-                        <div className="relative w-24 h-24 mx-auto mb-5">
-                            <div className="absolute inset-0 rounded-full border-4 border-blue-200/40 animate-ping" style={{animationDuration:'2.2s'}} />
-                            <div className="absolute inset-2 rounded-full border-4 border-purple-200/30 animate-ping" style={{animationDuration:'3s',animationDelay:'0.7s'}} />
-                            <div className="absolute inset-4 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-200/60">
-                                <Loader2 size={26} className="text-white animate-spin" />
+
+                    <div className="relative text-center py-12 px-6">
+                        {/* Orbiting spinner */}
+                        <div className="relative w-28 h-28 mx-auto mb-7">
+                            {/* Outer orbit ring */}
+                            <div className="absolute inset-0 rounded-full" style={{
+                                border: '3px dashed rgba(129, 140, 248, 0.25)',
+                                animation: 'spinSlow 8s linear infinite'
+                            }} />
+                            {/* Middle glow ring */}
+                            <div className="absolute inset-2 rounded-full" style={{
+                                border: '2px solid rgba(167, 139, 250, 0.2)',
+                                animation: 'spinSlow 6s linear infinite reverse'
+                            }} />
+                            {/* Pulsing glow behind center */}
+                            <div className="absolute inset-4 rounded-full" style={{
+                                background: 'radial-gradient(circle, rgba(129, 140, 248, 0.3) 0%, transparent 70%)',
+                                animation: 'pulseGlow 2s ease-in-out infinite'
+                            }} />
+                            {/* Center icon */}
+                            <div className="absolute inset-5 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-violet-600 flex items-center justify-center shadow-xl shadow-indigo-300/50">
+                                <Loader2 size={28} className="text-white" style={{ animation: 'spin 1.2s linear infinite' }} />
+                            </div>
+                            {/* Orbiting dot */}
+                            <div className="absolute w-3 h-3 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 shadow-md shadow-purple-300/60" style={{
+                                top: '50%',
+                                left: '50%',
+                                transformOrigin: '-42px 0',
+                                animation: 'orbitDot 3s linear infinite'
+                            }} />
+                        </div>
+
+                        {/* Shimmer heading */}
+                        <h3 className="text-xl font-extrabold mb-2" style={{
+                            background: 'linear-gradient(90deg, #312e81, #6366f1, #a78bfa, #6366f1, #312e81)',
+                            backgroundSize: '200% auto',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            animation: 'shimmerText 3s linear infinite'
+                        }}>Pesanan Sedang Diproses</h3>
+                        <p className="text-sm text-slate-500 mb-8 px-2 max-w-xs mx-auto leading-relaxed">
+                            Pembayaran dikonfirmasi! Detail akun akan segera dikirim ke Email Anda.
+                        </p>
+
+                        {/* Premium Progress Steps */}
+                        <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-indigo-100/60 p-5 mx-auto max-w-sm mb-6">
+                            <div className="flex items-start justify-between gap-0">
+                                {/* Step 1: Bayar — completed */}
+                                <div className="flex flex-col items-center flex-1">
+                                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center shadow-md shadow-green-200/60">
+                                        <CheckCircle2 size={16} className="text-white" />
+                                    </div>
+                                    <span className="text-[10px] text-green-600 font-bold mt-2 tracking-wide">Bayar</span>
+                                </div>
+
+                                {/* Connector 1 — completed */}
+                                <div className="flex-1 max-w-[40px] mt-[18px]">
+                                    <div className="h-[3px] rounded-full bg-gradient-to-r from-green-400 to-green-400" />
+                                </div>
+
+                                {/* Step 2: Verifikasi — completed */}
+                                <div className="flex flex-col items-center flex-1">
+                                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center shadow-md shadow-green-200/60">
+                                        <CheckCircle2 size={16} className="text-white" />
+                                    </div>
+                                    <span className="text-[10px] text-green-600 font-bold mt-2 tracking-wide">Verifikasi</span>
+                                </div>
+
+                                {/* Connector 2 — in-progress animated */}
+                                <div className="flex-1 max-w-[40px] mt-[18px] overflow-hidden rounded-full">
+                                    <div className="h-[3px] rounded-full" style={{
+                                        background: 'linear-gradient(90deg, #22c55e, #818cf8, #a78bfa)',
+                                        backgroundSize: '200% 100%',
+                                        animation: 'shimmerBar 1.5s ease-in-out infinite'
+                                    }} />
+                                </div>
+
+                                {/* Step 3: Proses — active */}
+                                <div className="flex flex-col items-center flex-1">
+                                    <div className="relative">
+                                        <div className="absolute inset-0 rounded-full bg-indigo-400/30 animate-ping" style={{ animationDuration: '2s' }} />
+                                        <div className="relative w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-300/60">
+                                            <Loader2 size={15} className="text-white animate-spin" />
+                                        </div>
+                                    </div>
+                                    <span className="text-[10px] text-indigo-600 font-extrabold mt-2 tracking-wide">Proses</span>
+                                </div>
+
+                                {/* Connector 3 — pending */}
+                                <div className="flex-1 max-w-[40px] mt-[18px]">
+                                    <div className="h-[3px] rounded-full bg-slate-200" />
+                                </div>
+
+                                {/* Step 4: Kirim — pending */}
+                                <div className="flex flex-col items-center flex-1">
+                                    <div className="w-9 h-9 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center">
+                                        <span className="text-sm">✉️</span>
+                                    </div>
+                                    <span className="text-[10px] text-slate-400 font-semibold mt-2 tracking-wide">Kirim</span>
+                                </div>
                             </div>
                         </div>
 
-                        <h3 className="text-lg font-extrabold text-slate-800 mb-1">Pesanan Sedang Diproses</h3>
-                        <p className="text-sm text-slate-500 mb-6 px-4">Pembayaran dikonfirmasi! Detail akun akan segera dikirim ke Email Anda.</p>
-
-                        {/* Progress Steps */}
-                        <div className="flex items-start justify-center gap-0 mb-5">
-                            <div className="flex flex-col items-center">
-                                <div className="w-8 h-8 rounded-full bg-green-100 border-2 border-green-400 flex items-center justify-center">
-                                    <CheckCircle2 size={15} className="text-green-500" />
-                                </div>
-                                <span className="text-[10px] text-green-600 font-semibold mt-1.5">Bayar</span>
-                            </div>
-                            <div className="w-10 h-0.5 bg-green-300 mt-4" />
-                            <div className="flex flex-col items-center">
-                                <div className="w-8 h-8 rounded-full bg-green-100 border-2 border-green-400 flex items-center justify-center">
-                                    <CheckCircle2 size={15} className="text-green-500" />
-                                </div>
-                                <span className="text-[10px] text-green-600 font-semibold mt-1.5">Verifikasi</span>
-                            </div>
-                            <div className="w-10 h-0.5 bg-gradient-to-r from-green-300 to-blue-400 mt-4" />
-                            <div className="flex flex-col items-center">
-                                <div className="w-8 h-8 rounded-full bg-blue-500 border-2 border-blue-600 flex items-center justify-center shadow-md shadow-blue-200/50">
-                                    <Loader2 size={14} className="text-white animate-spin" />
-                                </div>
-                                <span className="text-[10px] text-blue-600 font-bold mt-1.5">Proses</span>
-                            </div>
-                            <div className="w-10 h-0.5 bg-slate-200 mt-4" />
-                            <div className="flex flex-col items-center">
-                                <div className="w-8 h-8 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center">
-                                    <span className="text-slate-300 text-sm">✉️</span>
-                                </div>
-                                <span className="text-[10px] text-slate-400 font-semibold mt-1.5">Kirim Email</span>
-                            </div>
-                        </div>
-
-                        {/* Bouncing dots */}
-                        <div className="flex items-center justify-center gap-1.5">
-                            <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{animationDelay:'0ms'}} />
-                            <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{animationDelay:'180ms'}} />
-                            <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style={{animationDelay:'360ms'}} />
+                        {/* Pulsing dots */}
+                        <div className="flex items-center justify-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-indigo-400" style={{ animation: 'dotPulse 1.4s ease-in-out infinite', animationDelay: '0ms' }} />
+                            <div className="w-2 h-2 rounded-full bg-purple-500" style={{ animation: 'dotPulse 1.4s ease-in-out infinite', animationDelay: '200ms' }} />
+                            <div className="w-2 h-2 rounded-full bg-violet-500" style={{ animation: 'dotPulse 1.4s ease-in-out infinite', animationDelay: '400ms' }} />
                         </div>
                     </div>
+
+                    {/* Inline keyframes */}
+                    <style>{`
+                        @keyframes gradientShift {
+                            0%, 100% { background-position: 0% 50%; }
+                            50% { background-position: 100% 50%; }
+                        }
+                        @keyframes shimmerBar {
+                            0% { background-position: -200% 0; }
+                            100% { background-position: 200% 0; }
+                        }
+                        @keyframes shimmerText {
+                            0% { background-position: -200% center; }
+                            100% { background-position: 200% center; }
+                        }
+                        @keyframes spinSlow {
+                            from { transform: rotate(0deg); }
+                            to { transform: rotate(360deg); }
+                        }
+                        @keyframes pulseGlow {
+                            0%, 100% { opacity: 0.4; transform: scale(1); }
+                            50% { opacity: 0.8; transform: scale(1.1); }
+                        }
+                        @keyframes orbitDot {
+                            from { transform: rotate(0deg) translateX(42px); }
+                            to { transform: rotate(360deg) translateX(42px); }
+                        }
+                        @keyframes dotPulse {
+                            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+                            40% { transform: scale(1.2); opacity: 1; }
+                        }
+                    `}</style>
                 </div>
             )}
 
-            {/* COMPLETED */}
+            {/* COMPLETED — Celebration */}
             {orderStatus?.status === 'COMPLETED' && (
                 <div className="mb-6">
-                    <div className="bg-green-50 border border-green-200 rounded-2xl p-5 text-center mb-4">
-                        <div className="w-16 h-16 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-4">
-                            <CheckCircle2 size={32} />
+                    <div className="relative rounded-2xl overflow-hidden border border-emerald-200/60 shadow-lg shadow-emerald-100/30">
+                        {/* Background */}
+                        <div className="absolute inset-0" style={{
+                            background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 30%, #f0fdf4 60%, #d1fae5 100%)',
+                            backgroundSize: '400% 400%',
+                            animation: 'gradientShift 8s ease infinite'
+                        }} />
+                        
+                        {/* Confetti particles */}
+                        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                            {[...Array(6)].map((_, i) => (
+                                <div key={i} className="absolute w-2 h-2 rounded-full" style={{
+                                    background: ['#34d399', '#a78bfa', '#fbbf24', '#f472b6', '#60a5fa', '#fb923c'][i],
+                                    left: `${15 + i * 14}%`,
+                                    top: '-8px',
+                                    animation: `confettiFall ${2.5 + i * 0.4}s ease-in-out infinite`,
+                                    animationDelay: `${i * 0.5}s`,
+                                    opacity: 0.7
+                                }} />
+                            ))}
                         </div>
-                        <h3 className="text-lg font-bold text-green-800 mb-1">Terima Kasih!</h3>
-                        <p className="text-sm text-green-700 mb-4">Transaksi berhasil dan pesanan Anda telah diproses.</p>
 
-                        {/* Tampilkan data akun (SN/Lisensi) jika ada */}
-                        {validTexts.length > 0 && (
-                            <div className="mt-4 bg-white rounded-xl border border-green-100 p-4 shadow-sm text-left relative overflow-hidden">
-                                <div className="absolute top-0 left-0 w-1 h-full bg-green-400"></div>
-                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Detail Pesanan</h4>
-                                <div className="space-y-2">
-                                    {validTexts.map((text, idx) => (
-                                        <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 bg-slate-50 rounded-lg border border-slate-100">
-                                            <span className="font-mono text-sm text-slate-700 break-all leading-tight">{text}</span>
-                                            <button
-                                                onClick={() => copyToClipboard(text)}
-                                                className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:border-purple-300 hover:text-purple-600 rounded-md text-xs font-semibold text-slate-500 transition-colors"
-                                            >
-                                                {copied ? <CheckCircle2 size={14} className="text-green-500" /> : <Copy size={14} />}
-                                                {copied ? 'Disalin!' : 'Salin'}
-                                            </button>
-                                        </div>
-                                    ))}
+                        {/* Top bar */}
+                        <div className="absolute top-0 left-0 right-0 h-1.5 rounded-t-2xl bg-gradient-to-r from-emerald-400 via-green-400 to-teal-400" />
+
+                        <div className="relative text-center py-10 px-6">
+                            {/* Success icon */}
+                            <div className="relative w-24 h-24 mx-auto mb-6">
+                                <div className="absolute inset-0 rounded-full bg-green-300/20 animate-ping" style={{ animationDuration: '2.5s' }} />
+                                <div className="absolute inset-2 rounded-full bg-green-200/15" style={{ animation: 'pulseGlow 2s ease-in-out infinite' }} />
+                                <div className="absolute inset-3 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center shadow-xl shadow-green-300/50">
+                                    <CheckCircle2 size={36} className="text-white" />
                                 </div>
                             </div>
-                        )}
+
+                            {/* Shimmer heading */}
+                            <h3 className="text-xl font-extrabold mb-2" style={{
+                                background: 'linear-gradient(90deg, #065f46, #10b981, #34d399, #10b981, #065f46)',
+                                backgroundSize: '200% auto',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                animation: 'shimmerText 3s linear infinite'
+                            }}>Terima Kasih! 🎉</h3>
+                            <p className="text-sm text-emerald-700/80 mb-6 max-w-xs mx-auto leading-relaxed">
+                                Transaksi berhasil dan pesanan Anda telah diproses.
+                            </p>
+
+                            {/* Detail Pesanan */}
+                            {validTexts.length > 0 && (
+                                <div className="bg-white/70 backdrop-blur-sm rounded-2xl border border-emerald-100/60 p-5 text-left relative overflow-hidden mx-auto max-w-sm">
+                                    <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-emerald-400 to-green-500 rounded-r" />
+                                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 ml-2">Detail Pesanan</h4>
+                                    <div className="space-y-2">
+                                        {validTexts.map((text, idx) => (
+                                            <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-white/80 rounded-xl border border-emerald-50 shadow-sm">
+                                                <span className="font-mono text-sm text-slate-700 break-all leading-tight">{text}</span>
+                                                <button
+                                                    onClick={() => copyToClipboard(text)}
+                                                    className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:border-emerald-300 hover:text-emerald-600 rounded-lg text-xs font-semibold text-slate-500 transition-all duration-200 hover:shadow-sm"
+                                                >
+                                                    {copied ? <CheckCircle2 size={14} className="text-green-500" /> : <Copy size={14} />}
+                                                    {copied ? 'Disalin!' : 'Salin'}
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Confetti keyframes */}
+                        <style>{`
+                            @keyframes confettiFall {
+                                0% { transform: translateY(-10px) rotate(0deg); opacity: 0; }
+                                10% { opacity: 0.8; }
+                                100% { transform: translateY(400px) rotate(720deg); opacity: 0; }
+                            }
+                        `}</style>
                     </div>
+
                     <button
                         onClick={() => { setStep(1); window.location.href = '/'; }}
-                        className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3.5 rounded-xl transition-colors shadow-sm"
+                        className="w-full mt-4 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-bold py-3.5 rounded-xl transition-all duration-200 shadow-md shadow-green-200/40 hover:shadow-lg hover:shadow-green-200/50 hover:-translate-y-0.5 active:translate-y-0"
                     >Kembali ke Beranda</button>
                 </div>
             )}
