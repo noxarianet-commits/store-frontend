@@ -86,12 +86,13 @@ const PaymentStep = ({
         CANCELLED: { label: 'Dibatalkan', color: 'text-slate-500', bg: 'bg-slate-50 border-slate-100', icon: <AlertCircle size={16} className="text-slate-500" /> },
     };
     
-    const currentStatus = statusConfig[orderStatus?.status] || statusConfig['PENDING'];
+    const effectiveStatus = orderStatus?.status === 'PROCESSING_LOCK' ? 'PROCESSING' : orderStatus?.status;
+    const currentStatus = statusConfig[effectiveStatus] || statusConfig['PENDING'];
 
     return (
         <div>
             {/* Info Tunggu */}
-            {(orderStatus?.status === 'PENDING' || orderStatus?.status === 'PROCESSING' || !orderStatus?.status) && (
+            {(effectiveStatus === 'PENDING' || effectiveStatus === 'PROCESSING' || !effectiveStatus) && (
                 <div className="flex items-start gap-3 bg-blue-50/80 border border-blue-100/70 rounded-xl px-4 py-3 mb-5 relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-indigo-500/5 to-blue-500/5 animate-pulse pointer-events-none" />
                     <div className="relative flex items-center justify-center shrink-0 mt-0.5 w-5 h-5">
@@ -109,7 +110,7 @@ const PaymentStep = ({
             <div className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border mb-5 ${currentStatus.bg}`}>
                 {currentStatus.icon}
                 <span className={`text-sm font-semibold ${currentStatus.color}`}>{currentStatus.label}</span>
-                {(orderStatus?.status === 'PENDING' || orderStatus?.status === 'PROCESSING') && (
+                {(effectiveStatus === 'PENDING' || effectiveStatus === 'PROCESSING') && (
                     <div className="ml-auto flex items-center gap-1.5 text-gray-500 text-xs">
                         <Wifi size={12} className="animate-pulse" /> live
                     </div>
@@ -117,7 +118,7 @@ const PaymentStep = ({
             </div>
 
             {/* PENDING — tampilkan instruksi bayar */}
-            {(orderStatus?.status === 'PENDING' || !orderStatus?.status) && paymentResult && (
+            {(effectiveStatus === 'PENDING' || !effectiveStatus) && paymentResult && (
                 <div>
                     <div className="text-center mb-5">
                         <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Total Pembayaran</p>
@@ -179,7 +180,7 @@ const PaymentStep = ({
             )}
 
             {/* PENDING tanpa paymentResult — waiting confirmation */}
-            {(orderStatus?.status === 'PENDING' || !orderStatus?.status) && !paymentResult && (
+            {(effectiveStatus === 'PENDING' || !effectiveStatus) && !paymentResult && (
                 <div className="relative rounded-2xl overflow-hidden mb-6 border border-yellow-100">
                     <div className="absolute inset-0 bg-gradient-to-br from-yellow-50 via-amber-50/40 to-orange-50" />
                     <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl overflow-hidden">
@@ -205,7 +206,7 @@ const PaymentStep = ({
             )}
 
             {/* PROCESSING — Premium Loading Experience */}
-            {orderStatus?.status === 'PROCESSING' && (
+            {effectiveStatus === 'PROCESSING' && (
                 <div className="relative rounded-2xl overflow-hidden mb-6 border border-indigo-200/60 shadow-lg shadow-indigo-100/40">
                     {/* Animated gradient background */}
                     <div className="absolute inset-0" style={{
@@ -396,7 +397,7 @@ const PaymentStep = ({
             )}
 
             {/* COMPLETED — Celebration */}
-            {orderStatus?.status === 'COMPLETED' && (
+            {effectiveStatus === 'COMPLETED' && (
                 <div className="mb-6">
                     <div className="relative rounded-2xl overflow-hidden border border-emerald-200/60 shadow-lg shadow-emerald-100/30">
                         {/* Background */}
@@ -486,18 +487,18 @@ const PaymentStep = ({
             )}
 
             {/* FAILED / CANCELLED */}
-            {(orderStatus?.status === 'FAILED' || orderStatus?.status === 'CANCELLED') && (
+            {(effectiveStatus === 'FAILED' || effectiveStatus === 'CANCELLED') && (
                 <div className="bg-red-50 border border-red-200 rounded-2xl p-5 text-center mb-6">
                     <div className="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4">
                         <AlertCircle size={32} />
                     </div>
-                    <h3 className="text-lg font-bold text-red-800 mb-1">Pesanan {orderStatus?.status === 'FAILED' ? 'Gagal' : 'Dibatalkan'}</h3>
+                    <h3 className="text-lg font-bold text-red-800 mb-1">Pesanan {effectiveStatus === 'FAILED' ? 'Gagal' : 'Dibatalkan'}</h3>
                     <p className="text-sm text-red-700 mb-4">{orderStatus?.error_message || 'Terjadi kesalahan atau pesanan dibatalkan/kadaluarsa.'}</p>
                     
                     {/* Hubungi Admin Button */}
                     <a
                         href={`https://wa.me/6285199605580?text=${encodeURIComponent(
-                            `Halo admin, pesanan saya ${orderStatus?.status === 'FAILED' ? 'Gagal' : 'Dibatalkan'}.\n\n` +
+                            `Halo admin, pesanan saya ${effectiveStatus === 'FAILED' ? 'Gagal' : 'Dibatalkan'}.\n\n` +
                             `Detail Pesanan:\n` +
                             `- ID Pesanan: ${orderStatus?.order_id || paymentResult?.order_id || '-'}\n` +
                             `- Invoice: ${orderStatus?.pg_invoice || '-'}\n` +
