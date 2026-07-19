@@ -20,21 +20,19 @@ const ServerSelector = ({ vendor, setVendor, hasFincloud }) => {
             <div className="flex gap-3">
                 <button
                     onClick={() => setVendor('sekalipay')}
-                    className={`flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all duration-300 border ${
-                        vendor === 'sekalipay'
-                            ? 'bg-purple-50 text-purple-700 border-purple-200 shadow-sm'
-                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
-                    }`}
+                    className={`flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all duration-300 border ${vendor === 'sekalipay'
+                        ? 'bg-purple-50 text-purple-700 border-purple-200 shadow-sm'
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+                        }`}
                 >
                     Server 1
                 </button>
                 <button
                     onClick={() => setVendor('fincloud')}
-                    className={`flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all duration-300 border ${
-                        vendor === 'fincloud'
-                            ? 'bg-purple-50 text-purple-700 border-purple-200 shadow-sm'
-                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
-                    }`}
+                    className={`flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all duration-300 border ${vendor === 'fincloud'
+                        ? 'bg-purple-50 text-purple-700 border-purple-200 shadow-sm'
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+                        }`}
                 >
                     Server 2
                 </button>

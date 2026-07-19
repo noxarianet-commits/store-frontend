@@ -209,11 +209,25 @@ const PaymentStep = ({
                 <div className="relative rounded-2xl overflow-hidden mb-6 border border-indigo-200/60 shadow-lg shadow-indigo-100/40">
                     {/* Animated gradient background */}
                     <div className="absolute inset-0" style={{
-                        background: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 25%, #ede9fe 50%, #e0e7ff 75%, #eef2ff 100%)',
+                        background: 'linear-gradient(135deg, #f5f3ff 0%, #e0e7ff 25%, #f3e8ff 50%, #e0e7ff 75%, #f5f3ff 100%)',
                         backgroundSize: '400% 400%',
                         animation: 'gradientShift 6s ease infinite'
                     }} />
                     
+                    {/* Floating cyan/purple processing particles */}
+                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                        {[...Array(8)].map((_, i) => (
+                            <div key={i} className="absolute w-2 h-2 rounded-full" style={{
+                                background: ['#818cf8', '#a78bfa', '#c084fc', '#38bdf8', '#818cf8', '#6366f1', '#a78bfa', '#f472b6'][i % 8],
+                                left: `${10 + i * 11}%`,
+                                bottom: '-8px',
+                                animation: `floatParticles ${3 + (i % 3) * 0.8}s ease-in-out infinite`,
+                                animationDelay: `${i * 0.4}s`,
+                                opacity: 0.6
+                            }} />
+                        ))}
+                    </div>
+
                     {/* Top progress bar — animated slide */}
                     <div className="absolute top-0 left-0 right-0 h-1.5 rounded-t-2xl overflow-hidden bg-indigo-100">
                         <div className="h-full rounded-full" style={{
@@ -244,7 +258,7 @@ const PaymentStep = ({
                             }} />
                             {/* Center icon */}
                             <div className="absolute inset-5 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-violet-600 flex items-center justify-center shadow-xl shadow-indigo-300/50">
-                                <Loader2 size={28} className="text-white" style={{ animation: 'spin 1.2s linear infinite' }} />
+                                <Loader2 size={28} className="text-white animate-spin" />
                             </div>
                             {/* Orbiting dot */}
                             <div className="absolute w-3 h-3 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 shadow-md shadow-purple-300/60" style={{
@@ -263,15 +277,20 @@ const PaymentStep = ({
                             WebkitTextFillColor: 'transparent',
                             animation: 'shimmerText 3s linear infinite'
                         }}>Pesanan Sedang Diproses</h3>
-                        <p className="text-sm text-indigo-600 font-semibold mb-2 px-2 max-w-xs mx-auto leading-relaxed">
-                            Pesanan Anda sedang diproses, mohon tunggu 1-5 menit
-                        </p>
-                        <p className="text-sm text-slate-500 mb-8 px-2 max-w-xs mx-auto leading-relaxed">
-                            Pembayaran dikonfirmasi! Detail akun akan segera dikirim ke Email Anda.
+                        <p className="text-sm text-slate-600 font-semibold mb-6 px-2 max-w-sm mx-auto leading-relaxed">
+                            Pembayaran berhasil dikonfirmasi! Pesanan Anda sedang diproses, mohon tunggu 1-5 menit. Detail pesanan akan segera dikirim ke Email & WhatsApp Anda.
                         </p>
 
+                        {/* Info Notice Box */}
+                        <div className="bg-blue-50/70 border border-blue-100 rounded-xl p-3 mx-auto max-w-sm mb-6 text-left flex items-start gap-2.5">
+                            <Info size={16} className="text-blue-500 shrink-0 mt-0.5" />
+                            <p className="text-xs text-blue-700 leading-relaxed font-medium">
+                                <strong>Mohon jangan menutup atau merefresh halaman ini.</strong> Sistem sedang mengirimkan pesanan instan Anda secara real-time.
+                            </p>
+                        </div>
+
                         {/* Premium Progress Steps */}
-                        <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-indigo-100/60 p-5 mx-auto max-w-sm mb-6">
+                        <div className="bg-white/70 backdrop-blur-sm rounded-2xl border border-indigo-100/60 p-5 mx-auto max-w-sm mb-6">
                             <div className="flex items-start justify-between gap-0">
                                 {/* Step 1: Bayar — completed */}
                                 <div className="flex flex-col items-center flex-1">
@@ -366,6 +385,11 @@ const PaymentStep = ({
                         @keyframes dotPulse {
                             0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
                             40% { transform: scale(1.2); opacity: 1; }
+                        }
+                        @keyframes floatParticles {
+                            0% { transform: translateY(120%) scale(0.8); opacity: 0; }
+                            50% { opacity: 0.7; }
+                            100% { transform: translateY(-20px) scale(1.2); opacity: 0; }
                         }
                     `}</style>
                 </div>
