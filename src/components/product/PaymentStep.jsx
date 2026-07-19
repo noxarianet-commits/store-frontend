@@ -263,6 +263,9 @@ const PaymentStep = ({
                             WebkitTextFillColor: 'transparent',
                             animation: 'shimmerText 3s linear infinite'
                         }}>Pesanan Sedang Diproses</h3>
+                        <p className="text-sm text-indigo-600 font-semibold mb-2 px-2 max-w-xs mx-auto leading-relaxed">
+                            Pesanan Anda sedang diproses, mohon tunggu 1-5 menit
+                        </p>
                         <p className="text-sm text-slate-500 mb-8 px-2 max-w-xs mx-auto leading-relaxed">
                             Pembayaran dikonfirmasi! Detail akun akan segera dikirim ke Email Anda.
                         </p>
