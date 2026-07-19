@@ -164,6 +164,18 @@ const OrdersTab = ({ orders = [], openOrderModal, deleteOrder }) => {
                                             )}
                                         </div>
                                         {(() => {
+                                            const targetNum = order.account_details.target || order.account_details.sekalipay_note || order.account_details.raw_items?.[0]?.target;
+                                            if (targetNum) {
+                                                return (
+                                                    <div className="flex flex-col gap-1 bg-white/5 border border-white/5 px-2.5 py-2 rounded-xl text-xs mb-2">
+                                                        <span className="text-[10px] text-gray-500 uppercase font-bold">Nomor Tujuan</span>
+                                                        <span className="font-mono text-gray-300 select-all">{targetNum}</span>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
+                                        {(() => {
                                             const details = order.account_details;
                                             if (typeof details === 'object' && details !== null) {
                                                 if (Array.isArray(details.licenses) && details.licenses.length > 0) {

@@ -10,6 +10,7 @@ const OrderModal = ({ editingOrder, onClose, onSave }) => {
         account_details: null
     });
     const [accountDetailsStr, setAccountDetailsStr] = useState('');
+    const [manualLicense, setManualLicense] = useState('');
 
     useEffect(() => {
         if (editingOrder) {
@@ -32,6 +33,7 @@ const OrderModal = ({ editingOrder, onClose, onSave }) => {
                         : String(editingOrder.account_details))
                     : ''
             );
+            setManualLicense('');
         }
     }, [editingOrder]);
 
@@ -47,7 +49,25 @@ const OrderModal = ({ editingOrder, onClose, onSave }) => {
                 parsedDetails = accountDetailsStr;
             }
         }
-        onSave({ ...form, account_details: parsedDetails });
+
+        // Quick add manual license for failed orders (or any order)
+        let updatedForm = { ...form };
+        if (manualLicense.trim()) {
+            if (!parsedDetails || typeof parsedDetails !== 'object') {
+                parsedDetails = { type: 'auto', licenses: [manualLicense.trim()] };
+            } else {
+                if (!Array.isArray(parsedDetails.licenses)) {
+                    parsedDetails.licenses = [];
+                }
+                parsedDetails.licenses.push(manualLicense.trim());
+            }
+            // Auto set status to COMPLETED when admin adds license manually if it was FAILED or PENDING
+            if (updatedForm.status === 'FAILED' || updatedForm.status === 'PENDING') {
+                updatedForm.status = 'COMPLETED';
+            }
+        }
+
+        onSave({ ...updatedForm, account_details: parsedDetails });
     };
 
     return (
@@ -114,6 +134,20 @@ const OrderModal = ({ editingOrder, onClose, onSave }) => {
                             placeholder='Contoh JSON:&#10;{&#10;  "type": "auto",&#10;  "licenses": ["KEY-XYZ123"]&#10;}&#10;&#10;Atau ketik teks biasa langsung.'
                         />
                     </div>
+                    {(form.status === 'FAILED' || form.status === 'PENDING') && (
+                        <div className="bg-purple-500/10 border border-purple-500/20 p-4 rounded-xl">
+                            <label className="block text-xs text-purple-400 font-bold mb-1.5">Isi Lisensi / Kredensial Manual</label>
+                            <input
+                                value={manualLicense}
+                                onChange={(e) => setManualLicense(e.target.value)}
+                                className="w-full bg-[#0E0E0E] border border-purple-500/30 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-purple-500"
+                                placeholder="Ketik SN / Email & Password untuk dikirim ke pembeli..."
+                            />
+                            <p className="text-[10px] text-gray-400 mt-2">
+                                Mengisi kolom ini akan otomatis menambahkannya ke data lisensi dan merubah status menjadi <span className="font-bold text-green-400">Selesai</span>.
+                            </p>
+                        </div>
+                    )}
                     <div>
                         <label className="block text-xs text-gray-500 mb-1.5">Testimonial</label>
                         <textarea value={form.testimonial} onChange={(e) => setForm({ ...form, testimonial: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white h-24 resize-none" />
