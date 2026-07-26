@@ -86,6 +86,151 @@ const SettingsTab = ({
                 </div>
             </div>
 
+            {/* Payment Gateway Provider */}
+            <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                            <Save size={20} className="text-emerald-400" />
+                            Provider Payment Gateway
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-1">
+                            Pilih provider gateway aktif untuk pembuatan QRIS. Pembeli tidak dapat memilih sendiri.
+                        </p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* FinCloud Option */}
+                    <div
+                        onClick={() => {
+                            setSettings({ ...settings, payment_gateway: 'fincloud' });
+                            updateSetting('payment_gateway', 'fincloud');
+                        }}
+                        className={`cursor-pointer p-4 rounded-xl border transition-all flex items-start gap-3.5 ${
+                            (settings.payment_gateway || 'fincloud') === 'fincloud'
+                                ? 'bg-purple-600/10 border-purple-500/50 shadow-lg shadow-purple-500/10'
+                                : 'bg-white/5 border-white/10 hover:border-white/20'
+                        }`}
+                    >
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
+                            (settings.payment_gateway || 'fincloud') === 'fincloud'
+                                ? 'border-purple-500 bg-purple-500'
+                                : 'border-gray-500'
+                        }`}>
+                            {(settings.payment_gateway || 'fincloud') === 'fincloud' && (
+                                <div className="w-2 h-2 rounded-full bg-white" />
+                            )}
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h4 className="text-sm font-bold text-white">FinCloud (QRIS)</h4>
+                                {(settings.payment_gateway || 'fincloud') === 'fincloud' && (
+                                    <span className="px-2 py-0.5 text-[10px] font-bold bg-purple-500/20 text-purple-300 rounded-full border border-purple-500/30">
+                                        Aktif
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1">
+                                Gateway bawaan FinCloud API. Invoice dinamis dengan fee otomatis.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* ORKUT Option */}
+                    <div
+                        onClick={() => {
+                            setSettings({ ...settings, payment_gateway: 'orkut' });
+                            updateSetting('payment_gateway', 'orkut');
+                        }}
+                        className={`cursor-pointer p-4 rounded-xl border transition-all flex items-start gap-3.5 ${
+                            settings.payment_gateway === 'orkut'
+                                ? 'bg-purple-600/10 border-purple-500/50 shadow-lg shadow-purple-500/10'
+                                : 'bg-white/5 border-white/10 hover:border-white/20'
+                        }`}
+                    >
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
+                            settings.payment_gateway === 'orkut'
+                                ? 'border-purple-500 bg-purple-500'
+                                : 'border-gray-500'
+                        }`}>
+                            {settings.payment_gateway === 'orkut' && (
+                                <div className="w-2 h-2 rounded-full bg-white" />
+                            )}
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h4 className="text-sm font-bold text-white">ORKUT (OrderKuota)</h4>
+                                {settings.payment_gateway === 'orkut' && (
+                                    <span className="px-2 py-0.5 text-[10px] font-bold bg-purple-500/20 text-purple-300 rounded-full border border-purple-500/30">
+                                        Aktif
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1">
+                                QRIS Dinamis OrderKuota + Smart Polling (Balance Delta) & Kode Unik.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* ORKUT Credentials Config */}
+                {settings.payment_gateway === 'orkut' && (
+                    <div className="mt-6 pt-6 border-t border-white/10 space-y-4">
+                        <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                            ⚙️ Konfigurasi Kredensial ORKUT (OrderKuota)
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-400 mb-1">Server URL Gateway</label>
+                                <input
+                                    type="text"
+                                    value={settings.orkut_config?.base_url || 'http://panelku.fincloud.my.id:10002'}
+                                    onChange={(e) => setSettings({
+                                        ...settings,
+                                        orkut_config: { ...settings.orkut_config, base_url: e.target.value }
+                                    })}
+                                    placeholder="http://panelku.fincloud.my.id:10002"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-purple-500/50 font-mono"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-400 mb-1">Merchant Code</label>
+                                <input
+                                    type="text"
+                                    value={settings.orkut_config?.merchant_code || ''}
+                                    onChange={(e) => setSettings({
+                                        ...settings,
+                                        orkut_config: { ...settings.orkut_config, merchant_code: e.target.value }
+                                    })}
+                                    placeholder="Contoh: M1A2B3C4D (atau kosongkan)"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-purple-500/50 font-mono"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-400 mb-1">API Hash</label>
+                                <input
+                                    type="text"
+                                    value={settings.orkut_config?.api_hash || ''}
+                                    onChange={(e) => setSettings({
+                                        ...settings,
+                                        orkut_config: { ...settings.orkut_config, api_hash: e.target.value }
+                                    })}
+                                    placeholder="API Hash akun (atau kosongkan)"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-purple-500/50 font-mono"
+                                />
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => updateSetting('orkut_config', settings.orkut_config || {})}
+                            className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all"
+                        >
+                            <Save size={16} /> Simpan Kredensial ORKUT
+                        </button>
+                    </div>
+                )}
+            </div>
+
             {/* Admin Security */}
             <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-6">
                 <div className="mb-6">

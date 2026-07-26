@@ -121,10 +121,30 @@ const PaymentStep = ({
                 <div>
                     <div className="text-center mb-5">
                         <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Total Pembayaran</p>
-                        <p className="text-4xl font-extrabold text-slate-900">{formatRp(paymentResult.total || paymentResult.amount)}</p>
-                        {paymentResult.fee > 0 && (
-                            <p className="text-xs text-slate-400 mt-1">Termasuk fee QRIS {formatRp(paymentResult.fee)}</p>
+                        <p className="text-4xl font-extrabold text-slate-900">{formatRp(paymentResult.total || (paymentResult.amount + (paymentResult.unique_code || 0)))}</p>
+                        
+                        {/* Kode unik & Fee breakdown */}
+                        <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
+                            {paymentResult.unique_code > 0 && (
+                                <span className="px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200/80 rounded-lg text-xs font-semibold">
+                                    Termasuk Kode Unik: <strong className="font-bold">+Rp {paymentResult.unique_code}</strong>
+                                </span>
+                            )}
+                            {paymentResult.fee > 0 && (
+                                <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium">
+                                    Fee QRIS: {formatRp(paymentResult.fee)}
+                                </span>
+                            )}
+                        </div>
+
+                        {paymentResult.unique_code > 0 && (
+                            <div className="mt-3 bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5 max-w-sm mx-auto">
+                                <p className="text-[11px] text-amber-700 font-medium leading-snug">
+                                    ⚠️ <strong>PENTING:</strong> Bayar tepat hingga 3 digit terakhir agar pembayaran terverifikasi secara otomatis!
+                                </p>
+                            </div>
                         )}
+
                         <div className="flex justify-center mt-3">
                             <CountdownTimer expiredAt={orderStatus?.pg_expired_at} />
                         </div>
@@ -145,30 +165,47 @@ const PaymentStep = ({
                             <span>Scan QR Code</span>
                             <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] uppercase tracking-wider">QRIS</span>
                         </p>
-                        <div className="flex justify-center mb-4">
-                            {paymentResult.qr_link ? (
-                                <div className="p-3 bg-white border-2 border-dashed border-purple-200 rounded-2xl shadow-sm relative group cursor-pointer" onClick={() => downloadQR(paymentResult.qr_link)}>
-                                    <img src={paymentResult.qr_link} alt="QRIS" className="w-56 h-56 object-contain" />
-                                    <div className="absolute inset-0 bg-black/60 rounded-2xl flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Download size={32} className="text-white mb-2" />
-                                        <span className="text-white text-sm font-bold">Simpan QR</span>
+                        {(() => {
+                            const qrImageSrc = paymentResult.qr_link || (paymentResult.qr_string ? `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(paymentResult.qr_string)}` : null);
+                            return (
+                                <>
+                                    <div className="flex justify-center mb-4">
+                                        {qrImageSrc ? (
+                                            <div className="p-3 bg-white border-2 border-dashed border-purple-200 rounded-2xl shadow-sm relative group cursor-pointer" onClick={() => downloadQR(qrImageSrc)}>
+                                                <img
+                                                    src={qrImageSrc}
+                                                    alt="QRIS"
+                                                    className="w-56 h-56 object-contain"
+                                                    onError={(e) => {
+                                                        // Fallback jika URL utama gagal/blocked
+                                                        if (paymentResult.qr_string && !e.target.src.includes('qrserver.com')) {
+                                                            e.target.src = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(paymentResult.qr_string)}`;
+                                                        }
+                                                    }}
+                                                />
+                                                <div className="absolute inset-0 bg-black/60 rounded-2xl flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Download size={32} className="text-white mb-2" />
+                                                    <span className="text-white text-sm font-bold">Simpan QR</span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="w-56 h-56 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center text-slate-400">
+                                                <Loader2 size={24} className="animate-spin mb-2" />
+                                                <span className="text-xs">Memuat QR...</span>
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
-                            ) : (
-                                <div className="w-56 h-56 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center text-slate-400">
-                                    <Loader2 size={24} className="animate-spin mb-2" />
-                                    <span className="text-xs">Memuat QR...</span>
-                                </div>
-                            )}
-                        </div>
-                        {paymentResult.qr_link && (
-                            <button
-                                onClick={() => downloadQR(paymentResult.qr_link)}
-                                className="w-full py-2.5 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 border border-purple-100 mb-4"
-                            >
-                                <Download size={16} /> Simpan QR Code
-                            </button>
-                        )}
+                                    {qrImageSrc && (
+                                        <button
+                                            onClick={() => downloadQR(qrImageSrc)}
+                                            className="w-full py-2.5 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 border border-purple-100 mb-4"
+                                        >
+                                            <Download size={16} /> Simpan QR Code
+                                        </button>
+                                    )}
+                                </>
+                            );
+                        })()}
                         <p className="text-xs text-center text-slate-500 mb-3 bg-slate-50 py-2 rounded-lg">Gunakan aplikasi E-Wallet / M-Banking untuk scan.</p>
                         <button
                             onClick={handleSudahBayar}
