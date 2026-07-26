@@ -1,13 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Clock, Loader2, CheckCircle2, AlertCircle, Wifi, Info, Copy, RefreshCw, Star, Download } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Clock, Loader2, CheckCircle2, AlertCircle, Wifi, Info, Copy, RefreshCw, Download } from 'lucide-react';
 import { formatRp } from '../../utils/currencyUtils';
-
-const ORDER_PROCESS_CONFIG = {
-    auto: { label: 'Instan', color: 'text-green-600', bg: 'bg-green-50 border-green-100' },
-    h2h: { label: 'Instan', color: 'text-green-600', bg: 'bg-green-50 border-green-100' },
-    manual: { label: 'Manual', color: 'text-yellow-600', bg: 'bg-yellow-50 border-yellow-100' },
-    smm: { label: 'SMM', color: 'text-blue-600', bg: 'bg-blue-50 border-blue-100' },
-};
 
 function CountdownTimer({ expiredAt }) {
     const [remaining, setRemaining] = useState('');
@@ -50,14 +43,20 @@ const PaymentStep = ({
     validTexts,
     setStep,
     product,
-    rating,
-    setRating,
-    testimonialMsg,
-    setTestimonialMsg,
-    isSubmitting,
-    submitTestimonial,
-    testimonialSubmitted
 }) => {
+    const [copiedOrderId, setCopiedOrderId] = useState(false);
+    const displayOrderId = orderStatus?.order_id || paymentResult?.order_id || paymentResult?.id || paymentResult?.orderId;
+
+    const handleCopyOrderId = (idToCopy) => {
+        if (!idToCopy) return;
+        if (copyToClipboard) {
+            copyToClipboard(idToCopy);
+        } else if (navigator.clipboard) {
+            navigator.clipboard.writeText(idToCopy);
+        }
+        setCopiedOrderId(true);
+        setTimeout(() => setCopiedOrderId(false), 2000);
+    };
     const statusConfig = {
         PENDING: { 
             label: 'Menunggu Pembayaran', 
@@ -162,6 +161,34 @@ const PaymentStep = ({
                                 <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
                             </button>
                         </div>
+
+                        {/* Order ID & Peringatan Simpan ID */}
+                        {displayOrderId && (
+                            <div className="mb-5 p-3.5 bg-gradient-to-r from-purple-50/90 via-indigo-50/50 to-purple-50/90 border border-purple-100/90 rounded-xl">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-xs font-semibold text-slate-600">Order ID:</span>
+                                    <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-lg border border-purple-200/80 shadow-xs">
+                                        <span className="font-mono text-xs font-bold text-purple-700 tracking-wide">{displayOrderId}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleCopyOrderId(displayOrderId)}
+                                            className="text-purple-600 hover:text-purple-800 transition-colors p-0.5 flex items-center gap-1"
+                                            title="Salin Order ID"
+                                        >
+                                            {copiedOrderId ? <CheckCircle2 size={13} className="text-emerald-600" /> : <Copy size={13} />}
+                                            <span className="text-[10px] font-semibold">{copiedOrderId ? 'Disalin' : 'Salin'}</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-1.5 text-amber-800 bg-amber-50/90 border border-amber-200/70 rounded-lg p-2.5 mt-2.5">
+                                    <AlertCircle size={14} className="text-amber-600 shrink-0 mt-0.5" />
+                                    <p className="text-[11px] font-medium leading-relaxed text-amber-900">
+                                        ⚠️ <strong>Penting:</strong> Simpan Order ID di atas untuk mempermudah saat terdapat kendala pada pesanan Anda.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
                         <p className="text-sm font-bold text-center text-slate-800 mb-4 flex items-center justify-center gap-2">
                             <span>Scan QR Code</span>
                             <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] uppercase tracking-wider">QRIS</span>
