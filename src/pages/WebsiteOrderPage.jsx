@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Globe, Send, CheckCircle2, Code, Layout, Monitor, Server, ShoppingBag, Palette } from 'lucide-react';
 import { notifySuccess, notifyWarning } from '../utils/notify';
-
-const WA_NUMBER = '6285199605580';
+import api from '../api';
+import { getWaUrl } from '../utils/waUtils';
 
 const budgetOptions = [
     { value: '', label: 'Pilih Range Budget' },
@@ -31,6 +31,11 @@ const WebsiteOrderPage = () => {
     const [websiteType, setWebsiteType] = useState('');
     const [description, setDescription] = useState('');
     const [sending, setSending] = useState(false);
+    const [settings, setSettings] = useState({});
+
+    useEffect(() => {
+        api.get('/settings').then(res => setSettings(res.data || {})).catch(() => {});
+    }, []);
 
     const handleSendWA = () => {
         if (!budget) { notifyWarning('Pilih range budget terlebih dahulu!'); return; }
@@ -51,8 +56,7 @@ const WebsiteOrderPage = () => {
             'Mohon info lebih lanjut. Terima kasih!',
         ].join('\n');
 
-        const waUrl = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(message)}`;
-        window.open(waUrl, '_blank');
+        window.open(getWaUrl(settings, message), '_blank');
 
         setSending(false);
         notifySuccess('Pesanan dikirim ke WhatsApp!');

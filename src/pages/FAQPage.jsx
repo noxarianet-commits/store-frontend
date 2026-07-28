@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import api from '../api';
+import { getWaUrl } from '../utils/waUtils';
 
 const ALL_FAQS = [
     {
@@ -87,13 +89,18 @@ const FAQItem = ({ item, isOpen, onToggle }) => (
 const FAQPage = () => {
     const navigate = useNavigate();
     const [openId, setOpenId] = useState(null);
+    const [settings, setSettings] = useState({});
+
+    useEffect(() => {
+        api.get('/settings').then(res => setSettings(res.data || {})).catch(() => {});
+    }, []);
 
     const toggle = (id) => setOpenId(prev => (prev === id ? null : id));
 
     return (
-        <div className="min-h-screen font-sans text-slate-800 p-6 md:p-12">
+        <div className="min-h-screen text-slate-800 p-6 md:p-12 font-sans">
             <div className="max-w-3xl mx-auto">
-                {/* Back Button */}
+                {/* Back button */}
                 <button
                     onClick={() => navigate(-1)}
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-purple-600 transition-all mb-8 text-sm font-medium shadow-sm"
@@ -130,7 +137,7 @@ const FAQPage = () => {
                         Masih punya pertanyaan? Hubungi kami langsung via WhatsApp.
                     </p>
                     <a
-                        href="https://wa.me/6285199605580"
+                        href={getWaUrl(settings, 'Halo Admin, saya punya pertanyaan mengenai layanan Noxarianet.')}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm px-6 py-3 rounded-full transition-colors shadow-md shadow-purple-200"

@@ -6,13 +6,7 @@ import {
     ArrowLeft, Clock, RefreshCw, Wifi, Info
 } from 'lucide-react';
 import api from '../api';
-
-// ══════════════════════════════════════════════════════════════════════════
-// HELPER
-// ══════════════════════════════════════════════════════════════════════════
-function formatRp(num) {
-    return `Rp ${Number(num).toLocaleString('id-ID')}`;
-}
+import { getWaUrl } from '../utils/waUtils';
 
 // ══════════════════════════════════════════════════════════════════════════
 // PaymentSuccessPage
@@ -27,7 +21,12 @@ const PaymentSuccessPage = () => {
     const [orderData, setOrderData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [copied, setCopied] = useState('');
+    const [settings, setSettings] = useState({});
     const pollingRef = useRef(null);
+
+    useEffect(() => {
+        api.get('/settings').then(res => setSettings(res.data || {})).catch(() => {});
+    }, []);
 
     const copyToClipboard = (text, key) => {
         navigator.clipboard.writeText(text);
@@ -512,7 +511,7 @@ const PaymentSuccessPage = () => {
                                         </div>
                                     )}
                                     <a
-                                        href={`https://wa.me/6285199605580?text=Halo%20admin%2C%20pesanan%20saya%20gagal.%20ID%3A%20${orderId}`}
+                                        href={getWaUrl(settings, `Halo admin, pesanan saya gagal. ID: ${orderId}`)}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="block w-full bg-green-600/20 hover:bg-green-600/30 border border-green-500/20 py-3 rounded-xl font-semibold text-green-400 transition-colors text-sm text-center mb-3"

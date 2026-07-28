@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { ArrowUp, X } from 'lucide-react';
+import { getWaNumber } from '../utils/waUtils';
 
-const FloatingButtons = () => {
+const FloatingButtons = ({ settings }) => {
   const [showTopBtn, setShowTopBtn] = useState(false);
   const [showBubble, setShowBubble] = useState(false);
   const [bubbleClosed, setBubbleClosed] = useState(localStorage.getItem('waBubbleClosed') === 'true');
@@ -31,7 +32,7 @@ const FloatingButtons = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const waNumber = '6285199605580';
+  const waNumber = getWaNumber(settings);
   const waMessage = encodeURIComponent('Halo CS noxarianet, saya butuh bantuan.');
 
   const closeBubble = (e) => {

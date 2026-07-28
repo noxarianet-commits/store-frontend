@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Megaphone, X, Loader2, ChevronDown, ChevronUp, ShoppingBag, CheckCircle2 } from 'lucide-react';
+import { Megaphone, X, ChevronDown, ChevronUp, ShoppingBag, CheckCircle2 } from 'lucide-react';
 import api from '../api';
 import HeroSection from '../components/home/HeroSection';
 import CategoryTabs from '../components/home/CategoryTabs';
 import ProductCard from '../components/home/ProductCard';
 import TestimonialCarousel from '../components/home/TestimonialCarousel';
+import { getWaNumber, getWaUrl, formatWaDisplay } from '../utils/waUtils';
 
 /**
  * Filter products by active tab and search query.
@@ -275,7 +276,7 @@ const LandingPage = () => {
                                 <li><Link to="/faq" className="hover:text-purple-600 transition">FAQ</Link></li>
                                 <li>
                                     <a 
-                                        href="https://wa.me/6285199605580?text=Halo%20Admin%20Noxarianet%20Store%2C%20saya%20tertarik%20untuk%20membuat%20website.%20Boleh%20minta%20informasi%20lengkap%20mengenai%20paket%2C%20harga%2C%20dan%20estimasi%20waktu%20pembuatannya%3F%20Terima%20kasih." 
+                                        href={getWaUrl(settings, 'Halo Admin Noxarianet Store, saya tertarik untuk membuat website. Boleh minta informasi lengkap mengenai paket, harga, dan estimasi waktu pembuatannya? Terima kasih.')}
                                         target="_blank" 
                                         rel="noreferrer" 
                                         className="hover:text-purple-600 transition font-medium text-purple-600 flex items-center gap-1"
@@ -290,8 +291,8 @@ const LandingPage = () => {
                             <ul className="space-y-2.5 text-xs text-slate-500">
                                 <li>Kab. Pekalongan, Jawa Tengah, Indonesia.</li>
                                 <li>
-                                    <a href="https://wa.me/6285199605580" target="_blank" rel="noreferrer" className="text-purple-600 hover:text-purple-700 transition font-medium">
-                                        +62 851-9960-5580
+                                    <a href={getWaUrl(settings)} target="_blank" rel="noreferrer" className="text-purple-600 hover:text-purple-700 transition font-medium">
+                                        {formatWaDisplay(getWaNumber(settings))}
                                     </a>
                                 </li>
                             </ul>
@@ -387,15 +388,16 @@ const FAQSection = () => {
     );
 };
 
+const WaSvg = () => (
+    <svg className="w-4 h-4 fill-current flex-shrink-0" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.591 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.029 18.88c-1.161 0-2.305-.292-3.318-.844l-3.677.964.984-3.595c-.607-1.052-.927-2.246-.926-3.468.001-5.824 4.74-10.563 10.564-10.563 5.826 0 10.564 4.738 10.564 10.562s-4.738 10.564-10.564 10.564z"/></svg>
+);
+
 /**
  * InfoModal — Reusable info popup modal.
  * Text only mode.
  */
 const InfoModal = ({ show, settings, onClose, onDismiss24h, onJoinWA }) => {
     const waLink = 'https://chat.whatsapp.com/CbKJDpk99Hm0ItiWhDY7Kb?s=cl&p=a&ilr=4&amv=3';
-    const WaSvg = () => (
-        <svg className="w-4 h-4 fill-current flex-shrink-0" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.591 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.029 18.88c-1.161 0-2.305-.292-3.318-.844l-3.677.964.984-3.595c-.607-1.052-.927-2.246-.926-3.468.001-5.824 4.74-10.563 10.564-10.563 5.826 0 10.564 4.738 10.564 10.562s-4.738 10.564-10.564 10.564z"/></svg>
-    );
 
     return (
         <AnimatePresence>

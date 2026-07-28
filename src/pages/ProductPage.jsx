@@ -11,6 +11,7 @@ import Swal from 'sweetalert2';
 import { notifySuccess, notifyError, notifyWarning, showAlert } from '../utils/notify';
 import { normalizePhoneNumber } from '../utils/phoneUtils';
 import { formatRp } from '../utils/currencyUtils';
+import { getWaNumber, getWaUrl } from '../utils/waUtils';
 
 // New Modular Components
 import ServerSelector from '../components/product/ServerSelector';
@@ -591,9 +592,9 @@ const ProductPage = () => {
         }
         const isWebProduct = product.name?.toLowerCase().includes('web') || product.category?.toLowerCase().includes('jasa');
         const message = isWebProduct
-            ? `Halo noxarianet! Saya ingin order Jasa Pembuatan Website.%0A%0A*Informasi Pembeli*%0A- Nomor WA: ${formData.wa_number}%0A- Email: ${formData.email}%0A%0A*Detail Pesanan*%0A- Paket: ${selectedVariant?.name}%0A- Estimasi Budget: ${budget}%0A- Konsep/Fitur: ${conceptMsg}%0A%0AMohon bantuannya untuk detail lebih lanjut.`
-            : `Halo noxarianet! Saya ingin request script bot WA.%0A%0A*Informasi Pembeli*%0A- Nomor WA: ${formData.wa_number}%0A- Email: ${formData.email}%0A%0A*Konsep Script*%0A${conceptMsg}%0A%0AMohon bantuannya untuk estimasi harga dan pengerjaan.`;
-        window.open(`https://wa.me/6285199605580?text=${message}`, '_blank');
+            ? `Halo noxarianet! Saya ingin order Jasa Pembuatan Website.\n\n*Informasi Pembeli*\n- Nomor WA: ${formData.wa_number}\n- Email: ${formData.email}\n\n*Detail Pesanan*\n- Paket: ${selectedVariant?.name}\n- Estimasi Budget: ${budget}\n- Konsep/Fitur: ${conceptMsg}\n\nMohon bantuannya untuk detail lebih lanjut.`
+            : `Halo noxarianet! Saya ingin request script bot WA.\n\n*Informasi Pembeli*\n- Nomor WA: ${formData.wa_number}\n- Email: ${formData.email}\n\n*Konsep Script*\n${conceptMsg}\n\nMohon bantuannya untuk estimasi harga dan pengerjaan.`;
+        window.open(getWaUrl(settings, message), '_blank');
     };
 
     // ── Loading Skeleton ────────────────────────────────────────────────
@@ -852,7 +853,7 @@ const ProductPage = () => {
                                         onClick={() => {
                                             if (isServiceProduct) {
                                                 const waText = `Halo noxarianet, saya ingin memesan ${product.name} - Varian: ${selectedVariant?.name || '-'}${(selectedVariant?.sell_price || selectedVariant?.price) ? ` dengan harga ${formatRp(selectedVariant.sell_price || selectedVariant.price)}` : ''}.`;
-                                                window.open(`https://wa.me/6285199605580?text=${encodeURIComponent(waText)}`, '_blank');
+                                                window.open(getWaUrl(settings, waText), '_blank');
                                             } else {
                                                 setStep(2);
                                                 window.scrollTo({ top: 100, behavior: 'smooth' });

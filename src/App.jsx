@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import api from './api';
 import LandingPage from './pages/LandingPage';
 import ProductPage from './pages/ProductPage';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
@@ -15,6 +17,18 @@ import ScrollToTop from './components/ScrollToTop';
 import AnimatedBackground from './components/AnimatedBackground';
 
 function App() {
+  const [settings, setSettings] = useState({});
+
+  useEffect(() => {
+    api.get('/settings')
+      .then(res => {
+        if (res.data) setSettings(res.data);
+      })
+      .catch(err => {
+        console.warn('App settings load error:', err?.message);
+      });
+  }, []);
+
   return (
     <>
       <ScrollToTop />
@@ -33,7 +47,7 @@ function App() {
         <Route path="/error" element={<ErrorPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-      <FloatingButtons />
+      <FloatingButtons settings={settings} />
     </>
   );
 }

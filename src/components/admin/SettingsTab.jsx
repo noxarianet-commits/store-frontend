@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { Save, Eye, EyeOff, MessageSquare, Loader2, LogOut } from 'lucide-react';
-import api from '../../api';
-import { notifySuccess, notifyError } from '../../utils/notify';
+import { Save, Eye, EyeOff, MessageSquare, LogOut, Phone } from 'lucide-react';
+import { getWaNumber, formatWaDisplay } from '../../utils/waUtils';
 
 const SettingsTab = ({
     settings, setSettings, updateSetting,
@@ -11,8 +10,59 @@ const SettingsTab = ({
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showSettingsPassword, setShowSettingsPassword] = useState(false);
 
+    const currentWa = getWaNumber(settings);
+
     return (
         <div className="space-y-6">
+            {/* WhatsApp CS Number */}
+            <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                            <Phone size={20} className="text-green-400" />
+                            Nomor WhatsApp CS (Customer Service)
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-1">
+                            Nomor ini akan digunakan di seluruh tombol CS toko, halaman garansi, website order, dan email transaksi.
+                        </p>
+                    </div>
+                </div>
+                <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-2">
+                        Nomor WA CS (Format Internasional tanpa tanda +, contoh: 6285199605580)
+                    </label>
+                    <div className="flex flex-col md:flex-row gap-3">
+                        <input
+                            type="text"
+                            value={settings.whatsapp_cs !== undefined ? settings.whatsapp_cs : currentWa}
+                            onChange={(e) => setSettings({ ...settings, whatsapp_cs: e.target.value })}
+                            className="flex-1 bg-white/5 border border-white/10 rounded-xl p-3.5 text-sm text-white focus:outline-none focus:border-purple-500/50 font-mono"
+                            placeholder="6285199605580"
+                        />
+                        <button
+                            onClick={() => updateSetting('whatsapp_cs', settings.whatsapp_cs || currentWa)}
+                            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all shrink-0"
+                        >
+                            <Save size={18} /> Simpan Nomor CS
+                        </button>
+                    </div>
+                    {currentWa && (
+                        <p className="text-xs text-slate-400 mt-3 flex items-center gap-2">
+                            <span>Tampilan di web: <strong className="text-green-400">{formatWaDisplay(settings.whatsapp_cs || currentWa)}</strong></span>
+                            <span>•</span>
+                            <a
+                                href={`https://wa.me/${(settings.whatsapp_cs || currentWa).replace(/\D/g, '')}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-purple-400 hover:underline"
+                            >
+                                Uji Link (wa.me/{ (settings.whatsapp_cs || currentWa).replace(/\D/g, '') })
+                            </a>
+                        </p>
+                    )}
+                </div>
+            </div>
+
             {/* Shop Status */}
             <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-6">
                 <div className="flex items-center justify-between mb-6">

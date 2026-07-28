@@ -1,9 +1,19 @@
-
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Shield } from 'lucide-react';
+import api from '../api';
+import { getWaNumber, getWaUrl, formatWaDisplay } from '../utils/waUtils';
 
 const Garansi = () => {
     const navigate = useNavigate();
+    const [settings, setSettings] = useState({});
+
+    useEffect(() => {
+        api.get('/settings').then(res => setSettings(res.data || {})).catch(() => {});
+    }, []);
+
+    const waNum = getWaNumber(settings);
+
     return (
         <div className="min-h-screen text-slate-800 p-6 md:p-12 font-sans">
             <div className="max-w-3xl mx-auto">
@@ -25,7 +35,17 @@ const Garansi = () => {
                         <h2 className="text-slate-800 font-bold text-base">Cara Melakukan Klaim Garansi:</h2>
                         <ul className="list-decimal pl-5 space-y-3">
                             <li>Pastikan Anda masih menyimpan <strong>Nomor Pesanan / Invoice</strong> yang diberikan saat pertama kali transaksi berhasil.</li>
-                            <li>Hubungi Admin melalui WhatsApp ke nomor <span className="text-purple-600 font-semibold">+62 851-9960-5580</span>.</li>
+                            <li>
+                                Hubungi Admin melalui WhatsApp ke nomor{' '}
+                                <a
+                                    href={getWaUrl(settings, 'Halo Admin, saya mau klaim garansi.')}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-purple-600 font-semibold hover:underline"
+                                >
+                                    {formatWaDisplay(waNum)}
+                                </a>.
+                            </li>
                             <li>Sertakan Invoice pembelian dan jelaskan kendala yang dialami (misal: akun terkena screen limit, password salah, dsb).</li>
                             <li>Tunggu admin melakukan pengecekan. Jika terbukti bermasalah dan bukan karena pelanggaran aturan, admin akan memberikan akun pengganti atau memperbaiki akun Anda dalam waktu maksimal 1x24 jam.</li>
                         </ul>
