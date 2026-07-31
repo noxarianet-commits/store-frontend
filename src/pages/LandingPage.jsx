@@ -65,6 +65,8 @@ function computeCounts(products) {
     };
 }
 
+const WA_GROUP_LINK = 'https://chat.whatsapp.com/HQDNahAemv6GfmZqYZjSSD?s=sw&p=a&ilr=4&amv=3';
+
 const LandingPage = () => {
     const [homeData, setHomeData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -95,7 +97,7 @@ const LandingPage = () => {
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         if (isMobile) {
             e.preventDefault();
-            window.location.href = 'https://chat.whatsapp.com/CbKJDpk99Hm0ItiWhDY7Kb?s=cl&p=a&ilr=4&amv=3';
+            window.location.href = WA_GROUP_LINK;
         }
     };
 
@@ -397,7 +399,7 @@ const WaSvg = () => (
  * Text only mode.
  */
 const InfoModal = ({ show, settings, onClose, onDismiss24h, onJoinWA }) => {
-    const waLink = 'https://chat.whatsapp.com/CbKJDpk99Hm0ItiWhDY7Kb?s=cl&p=a&ilr=4&amv=3';
+    const waLink = WA_GROUP_LINK;
 
     return (
         <AnimatePresence>
