@@ -95,7 +95,7 @@ const LandingPage = () => {
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         if (isMobile) {
             e.preventDefault();
-            window.location.href = 'https://chat.whatsapp.com/CbKJDpk99Hm0ItiWhDY7Kb?s=cl&p=a&ilr=4&amv=3';
+            window.location.href = 'https://chat.whatsapp.com/HQDNahAemv6GfmZqYZjSSD?s=cl&p=a&ilr=4&amv=3';
         }
     };
 
@@ -397,7 +397,7 @@ const WaSvg = () => (
  * Text only mode.
  */
 const InfoModal = ({ show, settings, onClose, onDismiss24h, onJoinWA }) => {
-    const waLink = 'https://chat.whatsapp.com/CbKJDpk99Hm0ItiWhDY7Kb?s=cl&p=a&ilr=4&amv=3';
+    const waLink = 'https://chat.whatsapp.com/HQDNahAemv6GfmZqYZjSSD?s=cl&p=a&ilr=4&amv=3';
 
     return (
         <AnimatePresence>
