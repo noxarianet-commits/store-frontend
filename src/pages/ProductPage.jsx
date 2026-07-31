@@ -359,7 +359,7 @@ const ProductPage = () => {
         try {
             const res = await api.get(`/payments/status/${paymentResult.order_id}`);
             if (res.data?.data) setOrderStatus(res.data.data);
-        } catch (e) { /* ignore */ }
+        } catch { /* ignore */ }
         setIsRefreshing(false);
     };
 
@@ -379,7 +379,7 @@ const ProductPage = () => {
             });
             setTestimonialSubmitted(true);
             notifySuccess('Terima kasih atas testimoninya!');
-        } catch (err) {
+        } catch {
             notifyError('Tidak bisa menyimpan testimoni.');
         }
     };
@@ -474,9 +474,9 @@ const ProductPage = () => {
         const currentVariants = vendor === 'fincloud' ? fincloudVariants : product.variants;
         if (currentVariants && currentVariants.length > 0) {
             const cheapestInStock = currentVariants.find(v => v.stock > 0) || currentVariants[0];
-            setSelectedVariant(cheapestInStock);
+            setSelectedVariant(prev => (prev?.id === cheapestInStock?.id && prev?.sku === cheapestInStock?.sku) ? prev : cheapestInStock);
         } else {
-            setSelectedVariant(null);
+            setSelectedVariant(prev => prev ? null : prev);
         }
     }, [vendor, product, fincloudVariants]);
 
@@ -557,6 +557,9 @@ const ProductPage = () => {
                 wa_number: formData.wa_number,
                 email: formData.email,
                 note: noteStr,
+                customer_id: fieldData.customer_id,
+                user_id: fieldData.customer_id || fieldData.user_id,
+                zone_id: fieldData.zone_id,
                 provider_qty: isOpenDenom ? parseInt(providerQty) : undefined,
             });
 
@@ -651,7 +654,6 @@ const ProductPage = () => {
     );
 
     const steps = ['Checkout', 'Data Pembeli', 'Pembayaran'];
-    const isGameProduct = product?.category?.toLowerCase().includes('game') || product?.category?.toLowerCase().includes('top up') || product?.category?.toLowerCase().includes('topup');
     const isServiceProduct = product?.is_service_table || product?.category?.toLowerCase().includes('jasa');
 
     // Status badge config
@@ -662,7 +664,6 @@ const ProductPage = () => {
         FAILED: { label: 'Gagal', color: 'text-red-600', bg: 'bg-red-50 border-red-100', icon: <AlertCircle size={16} className="text-red-600" /> },
         CANCELLED: { label: 'Dibatalkan', color: 'text-slate-500', bg: 'bg-slate-50 border-slate-100', icon: <AlertCircle size={16} className="text-slate-500" /> },
     };
-    const currentStatus = statusConfig[orderStatus?.status] || statusConfig['PENDING'];
 
     // ── Compute dynamic fields (merge required_fields and validation.fields) ──
     const dynamicFields = [];
