@@ -58,9 +58,13 @@ const AdminDashboard = () => {
     const [showPasswordForm, setShowPasswordForm] = useState(false);
     const [passwordData, setPasswordData] = useState({ current_password: '', new_password: '', confirm_password: '' });
 
+    const [orderRefreshCounter, setOrderRefreshCounter] = useState(0);
+
     const fetchOrders = async () => {
-        try { const res = await api.get('/orders'); setOrders(res.data); }
-        catch (e) { console.error('Gagal fetch orders:', e); }
+        try {
+            const res = await api.get('/orders/stats');
+            setOrders(Array.isArray(res.data) ? res.data : (res.data.orders || []));
+        } catch (e) { console.error('Gagal fetch orders stats:', e); }
     };
 
     const fetchServices = async () => {
@@ -375,11 +379,17 @@ const AdminDashboard = () => {
             setIsOrderModalOpen(false);
             setEditingOrder(null);
             await fetchOrders();
+            setOrderRefreshCounter(c => c + 1);
         } catch (err) { notifyError(err.response?.data?.error || 'Gagal memperbarui pesanan'); }
     };
     const deleteOrder = async (id) => {
         const confirmed = await confirmAction({ title: 'Hapus pesanan?', text: 'Pesanan yang dihapus tidak bisa dikembalikan.', danger: true, confirmText: 'Ya, hapus!' });
-        if (confirmed) { await api.delete(`/orders/${id}`); await fetchOrders(); notifySuccess('Pesanan berhasil dihapus!'); }
+        if (confirmed) {
+            await api.delete(`/orders/${id}`);
+            await fetchOrders();
+            setOrderRefreshCounter(c => c + 1);
+            notifySuccess('Pesanan berhasil dihapus!');
+        }
     };
 
     // ---- Settings ----
@@ -475,7 +485,7 @@ const AdminDashboard = () => {
                         />
                     )}
                     {activeTab === 'orders' && (
-                        <OrdersTab orders={orders} openOrderModal={openOrderModal} deleteOrder={deleteOrder} />
+                        <OrdersTab openOrderModal={openOrderModal} deleteOrder={deleteOrder} refreshTrigger={orderRefreshCounter} />
                     )}
                     {activeTab === 'settings' && (
                         <SettingsTab
