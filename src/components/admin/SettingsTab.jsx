@@ -187,95 +187,118 @@ const SettingsTab = ({
                         </div>
                     </div>
 
-                    {/* ORKUT Option */}
+                    {/* Saya Bayar Option */}
                     <div
                         onClick={() => {
-                            setSettings({ ...settings, payment_gateway: 'orkut' });
-                            updateSetting('payment_gateway', 'orkut');
+                            setSettings({ ...settings, payment_gateway: 'sayabayar' });
+                            updateSetting('payment_gateway', 'sayabayar');
                         }}
                         className={`cursor-pointer p-4 rounded-xl border transition-all flex items-start gap-3.5 ${
-                            settings.payment_gateway === 'orkut'
+                            settings.payment_gateway === 'sayabayar'
                                 ? 'bg-purple-600/10 border-purple-500/50 shadow-lg shadow-purple-500/10'
                                 : 'bg-white/5 border-white/10 hover:border-white/20'
                         }`}
                     >
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
-                            settings.payment_gateway === 'orkut'
+                            settings.payment_gateway === 'sayabayar'
                                 ? 'border-purple-500 bg-purple-500'
                                 : 'border-gray-500'
                         }`}>
-                            {settings.payment_gateway === 'orkut' && (
+                            {settings.payment_gateway === 'sayabayar' && (
                                 <div className="w-2 h-2 rounded-full bg-white" />
                             )}
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h4 className="text-sm font-bold text-white">ORKUT (OrderKuota)</h4>
-                                {settings.payment_gateway === 'orkut' && (
+                                <h4 className="text-sm font-bold text-white">Saya Bayar (QRIS / VA / Bank Transfer)</h4>
+                                {settings.payment_gateway === 'sayabayar' && (
                                     <span className="px-2 py-0.5 text-[10px] font-bold bg-purple-500/20 text-purple-300 rounded-full border border-purple-500/30">
                                         Aktif
                                     </span>
                                 )}
                             </div>
                             <p className="text-xs text-gray-400 mt-1">
-                                QRIS Dinamis OrderKuota + Smart Polling (Balance Delta) & Kode Unik.
+                                Payment Gateway Otomatis tanpa biaya transaksi (0%). Mendukung QRIS, BCA Transfer, & Virtual Account.
                             </p>
                         </div>
                     </div>
                 </div>
 
-                {/* ORKUT Credentials Config */}
-                {settings.payment_gateway === 'orkut' && (
+                {/* Saya Bayar Credentials Config */}
+                {settings.payment_gateway === 'sayabayar' && (
                     <div className="mt-6 pt-6 border-t border-white/10 space-y-4">
                         <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                            ⚙️ Konfigurasi Kredensial ORKUT (OrderKuota)
+                            ⚙️ Konfigurasi Kredensial Saya Bayar
                         </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-medium text-gray-400 mb-1">Server URL Gateway</label>
+                                <label className="block text-xs font-medium text-gray-400 mb-1">API Key (X-API-Key)</label>
                                 <input
-                                    type="text"
-                                    value={settings.orkut_config?.base_url || 'http://panelku.fincloud.my.id:10002'}
+                                    type="password"
+                                    value={settings.sayabayar_config?.api_key || ''}
                                     onChange={(e) => setSettings({
                                         ...settings,
-                                        orkut_config: { ...settings.orkut_config, base_url: e.target.value }
+                                        sayabayar_config: { ...settings.sayabayar_config, api_key: e.target.value }
                                     })}
-                                    placeholder="http://panelku.fincloud.my.id:10002"
+                                    placeholder="sk_live_xxxx..."
                                     className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-purple-500/50 font-mono"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-gray-400 mb-1">Merchant Code</label>
+                                <label className="block text-xs font-medium text-gray-400 mb-1">Webhook Secret</label>
                                 <input
-                                    type="text"
-                                    value={settings.orkut_config?.merchant_code || ''}
+                                    type="password"
+                                    value={settings.sayabayar_config?.webhook_secret || ''}
                                     onChange={(e) => setSettings({
                                         ...settings,
-                                        orkut_config: { ...settings.orkut_config, merchant_code: e.target.value }
+                                        sayabayar_config: { ...settings.sayabayar_config, webhook_secret: e.target.value }
                                     })}
-                                    placeholder="Contoh: M1A2B3C4D (atau kosongkan)"
+                                    placeholder="whsec_xxxx..."
                                     className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-purple-500/50 font-mono"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-gray-400 mb-1">API Hash</label>
+                                <label className="block text-xs font-medium text-gray-400 mb-1">Base URL</label>
                                 <input
                                     type="text"
-                                    value={settings.orkut_config?.api_hash || ''}
+                                    value={settings.sayabayar_config?.base_url || 'https://api.sayabayar.com/v1'}
                                     onChange={(e) => setSettings({
                                         ...settings,
-                                        orkut_config: { ...settings.orkut_config, api_hash: e.target.value }
+                                        sayabayar_config: { ...settings.sayabayar_config, base_url: e.target.value }
                                     })}
-                                    placeholder="API Hash akun (atau kosongkan)"
+                                    placeholder="https://api.sayabayar.com/v1"
                                     className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-purple-500/50 font-mono"
                                 />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-400 mb-1">Metode Pembayaran Default</label>
+                                <select
+                                    value={settings.sayabayar_config?.payment_method || 'qris'}
+                                    onChange={(e) => setSettings({
+                                        ...settings,
+                                        sayabayar_config: { ...settings.sayabayar_config, payment_method: e.target.value }
+                                    })}
+                                    className="w-full bg-[#18181B] border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-purple-500/50"
+                                >
+                                    <option value="qris">QRIS (All Bank / E-Wallet)</option>
+                                    <option value="bca_transfer">BCA Bank Transfer</option>
+                                    <option value="va_bca">VA Bank BCA</option>
+                                    <option value="va_bni">VA Bank BNI</option>
+                                    <option value="va_bri">VA Bank BRI</option>
+                                    <option value="va_mandiri">VA Bank Mandiri</option>
+                                    <option value="va_permata">VA Bank Permata</option>
+                                    <option value="va_cimb">VA CIMB Niaga</option>
+                                    <option value="va_bsm">VA BSI</option>
+                                    <option value="va_danamon">VA Bank Danamon</option>
+                                    <option value="va_seabank">VA SeaBank</option>
+                                </select>
                             </div>
                         </div>
                         <button
-                            onClick={() => updateSetting('orkut_config', settings.orkut_config || {})}
+                            onClick={() => updateSetting('sayabayar_config', settings.sayabayar_config || {})}
                             className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all"
                         >
-                            <Save size={16} /> Simpan Kredensial ORKUT
+                            <Save size={16} /> Simpan Konfigurasi Saya Bayar
                         </button>
                     </div>
                 )}
