@@ -271,6 +271,20 @@ const SettingsTab = ({
                                 />
                             </div>
                             <div>
+                                <label className="block text-xs font-medium text-gray-400 mb-1">Channel Preference (Preferensi Channel)</label>
+                                <select
+                                    value={settings.sayabayar_config?.channel_preference || 'platform'}
+                                    onChange={(e) => setSettings({
+                                        ...settings,
+                                        sayabayar_config: { ...settings.sayabayar_config, channel_preference: e.target.value }
+                                    })}
+                                    className="w-full bg-[#18181B] border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-purple-500/50"
+                                >
+                                    <option value="platform">Platform (Default / Free Tier)</option>
+                                    <option value="client">Client (Pro Tier + Channel Aktif)</option>
+                                </select>
+                            </div>
+                            <div>
                                 <label className="block text-xs font-medium text-gray-400 mb-1">Metode Pembayaran Default</label>
                                 <select
                                     value={settings.sayabayar_config?.payment_method || 'qris'}
@@ -281,6 +295,7 @@ const SettingsTab = ({
                                     className="w-full bg-[#18181B] border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-purple-500/50"
                                 >
                                     <option value="qris">QRIS (All Bank / E-Wallet)</option>
+                                    <option value="qris_gopay">QRIS (All Bank / E-Wallet)</option>
                                     <option value="bca_transfer">BCA Bank Transfer</option>
                                     <option value="va_bca">VA Bank BCA</option>
                                     <option value="va_bni">VA Bank BNI</option>

@@ -122,25 +122,11 @@ const PaymentStep = ({
                     <div className="text-center mb-5">
                         <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Total Pembayaran</p>
                         <p className="text-4xl font-extrabold text-slate-900">{formatRp(paymentResult.total || (paymentResult.amount + (paymentResult.unique_code || 0)))}</p>
-                        
-                        {/* Kode unik & Fee breakdown */}
-                        <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
-                            {paymentResult.unique_code > 0 && (
-                                <span className="px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200/80 rounded-lg text-xs font-semibold">
-                                    Termasuk Kode Unik: <strong className="font-bold">+Rp {paymentResult.unique_code}</strong>
-                                </span>
-                            )}
-                            {paymentResult.fee > 0 && (
-                                <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium">
-                                    Fee QRIS: {formatRp(paymentResult.fee)}
-                                </span>
-                            )}
-                        </div>
 
                         {paymentResult.unique_code > 0 && (
                             <div className="mt-3 bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5 max-w-sm mx-auto">
                                 <p className="text-[11px] text-amber-700 font-medium leading-snug">
-                                    ⚠️ <strong>PENTING:</strong> Bayar tepat hingga 3 digit terakhir agar pembayaran terverifikasi secara otomatis!
+                                    ⚠️ <strong>PENTING:</strong> Bayar tepat hingga 3 digit terakhir!
                                 </p>
                             </div>
                         )}
@@ -161,33 +147,6 @@ const PaymentStep = ({
                                 <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
                             </button>
                         </div>
-
-                        {/* Order ID & Peringatan Simpan ID */}
-                        {displayOrderId && (
-                            <div className="mb-5 p-3.5 bg-gradient-to-r from-purple-50/90 via-indigo-50/50 to-purple-50/90 border border-purple-100/90 rounded-xl">
-                                <div className="flex items-center justify-between gap-2">
-                                    <span className="text-xs font-semibold text-slate-600">Order ID:</span>
-                                    <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-lg border border-purple-200/80 shadow-xs">
-                                        <span className="font-mono text-xs font-bold text-purple-700 tracking-wide">{displayOrderId}</span>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleCopyOrderId(displayOrderId)}
-                                            className="text-purple-600 hover:text-purple-800 transition-colors p-0.5 flex items-center gap-1"
-                                            title="Salin Order ID"
-                                        >
-                                            {copiedOrderId ? <CheckCircle2 size={13} className="text-emerald-600" /> : <Copy size={13} />}
-                                            <span className="text-[10px] font-semibold">{copiedOrderId ? 'Disalin' : 'Salin'}</span>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-1.5 text-amber-800 bg-amber-50/90 border border-amber-200/70 rounded-lg p-2.5 mt-2.5">
-                                    <AlertCircle size={14} className="text-amber-600 shrink-0 mt-0.5" />
-                                    <p className="text-[11px] font-medium leading-relaxed text-amber-900">
-                                        ⚠️ <strong>Penting:</strong> Simpan Order ID di atas untuk mempermudah saat terdapat kendala pada pesanan Anda.
-                                    </p>
-                                </div>
-                            </div>
-                        )}
 
                         <p className="text-sm font-bold text-center text-slate-800 mb-4 flex items-center justify-center gap-2">
                             <span>Scan QR Code</span>
@@ -234,6 +193,32 @@ const PaymentStep = ({
                                 </>
                             );
                         })()}
+                        {/* Order ID & Peringatan Simpan ID */}
+                        {displayOrderId && (
+                            <div className="mb-5 p-3.5 bg-gradient-to-r from-purple-50/90 via-indigo-50/50 to-purple-50/90 border border-purple-100/90 rounded-xl">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-xs font-semibold text-slate-600">Order ID:</span>
+                                    <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-lg border border-purple-200/80 shadow-xs">
+                                        <span className="font-mono text-xs font-bold text-purple-700 tracking-wide">{displayOrderId}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleCopyOrderId(displayOrderId)}
+                                            className="text-purple-600 hover:text-purple-800 transition-colors p-0.5 flex items-center gap-1"
+                                            title="Salin Order ID"
+                                        >
+                                            {copiedOrderId ? <CheckCircle2 size={13} className="text-emerald-600" /> : <Copy size={13} />}
+                                            <span className="text-[10px] font-semibold">{copiedOrderId ? 'Disalin' : 'Salin'}</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-1.5 text-amber-800 bg-amber-50/90 border border-amber-200/70 rounded-lg p-2.5 mt-2.5">
+                                    <AlertCircle size={14} className="text-amber-600 shrink-0 mt-0.5" />
+                                    <p className="text-[11px] font-medium leading-relaxed text-amber-900">
+                                        ⚠️ <strong>Penting:</strong> Simpan Order ID di atas untuk mempermudah saat terdapat kendala pada pesanan Anda.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
                         <p className="text-xs text-center text-slate-500 mb-3 bg-slate-50 py-2 rounded-lg">Gunakan aplikasi E-Wallet / M-Banking untuk scan.</p>
                         <button
                             onClick={handleSudahBayar}
