@@ -150,7 +150,7 @@ const SettingsTab = ({
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* FinCloud Option */}
                     <div
                         onClick={() => {
@@ -210,7 +210,7 @@ const SettingsTab = ({
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h4 className="text-sm font-bold text-white">Saya Bayar (QRIS / VA / Bank Transfer)</h4>
+                                <h4 className="text-sm font-bold text-white">Saya Bayar (QRIS / VA / Bank)</h4>
                                 {settings.payment_gateway === 'sayabayar' && (
                                     <span className="px-2 py-0.5 text-[10px] font-bold bg-purple-500/20 text-purple-300 rounded-full border border-purple-500/30">
                                         Aktif
@@ -218,11 +218,116 @@ const SettingsTab = ({
                                 )}
                             </div>
                             <p className="text-xs text-gray-400 mt-1">
-                                Payment Gateway Otomatis tanpa biaya transaksi (0%). Mendukung QRIS, BCA Transfer, & Virtual Account.
+                                Payment Gateway Otomatis tanpa biaya transaksi (0%). Mendukung QRIS, BCA Transfer, & VA.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Dyqris Option */}
+                    <div
+                        onClick={() => {
+                            setSettings({ ...settings, payment_gateway: 'dyqris' });
+                            updateSetting('payment_gateway', 'dyqris');
+                        }}
+                        className={`cursor-pointer p-4 rounded-xl border transition-all flex items-start gap-3.5 ${
+                            settings.payment_gateway === 'dyqris'
+                                ? 'bg-purple-600/10 border-purple-500/50 shadow-lg shadow-purple-500/10'
+                                : 'bg-white/5 border-white/10 hover:border-white/20'
+                        }`}
+                    >
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
+                            settings.payment_gateway === 'dyqris'
+                                ? 'border-purple-500 bg-purple-500'
+                                : 'border-gray-500'
+                        }`}>
+                            {settings.payment_gateway === 'dyqris' && (
+                                <div className="w-2 h-2 rounded-full bg-white" />
+                            )}
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h4 className="text-sm font-bold text-white">Dyqris (Mini QRIS)</h4>
+                                {settings.payment_gateway === 'dyqris' && (
+                                    <span className="px-2 py-0.5 text-[10px] font-bold bg-purple-500/20 text-purple-300 rounded-full border border-purple-500/30">
+                                        Aktif
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1">
+                                Mini QRIS Payment Gateway dengan nominal unik real-time dan notifikasi PayHook.
                             </p>
                         </div>
                     </div>
                 </div>
+
+                {/* Dyqris Credentials Config */}
+                {settings.payment_gateway === 'dyqris' && (
+                    <div className="mt-6 pt-6 border-t border-white/10 space-y-4">
+                        <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                            ⚙️ Konfigurasi Kredensial Dyqris Gateway
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-400 mb-1">Merchant API Key (Bearer Token)</label>
+                                <input
+                                    type="password"
+                                    value={settings.dyqris_config?.api_key || ''}
+                                    onChange={(e) => setSettings({
+                                        ...settings,
+                                        dyqris_config: { ...settings.dyqris_config, api_key: e.target.value }
+                                    })}
+                                    placeholder="Secret API Key Dyqris..."
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-purple-500/50 font-mono"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-400 mb-1">Webhook Secret (HMAC Signature)</label>
+                                <input
+                                    type="password"
+                                    value={settings.dyqris_config?.webhook_secret || ''}
+                                    onChange={(e) => setSettings({
+                                        ...settings,
+                                        dyqris_config: { ...settings.dyqris_config, webhook_secret: e.target.value }
+                                    })}
+                                    placeholder="Webhook Secret Key..."
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-purple-500/50 font-mono"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-400 mb-1">Base URL Gateway</label>
+                                <input
+                                    type="text"
+                                    value={settings.dyqris_config?.base_url || ''}
+                                    onChange={(e) => setSettings({
+                                        ...settings,
+                                        dyqris_config: { ...settings.dyqris_config, base_url: e.target.value }
+                                    })}
+                                    placeholder="https://gateway.domain.com"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-purple-500/50 font-mono"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-400 mb-1">Masa Kadaluarsa Invoice (Menit)</label>
+                                <input
+                                    type="number"
+                                    value={settings.dyqris_config?.expiry_minutes || 15}
+                                    onChange={(e) => setSettings({
+                                        ...settings,
+                                        dyqris_config: { ...settings.dyqris_config, expiry_minutes: e.target.value }
+                                    })}
+                                    placeholder="15"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-purple-500/50 font-mono"
+                                />
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => updateSetting('dyqris_config', settings.dyqris_config || {})}
+                            className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all"
+                        >
+                            <Save size={16} /> Simpan Konfigurasi Dyqris
+                        </button>
+                    </div>
+                )}
 
                 {/* Saya Bayar Credentials Config */}
                 {settings.payment_gateway === 'sayabayar' && (
