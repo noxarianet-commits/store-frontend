@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Save, Eye, EyeOff, MessageSquare, LogOut, Phone } from 'lucide-react';
-import { getWaNumber, formatWaDisplay } from '../../utils/waUtils';
+import { Save, Eye, EyeOff, MessageSquare, LogOut, Phone, Users } from 'lucide-react';
+import { getWaNumber, formatWaDisplay, getWaGroupLink } from '../../utils/waUtils';
 
 const SettingsTab = ({
     settings, setSettings, updateSetting,
@@ -11,6 +11,7 @@ const SettingsTab = ({
     const [showSettingsPassword, setShowSettingsPassword] = useState(false);
 
     const currentWa = getWaNumber(settings);
+    const currentWaGroupLink = getWaGroupLink(settings);
 
     return (
         <div className="space-y-6">
@@ -57,6 +58,55 @@ const SettingsTab = ({
                                 className="text-purple-400 hover:underline"
                             >
                                 Uji Link (wa.me/{ (settings.whatsapp_cs || currentWa).replace(/\D/g, '') })
+                            </a>
+                        </p>
+                    )}
+                </div>
+            </div>
+
+            {/* WhatsApp Group Link */}
+            <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                            <Users size={20} className="text-green-400" />
+                            Link Group WhatsApp
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-1">
+                            Link grup ini akan digunakan pada popup Info Penting dan tombol gabung grup WA di halaman utama.
+                        </p>
+                    </div>
+                </div>
+                <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-2">
+                        URL Join Group WhatsApp (contoh: https://chat.whatsapp.com/...)
+                    </label>
+                    <div className="flex flex-col md:flex-row gap-3">
+                        <input
+                            type="text"
+                            value={settings.wa_group_link !== undefined ? settings.wa_group_link : currentWaGroupLink}
+                            onChange={(e) => setSettings({ ...settings, wa_group_link: e.target.value })}
+                            className="flex-1 bg-white/5 border border-white/10 rounded-xl p-3.5 text-sm text-white focus:outline-none focus:border-purple-500/50 font-mono"
+                            placeholder="https://chat.whatsapp.com/..."
+                        />
+                        <button
+                            onClick={() => updateSetting('wa_group_link', settings.wa_group_link || currentWaGroupLink)}
+                            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all shrink-0"
+                        >
+                            <Save size={18} /> Simpan Link Group WA
+                        </button>
+                    </div>
+                    {currentWaGroupLink && (
+                        <p className="text-xs text-slate-400 mt-3 flex items-center gap-[#0.5rem] items-center">
+                            <span>Link aktif: <strong className="text-green-400 truncate max-w-xs inline-block align-bottom">{settings.wa_group_link || currentWaGroupLink}</strong></span>
+                            <span>•</span>
+                            <a
+                                href={settings.wa_group_link || currentWaGroupLink}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-purple-400 hover:underline shrink-0"
+                            >
+                                Uji Link Group WA
                             </a>
                         </p>
                     )}

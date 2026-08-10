@@ -3,6 +3,7 @@
  */
 
 export const DEFAULT_WA_NUMBER = '6285199605580';
+export const DEFAULT_WA_GROUP_LINK = 'https://chat.whatsapp.com/HQDNahAemv6GfmZqYZjSSD?s=sw&p=a&ilr=4&amv=3';
 
 /**
  * Returns clean numeric WA CS number from settings or default.
@@ -15,6 +16,17 @@ export function getWaNumber(settings) {
     const num = settings.whatsapp_cs;
     if (!num) return DEFAULT_WA_NUMBER;
     return String(num).replace(/\D/g, '') || DEFAULT_WA_NUMBER;
+}
+
+/**
+ * Returns WhatsApp Group join link from settings or default.
+ * @param {object|string} settings 
+ * @returns {string}
+ */
+export function getWaGroupLink(settings) {
+    if (!settings) return DEFAULT_WA_GROUP_LINK;
+    if (typeof settings === 'string') return settings || DEFAULT_WA_GROUP_LINK;
+    return settings.wa_group_link || DEFAULT_WA_GROUP_LINK;
 }
 
 /**

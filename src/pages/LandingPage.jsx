@@ -7,7 +7,7 @@ import HeroSection from '../components/home/HeroSection';
 import CategoryTabs from '../components/home/CategoryTabs';
 import ProductCard from '../components/home/ProductCard';
 import TestimonialCarousel from '../components/home/TestimonialCarousel';
-import { getWaNumber, getWaUrl, formatWaDisplay } from '../utils/waUtils';
+import { getWaNumber, getWaUrl, formatWaDisplay, getWaGroupLink } from '../utils/waUtils';
 
 /**
  * Filter products by active tab and search query.
@@ -65,7 +65,6 @@ function computeCounts(products) {
     };
 }
 
-const WA_GROUP_LINK = 'https://chat.whatsapp.com/HQDNahAemv6GfmZqYZjSSD?s=sw&p=a&ilr=4&amv=3';
 
 const LandingPage = () => {
     const [homeData, setHomeData] = useState(null);
@@ -97,7 +96,7 @@ const LandingPage = () => {
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         if (isMobile) {
             e.preventDefault();
-            window.location.href = WA_GROUP_LINK;
+            window.location.href = getWaGroupLink(settings);
         }
     };
 
@@ -399,7 +398,7 @@ const WaSvg = () => (
  * Text only mode.
  */
 const InfoModal = ({ show, settings, onClose, onDismiss24h, onJoinWA }) => {
-    const waLink = WA_GROUP_LINK;
+    const waLink = getWaGroupLink(settings);
 
     return (
         <AnimatePresence>
