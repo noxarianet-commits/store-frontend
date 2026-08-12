@@ -247,7 +247,7 @@ const ProductPage = () => {
                                 });
                                 setTestimonialSubmitted(true);
                                 notifySuccess('Terima kasih atas testimoninya!');
-                            } catch (err) {
+                            } catch {
                                 notifyError('Tidak bisa menyimpan testimoni.');
                             }
                         }
@@ -259,35 +259,35 @@ const ProductPage = () => {
 
     // ── Polling status order setelah payment dibuat ──────────────────────
     useEffect(() => {
+        const stopPolling = () => {
+            if (pollingRef.current) {
+                clearInterval(pollingRef.current);
+                pollingRef.current = null;
+            }
+        };
+
+        const startPolling = (orderId) => {
+            stopPolling();
+            pollingRef.current = setInterval(async () => {
+                try {
+                    const res = await api.get(`/payments/status/${orderId}`);
+                    const status = res.data?.data?.status;
+                    setOrderStatus(res.data?.data);
+
+                    if (status === 'COMPLETED' || status === 'FAILED' || status === 'CANCELLED') {
+                        stopPolling();
+                    }
+                } catch (err) {
+                    console.error('Polling error:', err.message);
+                }
+            }, 5000);
+        };
+
         if (step === 3 && paymentResult?.order_id) {
             startPolling(paymentResult.order_id);
         }
         return () => stopPolling();
     }, [step, paymentResult]);
-
-    function startPolling(orderId) {
-        stopPolling();
-        pollingRef.current = setInterval(async () => {
-            try {
-                const res = await api.get(`/payments/status/${orderId}`);
-                const status = res.data?.data?.status;
-                setOrderStatus(res.data?.data);
-
-                if (status === 'COMPLETED' || status === 'FAILED' || status === 'CANCELLED') {
-                    stopPolling();
-                }
-            } catch (err) {
-                console.error('Polling error:', err.message);
-            }
-        }, 5000);
-    }
-
-    function stopPolling() {
-        if (pollingRef.current) {
-            clearInterval(pollingRef.current);
-            pollingRef.current = null;
-        }
-    }
 
     // ── Download QR (fetch atau fallback ke new tab jika CORS blocked) ───────────────
     const downloadQR = async (qrUrl) => {
@@ -390,27 +390,30 @@ const ProductPage = () => {
             try {
                 const isServiceRoute = location.pathname.startsWith('/service/');
 
-                const [sekalipayRes, dbRes, servicesRes, settingsRes] = await Promise.all([
-                    !isServiceRoute ? api.get('/sekalipay/items', { params: { per_page: 200 } }).catch(() => ({ data: { data: [] } })) : Promise.resolve({ data: { data: [] } }),
-                    !isServiceRoute ? api.get('/products').catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
-                    api.get('/services').catch(() => ({ data: [] })),
+                // Fetch settings and targeted product/service by ID in parallel
+                const [targetRes, settingsRes] = await Promise.all([
+                    isServiceRoute
+                        ? api.get(`/services/${id}`).catch(() => null)
+                        : api.get(`/products/${id}`).catch(() => null),
                     api.get('/settings').catch(() => ({ data: {} }))
                 ]);
 
-                if (settingsRes.data) {
+                if (settingsRes?.data) {
                     setSettings(settingsRes.data);
                 }
 
-                let foundProduct = null;
-                if (!isServiceRoute && sekalipayRes.data && Array.isArray(sekalipayRes.data.data)) {
-                    foundProduct = sekalipayRes.data.data.find(p => p.id.toString() === id);
-                }
-                if (!foundProduct && !isServiceRoute && dbRes.data && Array.isArray(dbRes.data)) {
-                    foundProduct = dbRes.data.find(p => p.id.toString() === id);
-                }
-                if (!foundProduct && servicesRes.data && Array.isArray(servicesRes.data)) {
-                    foundProduct = servicesRes.data.find(p => p.id.toString() === id);
-                    if (foundProduct) foundProduct.is_service_table = true;
+                let foundProduct = targetRes?.data || null;
+
+                // Fallback: If not found in DB products and not service route, check Sekalipay items
+                if (!foundProduct && !isServiceRoute) {
+                    try {
+                        const sekalipayRes = await api.get('/sekalipay/items', { params: { per_page: 200 } });
+                        if (sekalipayRes.data && Array.isArray(sekalipayRes.data.data)) {
+                            foundProduct = sekalipayRes.data.data.find(p => p.id.toString() === id);
+                        }
+                    } catch {
+                        // ignore fallback error
+                    }
                 }
 
                 if (foundProduct) {

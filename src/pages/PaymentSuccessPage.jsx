@@ -34,41 +34,49 @@ const PaymentSuccessPage = () => {
         setTimeout(() => setCopied(''), 2000);
     };
 
-    // ── Polling order status ─────────────────────────────────────────────
+    // ── Polling order status (with incremental backoff) ───────────────────
     useEffect(() => {
         if (!orderId) {
             setLoading(false);
             return;
         }
 
+        let isSubscribed = true;
+        let delay = 4000; // Start with 4 seconds
+
         const fetchStatus = async () => {
             try {
                 const res = await api.get(`/payments/status/${orderId}`);
                 const data = res.data?.data;
+                if (!isSubscribed) return;
+
                 setOrderData(data);
                 setLoading(false);
 
                 // Berhenti polling jika sudah final
                 if (data?.status === 'COMPLETED' || data?.status === 'FAILED' || data?.status === 'CANCELLED') {
-                    stopPolling();
+                    return;
                 }
+
+                // Increment delay up to max 15 seconds
+                delay = Math.min(delay + 2000, 15000);
+                pollingRef.current = setTimeout(fetchStatus, delay);
             } catch {
-                setLoading(false);
+                if (isSubscribed) {
+                    setLoading(false);
+                    // Retry with 10s delay on error
+                    pollingRef.current = setTimeout(fetchStatus, 10000);
+                }
             }
         };
 
         fetchStatus();
-        pollingRef.current = setInterval(fetchStatus, 5000);
 
-        return () => stopPolling();
+        return () => {
+            isSubscribed = false;
+            if (pollingRef.current) clearTimeout(pollingRef.current);
+        };
     }, [orderId]);
-
-    function stopPolling() {
-        if (pollingRef.current) {
-            clearInterval(pollingRef.current);
-            pollingRef.current = null;
-        }
-    }
 
     // ── Status config ────────────────────────────────────────────────────
     const statusConfig = {
