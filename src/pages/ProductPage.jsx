@@ -423,6 +423,7 @@ const ProductPage = () => {
                     // Normalize variant prices and sort by price low to high
                     if (foundProduct.variants) {
                         foundProduct.variants = foundProduct.variants
+                            .filter(v => !v.is_hidden)
                             .map(v => ({
                                 ...v,
                                 price: v.price || v.sell_price || 0,
