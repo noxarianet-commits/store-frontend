@@ -80,8 +80,7 @@ const ProductPage = () => {
     });
 
     // Multi-Vendor State
-    const [vendor, setVendor] = useState('sekalipay'); // 'sekalipay' | 'fincloud'
-    const [fincloudVariants, setFincloudVariants] = useState([]);
+    const [vendor, setVendor] = useState('sekalipay'); // 'sekalipay' | 'okeconnect' | 'fincloud'
 
     // Checkout states
     const [step, setStep] = useState(1);
@@ -315,8 +314,7 @@ const ProductPage = () => {
 
     // ── Cek ID / Validate Account ───────────────────────────────────────
     const handleValidateAccount = async () => {
-        const sekalipayValVariant = vendor === 'fincloud' ? product?.variants?.find(v => v.validation?.available) : null;
-        const activeVariant = vendor === 'fincloud' ? sekalipayValVariant : selectedVariant;
+        const activeVariant = selectedVariant || (product?.variants && product.variants.find(v => v.validation?.available));
 
         if (!activeVariant || !activeVariant.validation?.available) return;
         
@@ -330,8 +328,16 @@ const ProductPage = () => {
 
         setIsValidating(true);
         try {
-            const res = await api.post('/sekalipay/validate', {
-                item_id: activeVariant.id,
+            const currentVendor = selectedVariant?.vendor || product?.vendor || vendor || 'sekalipay';
+            if (currentVendor === 'okeconnect') {
+                // Untuk produk dari OkeConnect, tidak perlu validasi/pengecekan ke Sekalipay
+                setValidatedAccount({ valid: true, account_name: customerId, display_name: customerId });
+                notifySuccess(`Target ID disimpan: ${customerId}`);
+                return;
+            }
+            const res = await api.validateAccount({
+                vendor: currentVendor,
+                variant_id: activeVariant.id || activeVariant.vendor_variant_id,
                 customer_id: customerId,
                 zone_id: zoneId || undefined,
             });
@@ -344,6 +350,8 @@ const ProductPage = () => {
             setIsValidating(false);
         }
     };
+
+
     const handleSudahBayar = () => {
         showAlert({
             title: 'Mohon Ditunggu',
@@ -419,49 +427,53 @@ const ProductPage = () => {
                 if (foundProduct) {
                     if (foundProduct.is_active === false) foundProduct.status = 'sold_out';
                     else if (foundProduct.is_active === true) foundProduct.status = 'available';
-                    
-                    // Normalize variant prices and sort by price low to high
+
+                    // If servers array is present, format server variants
+                    if (foundProduct.servers && foundProduct.servers.length > 0) {
+                        foundProduct.servers = foundProduct.servers.map(s => ({
+                            ...s,
+                            variants: (s.variants || [])
+                                .filter(v => !v.is_hidden)
+                                .map(v => ({
+                                    ...v,
+                                    price: v.price || v.sell_price || 0,
+                                    vendor: s.vendor
+                                }))
+                                .sort((a, b) => (a.price || 0) - (b.price || 0))
+                        }));
+                    }
+
+                    // Normalize root variant prices if any
                     if (foundProduct.variants) {
                         foundProduct.variants = foundProduct.variants
                             .filter(v => !v.is_hidden)
                             .map(v => ({
                                 ...v,
                                 price: v.price || v.sell_price || 0,
-                                vendor: 'sekalipay'
+                                vendor: foundProduct.vendor || 'sekalipay'
                             }))
-                            .sort((a, b) => a.price - b.price);
+                            .sort((a, b) => (a.price || 0) - (b.price || 0));
                     }
+
                     setProduct(foundProduct);
-                    
-                    // Fetch Fincloud matching variants if not a service route
-                    if (!isServiceRoute) {
-                        try {
-                            const fincloudRes = await api.getFincloudProducts({ search: foundProduct.name, per_page: 200 });
-                            if (fincloudRes.data?.data && fincloudRes.data.data.length > 0) {
-                                const mappedFincloud = fincloudRes.data.data
-                                    .map(v => ({
-                                        id: v.sku, // map sku to id for frontend logic
-                                        sku: v.sku,
-                                        name: v.name,
-                                        price: v.price,
-                                        sell_price: v.price,
-                                        stock: 9999, // Fincloud assumes available if returned
-                                        order_process: 'auto',
-                                        vendor: 'fincloud',
-                                        required_fields: [{ key: 'target', label: 'Nomor Tujuan / User ID', required: true }],
-                                        validation: {}
-                                    }))
-                                    .sort((a, b) => a.price - b.price);
-                                setFincloudVariants(mappedFincloud);
-                            }
-                        } catch (e) {
-                            console.error('Failed to load Fincloud variants', e);
+
+                    // Determine active server vendor
+                    const initialVendor = (foundProduct.servers && foundProduct.servers.length > 0)
+                        ? foundProduct.servers[0].vendor
+                        : (foundProduct.vendor || 'sekalipay');
+
+                    setVendor(prev => {
+                        if (foundProduct.servers && foundProduct.servers.some(s => s.vendor === prev)) {
+                            return prev;
                         }
-                    }
-                    
-                    // Auto-select first in-stock variant based on current vendor state (we default to sekalipay)
-                    const firstInStock = foundProduct.variants?.find(v => v.stock > 0);
-                    setSelectedVariant(firstInStock || foundProduct.variants?.[0] || null);
+                        return initialVendor;
+                    });
+
+                    // Auto-select first in-stock variant
+                    const activeServer = foundProduct.servers?.find(s => s.vendor === initialVendor) || foundProduct.servers?.[0];
+                    const activeVariants = activeServer?.variants || foundProduct.variants || [];
+                    const firstInStock = activeVariants.find(v => v.stock > 0);
+                    setSelectedVariant(firstInStock || activeVariants[0] || null);
                 }
                 setLoading(false);
             } catch (err) {
@@ -472,17 +484,32 @@ const ProductPage = () => {
         fetchProduct();
     }, [id, location.pathname]);
 
+    // Handle switching server
+    const handleSelectServer = (newVendor) => {
+        setVendor(newVendor);
+        const targetServer = product?.servers?.find(s => s.vendor === newVendor);
+        const variantsList = targetServer?.variants || [];
+        const cheapestInStock = variantsList.find(v => v.stock > 0) || variantsList[0] || null;
+        setSelectedVariant(cheapestInStock);
+    };
+
     // Auto-select first variant on vendor switch
     useEffect(() => {
         if (!product) return;
-        const currentVariants = vendor === 'fincloud' ? fincloudVariants : product.variants;
+        const activeServer = product?.servers?.find(s => s.vendor === vendor) || product?.servers?.[0];
+        const currentVariants = activeServer?.variants || product?.variants || [];
         if (currentVariants && currentVariants.length > 0) {
             const cheapestInStock = currentVariants.find(v => v.stock > 0) || currentVariants[0];
-            setSelectedVariant(prev => (prev?.id === cheapestInStock?.id && prev?.sku === cheapestInStock?.sku) ? prev : cheapestInStock);
+            setSelectedVariant(prev => {
+                if (prev && currentVariants.some(v => (v.id === prev.id || v.sku === prev.sku) && (v.vendor === prev.vendor))) {
+                    return prev;
+                }
+                return cheapestInStock;
+            });
         } else {
-            setSelectedVariant(prev => prev ? null : prev);
+            setSelectedVariant(null);
         }
-    }, [vendor, product, fincloudVariants]);
+    }, [vendor, product]);
 
     const handleFormChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -549,11 +576,15 @@ const ProductPage = () => {
                     ? JSON.stringify({ target: fieldData.target || noteTarget, opt_smm: [], comment_smm: '' }) 
                     : noteTarget);
 
+            const activeServer = product?.servers?.find(s => s.vendor === vendor) || product?.servers?.[0];
+            const targetProductId = selectedVariant?.product_id || activeServer?.product_id || product?.id;
+            const currentVendor = selectedVariant?.vendor || activeServer?.vendor || vendor || 'sekalipay';
+
             const res = await api.post('/payments/create', {
-                vendor: vendor,
-                product_id: product.id?.toString(),
-                variant_id: vendor === 'sekalipay' ? selectedVariant?.id : undefined,
-                sku: vendor === 'fincloud' ? selectedVariant?.sku : undefined,
+                vendor: currentVendor,
+                product_id: targetProductId?.toString(),
+                variant_id: selectedVariant?.id || selectedVariant?.vendor_variant_id,
+                sku: selectedVariant?.sku || selectedVariant?.vendor_variant_id,
                 variant_name: selectedVariant?.name,
                 product_name: product.name,
                 amount: computedPrice,
@@ -566,6 +597,7 @@ const ProductPage = () => {
                 zone_id: fieldData.zone_id,
                 provider_qty: isOpenDenom ? parseInt(providerQty) : undefined,
             });
+
 
             if (res.data?.success) {
                 setPaymentResult(res.data.data);
@@ -827,10 +859,18 @@ const ProductPage = () => {
                     >
                         {step === 1 && (
                             <div>
-                                <ServerSelector vendor={vendor} setVendor={setVendor} hasFincloud={fincloudVariants.length > 0} />
+                                <ServerSelector
+                                    servers={product?.servers || []}
+                                    activeVendor={vendor}
+                                    onSelectServer={handleSelectServer}
+                                />
                                 <h2 className="text-base font-bold text-slate-900 mb-5">Pilih Paket</h2>
                                 <VariantSelector 
-                                    variants={vendor === 'fincloud' ? fincloudVariants : product.variants} 
+                                    variants={
+                                        (product?.servers?.find(s => s.vendor === vendor)?.variants) ||
+                                        product?.variants ||
+                                        []
+                                    } 
                                     selectedVariant={selectedVariant} 
                                     setSelectedVariant={setSelectedVariant}
                                     showAllVariants={showAllVariants}

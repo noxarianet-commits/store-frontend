@@ -17,6 +17,7 @@ import OrdersTab from '../components/admin/OrdersTab';
 import OrderModal from '../components/admin/OrderModal';
 import SettingsTab from '../components/admin/SettingsTab';
 import FeaturedTab from '../components/admin/FeaturedTab';
+import OkeconnectTab from '../components/admin/OkeconnectTab';
 
 const AdminDashboard = () => {
     const [isLogin, setIsLogin] = useState(false);
@@ -39,6 +40,11 @@ const AdminDashboard = () => {
     const [fincloudSync, setFincloudSync] = useState(null);
     const [fincloudLoading, setFincloudLoading] = useState(false);
     const [fincloudSearch, setFincloudSearch] = useState('');
+    const [okeconnectProducts, setOkeconnectProducts] = useState([]);
+    const [okeconnectBalance, setOkeconnectBalance] = useState(null);
+    const [okeconnectSync, setOkeconnectSync] = useState(null);
+    const [okeconnectLoading, setOkeconnectLoading] = useState(false);
+    const [okeconnectSearch, setOkeconnectSearch] = useState('');
     const [expandedProduct, setExpandedProduct] = useState(null);
     const [syncInProgress, setSyncInProgress] = useState(false);
     const [globalMarkupValue, setGlobalMarkupValue] = useState('');
@@ -46,6 +52,7 @@ const AdminDashboard = () => {
     const [featuredLoading, setFeaturedLoading] = useState(false);
     const [error] = useState(null);
     const [loading, setLoading] = useState(true);
+
 
     // Modal states
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -81,30 +88,45 @@ const AdminDashboard = () => {
         setSekalipayLoading(true);
         try {
             const [prodRes, balRes, syncRes] = await Promise.all([
-                api.get('/admin/sekalipay/products').catch(() => ({ data: [] })),
-                api.get('/admin/sekalipay/balance').catch(() => ({ data: null })),
-                api.get('/admin/sekalipay/sync-status').catch(() => ({ data: null }))
+                api.getAdminProducts({ vendor: 'sekalipay' }).catch(() => ({ data: [] })),
+                api.getAdminBalance('sekalipay').catch(() => ({ data: null })),
+                api.getAdminSyncStatus('sekalipay').catch(() => ({ data: null }))
             ]);
-            setSekalipayProducts(prodRes.data);
-            setSekalipayBalance(balRes.data);
-            setSekalipaySync(syncRes.data);
+            setSekalipayProducts(prodRes.data || []);
+            setSekalipayBalance(balRes.data?.data || balRes.data);
+            setSekalipaySync(syncRes.data?.lastSync || syncRes.data);
         } catch (e) { console.error('Gagal fetch sekalipay:', e); }
         setSekalipayLoading(false);
     }, []);
 
-        const fetchFincloud = useCallback(async () => {
+    const fetchFincloud = useCallback(async () => {
         setFincloudLoading(true);
         try {
             const [prodRes, balRes, syncRes] = await Promise.all([
-                api.get('/admin/fincloud/products').catch(() => ({ data: [] })),
-                api.get('/admin/fincloud/balance').catch(() => ({ data: null })),
-                api.get('/admin/fincloud/sync-status').catch(() => ({ data: null }))
+                api.getAdminProducts({ vendor: 'fincloud' }).catch(() => ({ data: [] })),
+                api.getAdminBalance('fincloud').catch(() => ({ data: null })),
+                api.getAdminSyncStatus('fincloud').catch(() => ({ data: null }))
             ]);
-            setFincloudProducts(prodRes.data);
-            setFincloudBalance(balRes.data);
-            setFincloudSync(syncRes.data);
+            setFincloudProducts(prodRes.data || []);
+            setFincloudBalance(balRes.data?.data || balRes.data);
+            setFincloudSync(syncRes.data?.lastSync || syncRes.data);
         } catch (e) { console.error('Gagal fetch fincloud:', e); }
         setFincloudLoading(false);
+    }, []);
+
+    const fetchOkeconnect = useCallback(async () => {
+        setOkeconnectLoading(true);
+        try {
+            const [prodRes, balRes, syncRes] = await Promise.all([
+                api.getAdminProducts({ vendor: 'okeconnect' }).catch(() => ({ data: [] })),
+                api.getAdminBalance('okeconnect').catch(() => ({ data: null })),
+                api.getAdminSyncStatus('okeconnect').catch(() => ({ data: null }))
+            ]);
+            setOkeconnectProducts(prodRes.data || []);
+            setOkeconnectBalance(balRes.data?.data || balRes.data);
+            setOkeconnectSync(syncRes.data?.lastSync || syncRes.data);
+        } catch (e) { console.error('Gagal fetch okeconnect:', e); }
+        setOkeconnectLoading(false);
     }, []);
 
     const fetchData = async () => {
@@ -112,6 +134,7 @@ const AdminDashboard = () => {
         await Promise.all([fetchOrders(), fetchServices(), fetchSettings()]);
         if (activeTab === 'sekalipay') await fetchSekalipay();
         if (activeTab === 'fincloud') await fetchFincloud();
+        if (activeTab === 'okeconnect') await fetchOkeconnect();
         if (activeTab === 'featured') await fetchFeaturedProducts();
         setLoading(false);
     };
@@ -119,7 +142,7 @@ const AdminDashboard = () => {
     const fetchFeaturedProducts = useCallback(async () => {
         setFeaturedLoading(true);
         try {
-            const res = await api.get('/admin/sekalipay/products');
+            const res = await api.getAdminProducts({ vendor: 'sekalipay' });
             setFeaturedProducts(res.data || []);
         } catch (e) { console.error('Gagal fetch featured products:', e); }
         setFeaturedLoading(false);
@@ -153,12 +176,20 @@ const AdminDashboard = () => {
         }
     }, [activeTab, isLogin, fetchFeaturedProducts]);
 
-        useEffect(() => {
+    useEffect(() => {
         if (isLogin && activeTab === 'fincloud') {
             const timer = setTimeout(() => fetchFincloud(), 0);
             return () => clearTimeout(timer);
         }
     }, [activeTab, isLogin, fetchFincloud]);
+
+    useEffect(() => {
+        if (isLogin && activeTab === 'okeconnect') {
+            const timer = setTimeout(() => fetchOkeconnect(), 0);
+            return () => clearTimeout(timer);
+        }
+    }, [activeTab, isLogin, fetchOkeconnect]);
+
 
     // ---- Auth ----
     const handleLogin = async (e) => {
@@ -212,8 +243,8 @@ const AdminDashboard = () => {
     const handleSync = async (type) => {
         setSyncInProgress(true);
         try {
-            const res = await api.post('/admin/sekalipay/sync', { type });
-            notifySuccess(`Sync berhasil: ${res.data.syncedProducts || 0} produk disinkronkan`);
+            const res = await api.triggerSync('sekalipay', type);
+            notifySuccess(`Sync berhasil: ${res.data.syncedProducts || res.data.productCount || 0} produk disinkronkan`);
             await fetchSekalipay();
         } catch (err) {
             notifyError(err.response?.data?.error || 'Sync gagal');
@@ -225,7 +256,7 @@ const AdminDashboard = () => {
         const val = parseInt(globalMarkupValue);
         if (isNaN(val) || val < 0) { notifyWarning('Masukkan nilai markup yang valid'); return; }
         try {
-            const res = await api.post('/admin/sekalipay/global-markup', { markup: val });
+            const res = await api.applyGlobalMarkup('sekalipay', val);
             notifySuccess(res.data.message);
             setGlobalMarkupValue('');
             await fetchSekalipay();
@@ -236,7 +267,7 @@ const AdminDashboard = () => {
 
     const handleMarkupUpdate = async (productId, variantId, markup) => {
         try {
-            await api.patch(`/admin/sekalipay/products/${productId}/markup`, { variantId, markup });
+            await api.updateAdminMarkup(productId, { variantId, markup });
             await fetchSekalipay();
             notifySuccess('Markup berhasil diupdate!');
         } catch (err) {
@@ -246,7 +277,7 @@ const AdminDashboard = () => {
 
     const handleToggleProduct = async (productId) => {
         try {
-            await api.patch(`/admin/sekalipay/products/${productId}/toggle`);
+            await api.toggleAdminProduct(productId);
             await fetchSekalipay();
             notifySuccess('Status produk berhasil diubah!');
         } catch (err) {
@@ -256,7 +287,7 @@ const AdminDashboard = () => {
 
     const handleToggleVariantHidden = async (productId, variantId) => {
         try {
-            const res = await api.patch(`/admin/sekalipay/products/${productId}/variant/${variantId}/toggle-hidden`);
+            const res = await api.patch(`/admin/products/products/${productId}/variant/${variantId}/toggle-hidden`);
             await fetchSekalipay();
             notifySuccess(res.data.is_hidden ? 'Varian disembunyikan!' : 'Varian ditampilkan!');
         } catch (err) {
@@ -266,7 +297,7 @@ const AdminDashboard = () => {
 
     const handleToggleFeatured = async (productId) => {
         try {
-            const res = await api.patch(`/admin/sekalipay/products/${productId}/featured`);
+            const res = await api.toggleAdminFeatured(productId);
             await fetchFeaturedProducts();
             notifySuccess(res.data.is_featured ? 'Produk ditandai sebagai unggulan!' : 'Produk dihapus dari unggulan.');
         } catch (err) {
@@ -274,12 +305,12 @@ const AdminDashboard = () => {
         }
     };
 
-        // ---- Fincloud handlers ----
+    // ---- Fincloud handlers ----
     const handleFincloudSync = async () => {
         setSyncInProgress(true);
         try {
-            const res = await api.post('/admin/fincloud/sync');
-            notifySuccess(`Sync berhasil: ${res.data.syncedProducts || 0} produk disinkronkan`);
+            const res = await api.triggerSync('fincloud', 'full');
+            notifySuccess(`Sync berhasil: ${res.data.syncedProducts || res.data.productCount || 0} produk disinkronkan`);
             await fetchFincloud();
         } catch (err) {
             notifyError(err.response?.data?.error || 'Sync gagal');
@@ -291,7 +322,7 @@ const AdminDashboard = () => {
         const val = parseInt(globalMarkupValue);
         if (isNaN(val) || val < 0) { notifyWarning('Masukkan nilai markup yang valid'); return; }
         try {
-            const res = await api.post('/admin/fincloud/global-markup', { markup: val });
+            const res = await api.applyGlobalMarkup('fincloud', val);
             notifySuccess(res.data.message);
             setGlobalMarkupValue('');
             await fetchFincloud();
@@ -300,9 +331,9 @@ const AdminDashboard = () => {
         }
     };
 
-    const handleFincloudMarkupUpdate = async (sku, markup) => {
+    const handleFincloudMarkupUpdate = async (productIdOrSku, markup) => {
         try {
-            await api.patch(`/admin/fincloud/products/${sku}/markup`, { markup });
+            await api.updateAdminMarkup(productIdOrSku, { markup });
             await fetchFincloud();
             notifySuccess('Markup Fincloud berhasil diupdate!');
         } catch (err) {
@@ -310,9 +341,9 @@ const AdminDashboard = () => {
         }
     };
 
-    const handleFincloudToggleProduct = async (sku) => {
+    const handleFincloudToggleProduct = async (productIdOrSku) => {
         try {
-            await api.patch(`/admin/fincloud/products/${sku}/toggle`);
+            await api.toggleAdminProduct(productIdOrSku);
             await fetchFincloud();
             notifySuccess('Status produk berhasil diubah!');
         } catch (err) {
@@ -332,9 +363,11 @@ const AdminDashboard = () => {
 
     const handleFincloudBulkMarkup = async (updates) => {
         try {
-            const res = await api.patch('/admin/fincloud/products/bulk-markup', { updates });
+            for (const item of updates) {
+                await api.updateAdminMarkup(item.sku, { markup: item.markup });
+            }
             await fetchFincloud();
-            notifySuccess(res.data.message || `${res.data.updatedCount} markup berhasil disimpan!`);
+            notifySuccess(`${updates.length} markup berhasil disimpan!`);
             return { success: true };
         } catch (err) {
             notifyError(err.response?.data?.error || 'Gagal menyimpan markup');
@@ -342,7 +375,63 @@ const AdminDashboard = () => {
         }
     };
 
+    // ---- OkeConnect handlers ----
+    const handleOkeconnectSync = async (type = 'full') => {
+        setSyncInProgress(true);
+        try {
+            const res = await api.triggerSync('okeconnect', type);
+            notifySuccess(`Sync berhasil: ${res.data.productCount || res.data.productsUpserted || 0} produk disinkronkan`);
+            await fetchOkeconnect();
+        } catch (err) {
+            notifyError(err.response?.data?.error || 'Sync OkeConnect gagal');
+        }
+        setSyncInProgress(false);
+    };
+
+    const handleOkeconnectGlobalMarkup = async () => {
+        const val = parseInt(globalMarkupValue);
+        if (isNaN(val) || val < 0) { notifyWarning('Masukkan nilai markup yang valid'); return; }
+        try {
+            const res = await api.applyGlobalMarkup('okeconnect', val);
+            notifySuccess(res.data.message);
+            setGlobalMarkupValue('');
+            await fetchOkeconnect();
+        } catch (err) {
+            notifyError(err.response?.data?.error || 'Gagal menerapkan markup OkeConnect');
+        }
+    };
+
+    const handleOkeconnectMarkupUpdate = async (productId, variantId, markup) => {
+        try {
+            await api.updateAdminMarkup(productId, { variantId, markup });
+            await fetchOkeconnect();
+            notifySuccess('Markup OkeConnect berhasil diupdate!');
+        } catch (err) {
+            notifyError(err.response?.data?.error || 'Gagal update markup OkeConnect');
+        }
+    };
+
+    const handleOkeconnectToggleProduct = async (productId) => {
+        try {
+            await api.toggleAdminProduct(productId);
+            await fetchOkeconnect();
+        } catch (err) {
+            notifyError(err.response?.data?.error || 'Gagal mengubah status produk OkeConnect');
+        }
+    };
+
+    const handleOkeconnectToggleVariantHidden = async (productId, variantId) => {
+        try {
+            await api.toggleVariantHidden(variantId);
+            await fetchOkeconnect();
+            notifySuccess('Status tampilan varian berhasil diubah!');
+        } catch (err) {
+            notifyError(err.response?.data?.error || 'Gagal mengubah visibilitas varian');
+        }
+    };
+
     // ---- Product CRUD ----
+
     const openProductModal = (product = null) => {
         setEditingProduct(product);
         setIsAddingProduct(!product);
@@ -470,7 +559,21 @@ const AdminDashboard = () => {
                             handleBulkMarkup={handleFincloudBulkMarkup}
                         />
                     )}
+                    {activeTab === 'okeconnect' && (
+                        <OkeconnectTab
+                            okeconnectProducts={okeconnectProducts} okeconnectBalance={okeconnectBalance}
+                            okeconnectSync={okeconnectSync} okeconnectLoading={okeconnectLoading}
+                            okeconnectSearch={okeconnectSearch} setOkeconnectSearch={setOkeconnectSearch}
+                            handleSync={handleOkeconnectSync} handleGlobalMarkup={handleOkeconnectGlobalMarkup}
+                            handleMarkupUpdate={handleOkeconnectMarkupUpdate} handleToggleProduct={handleOkeconnectToggleProduct}
+                            syncInProgress={syncInProgress}
+                            globalMarkupValue={globalMarkupValue} setGlobalMarkupValue={setGlobalMarkupValue}
+                            expandedProduct={expandedProduct} setExpandedProduct={setExpandedProduct}
+                            handleToggleVariantHidden={handleOkeconnectToggleVariantHidden}
+                        />
+                    )}
                     {activeTab === 'revenue' && <RevenueTab orders={orders} settings={settings} updateSetting={updateSetting} />}
+
                     {activeTab === 'featured' && (
                         <FeaturedTab
                             products={featuredProducts}
