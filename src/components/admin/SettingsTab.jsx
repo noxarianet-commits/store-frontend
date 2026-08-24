@@ -237,38 +237,38 @@ const SettingsTab = ({
                         </div>
                     </div>
 
-                    {/* Saya Bayar Option */}
+                    {/* Sekalipay Gateway Option */}
                     <div
                         onClick={() => {
-                            setSettings({ ...settings, payment_gateway: 'sayabayar' });
-                            updateSetting('payment_gateway', 'sayabayar');
+                            setSettings({ ...settings, payment_gateway: 'sekalipay' });
+                            updateSetting('payment_gateway', 'sekalipay');
                         }}
                         className={`cursor-pointer p-4 rounded-xl border transition-all flex items-start gap-3.5 ${
-                            settings.payment_gateway === 'sayabayar'
+                            settings.payment_gateway === 'sekalipay'
                                 ? 'bg-purple-600/10 border-purple-500/50 shadow-lg shadow-purple-500/10'
                                 : 'bg-white/5 border-white/10 hover:border-white/20'
                         }`}
                     >
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
-                            settings.payment_gateway === 'sayabayar'
+                            settings.payment_gateway === 'sekalipay'
                                 ? 'border-purple-500 bg-purple-500'
                                 : 'border-gray-500'
                         }`}>
-                            {settings.payment_gateway === 'sayabayar' && (
+                            {settings.payment_gateway === 'sekalipay' && (
                                 <div className="w-2 h-2 rounded-full bg-white" />
                             )}
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h4 className="text-sm font-bold text-white">Saya Bayar (QRIS / VA / Bank)</h4>
-                                {settings.payment_gateway === 'sayabayar' && (
+                                <h4 className="text-sm font-bold text-white">Sekalipay (QRIS)</h4>
+                                {settings.payment_gateway === 'sekalipay' && (
                                     <span className="px-2 py-0.5 text-[10px] font-bold bg-purple-500/20 text-purple-300 rounded-full border border-purple-500/30">
                                         Aktif
                                     </span>
                                 )}
                             </div>
                             <p className="text-xs text-gray-400 mt-1">
-                                Payment Gateway Otomatis tanpa biaya transaksi (0%). Mendukung QRIS, BCA Transfer, & VA.
+                                Payment Gateway QRIS resmi Sekalipay dengan settlement otomatis H+0 & webhook instant.
                             </p>
                         </div>
                     </div>
@@ -379,96 +379,86 @@ const SettingsTab = ({
                     </div>
                 )}
 
-                {/* Saya Bayar Credentials Config */}
-                {settings.payment_gateway === 'sayabayar' && (
+                {/* Sekalipay Gateway Credentials Config */}
+                {settings.payment_gateway === 'sekalipay' && (
                     <div className="mt-6 pt-6 border-t border-white/10 space-y-4">
                         <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                            ⚙️ Konfigurasi Kredensial Saya Bayar
+                            ⚙️ Konfigurasi Kredensial Sekalipay Payment Gateway (QRIS)
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-medium text-gray-400 mb-1">API Key (X-API-Key)</label>
+                                <label className="block text-xs font-medium text-gray-400 mb-1">Merchant API Key (X-API-Key)</label>
                                 <input
                                     type="password"
-                                    value={settings.sayabayar_config?.api_key || ''}
+                                    value={settings.sekalipay_gateway_config?.api_key || ''}
                                     onChange={(e) => setSettings({
                                         ...settings,
-                                        sayabayar_config: { ...settings.sayabayar_config, api_key: e.target.value }
+                                        sekalipay_gateway_config: { ...settings.sekalipay_gateway_config, api_key: e.target.value }
                                     })}
-                                    placeholder="sk_live_xxxx..."
+                                    placeholder="mk_OIsnKspR7vbs..."
                                     className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-purple-500/50 font-mono"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-gray-400 mb-1">Webhook Secret</label>
+                                <label className="block text-xs font-medium text-gray-400 mb-1">Secret Key (HMAC-SHA256 Signature)</label>
                                 <input
                                     type="password"
-                                    value={settings.sayabayar_config?.webhook_secret || ''}
+                                    value={settings.sekalipay_gateway_config?.secret_key || ''}
                                     onChange={(e) => setSettings({
                                         ...settings,
-                                        sayabayar_config: { ...settings.sayabayar_config, webhook_secret: e.target.value }
+                                        sekalipay_gateway_config: { ...settings.sekalipay_gateway_config, secret_key: e.target.value }
                                     })}
-                                    placeholder="whsec_xxxx..."
+                                    placeholder="sk_uz26eNar0qcl..."
                                     className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-purple-500/50 font-mono"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-gray-400 mb-1">Base URL</label>
+                                <label className="block text-xs font-medium text-gray-400 mb-1">Merchant Code</label>
                                 <input
                                     type="text"
-                                    value={settings.sayabayar_config?.base_url || 'https://api.sayabayar.com/v1'}
+                                    value={settings.sekalipay_gateway_config?.merchant_code || ''}
                                     onChange={(e) => setSettings({
                                         ...settings,
-                                        sayabayar_config: { ...settings.sayabayar_config, base_url: e.target.value }
+                                        sekalipay_gateway_config: { ...settings.sekalipay_gateway_config, merchant_code: e.target.value }
                                     })}
-                                    placeholder="https://api.sayabayar.com/v1"
+                                    placeholder="MCH-B8ISMW"
                                     className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-purple-500/50 font-mono"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-gray-400 mb-1">Channel Preference (Preferensi Channel)</label>
-                                <select
-                                    value={settings.sayabayar_config?.channel_preference || 'platform'}
+                                <label className="block text-xs font-medium text-gray-400 mb-1">Base URL Gateway</label>
+                                <input
+                                    type="text"
+                                    value={settings.sekalipay_gateway_config?.base_url || 'https://sekalipay.com/api/v1/gateway'}
                                     onChange={(e) => setSettings({
                                         ...settings,
-                                        sayabayar_config: { ...settings.sayabayar_config, channel_preference: e.target.value }
+                                        sekalipay_gateway_config: { ...settings.sekalipay_gateway_config, base_url: e.target.value }
                                     })}
-                                    className="w-full bg-[#18181B] border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-purple-500/50"
-                                >
-                                    <option value="platform">Platform (Default / Free Tier)</option>
-                                    <option value="client">Client (Pro Tier + Channel Aktif)</option>
-                                </select>
+                                    placeholder="https://sekalipay.com/api/v1/gateway"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-purple-500/50 font-mono"
+                                />
                             </div>
-                            <div>
-                                <label className="block text-xs font-medium text-gray-400 mb-1">Metode Pembayaran Default</label>
+                            <div className="md:col-span-2">
+                                <label className="block text-xs font-medium text-gray-400 mb-1">Payment Channel QRIS (Payment Code)</label>
                                 <select
-                                    value={settings.sayabayar_config?.payment_method || 'qris'}
+                                    value={settings.sekalipay_gateway_config?.payment_code || 'QRIS'}
                                     onChange={(e) => setSettings({
                                         ...settings,
-                                        sayabayar_config: { ...settings.sayabayar_config, payment_method: e.target.value }
+                                        sekalipay_gateway_config: { ...settings.sekalipay_gateway_config, payment_code: e.target.value }
                                     })}
                                     className="w-full bg-[#18181B] border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-purple-500/50"
                                 >
-                                    <option value="qris">QRIS (All Bank / E-Wallet)</option>
-                                    <option value="qris_gopay">QRIS (All Bank / E-Wallet)</option>
-                                    <option value="bca_transfer">BCA Bank Transfer</option>
-                                    <option value="va_bca">VA Bank BCA</option>
-                                    <option value="va_bni">VA Bank BNI</option>
-                                    <option value="va_bri">VA Bank BRI</option>
-                                    <option value="va_mandiri">VA Bank Mandiri</option>
-                                    <option value="va_permata">VA Bank Permata</option>
-                                    <option value="va_cimb">VA CIMB Niaga</option>
-                                    <option value="va_bsm">VA BSI</option>
-                                    <option value="va_danamon">VA Bank Danamon</option>
-                                    <option value="va_seabank">VA SeaBank</option>
+                                    <option value="QRIS">QRIS (Standard / Default)</option>
+                                    <option value="QRISREALTIME">QRISREALTIME (Realtime Settlement / Instant Confirmation)</option>
+                                    <option value="QRIS_CUSTOM">QRIS_CUSTOM (Custom QRIS)</option>
                                 </select>
                             </div>
                         </div>
                         <button
-                            onClick={() => updateSetting('sayabayar_config', settings.sayabayar_config || {})}
+                            onClick={() => updateSetting('sekalipay_gateway_config', settings.sekalipay_gateway_config || {})}
                             className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all"
                         >
-                            <Save size={16} /> Simpan Konfigurasi Saya Bayar
+                            <Save size={16} /> Simpan Konfigurasi Sekalipay Gateway
                         </button>
                     </div>
                 )}
