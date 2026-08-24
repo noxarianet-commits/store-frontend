@@ -16,7 +16,7 @@ const ServerSelector = ({ servers = [], activeVendor, onSelectServer }) => {
                     <Server size={20} />
                 </div>
                 <div>
-                    <h2 className="text-lg font-bold text-slate-800">Pilih Server (Vendor)</h2>
+                    <h2 className="text-lg font-bold text-slate-800">Pilih Server</h2>
                     <p className="text-xs text-slate-500">Pilih server untuk ketersediaan dan harga terbaik</p>
                 </div>
             </div>
@@ -48,9 +48,6 @@ const ServerSelector = ({ servers = [], activeVendor, onSelectServer }) => {
                                 {serverLabel}
                                 {isSelected && <Check size={14} className="text-purple-600 shrink-0" />}
                             </div>
-                            <span className="text-[10px] text-slate-400 font-normal">
-                                Jalur {vendorLabel} ({server.variants?.length || 0} varian)
-                            </span>
                         </button>
                     );
                 })}
