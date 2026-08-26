@@ -258,6 +258,9 @@ const ProductPage = () => {
 
     // ── Polling status order setelah payment dibuat ──────────────────────
     useEffect(() => {
+        const orderId = paymentResult?.order_id;
+        if (step !== 3 || !orderId) return;
+
         const stopPolling = () => {
             if (pollingRef.current) {
                 clearInterval(pollingRef.current);
@@ -265,28 +268,28 @@ const ProductPage = () => {
             }
         };
 
-        const startPolling = (orderId) => {
-            stopPolling();
-            pollingRef.current = setInterval(async () => {
-                try {
-                    const res = await api.get(`/payments/status/${orderId}`);
-                    const status = res.data?.data?.status;
-                    setOrderStatus(res.data?.data);
-
-                    if (status === 'COMPLETED' || status === 'FAILED' || status === 'CANCELLED') {
-                        stopPolling();
-                    }
-                } catch (err) {
-                    console.error('Polling error:', err.message);
+        const pollStatus = async () => {
+            try {
+                const res = await api.get(`/payments/status/${orderId}`);
+                const status = res.data?.data?.status;
+                if (res.data?.data) {
+                    setOrderStatus(res.data.data);
                 }
-            }, 5000);
+
+                if (status === 'COMPLETED' || status === 'FAILED' || status === 'CANCELLED') {
+                    stopPolling();
+                }
+            } catch (err) {
+                // Silent catch: network/rate limit glitch won't crash or break polling
+                console.warn('Polling status warning:', err.message);
+            }
         };
 
-        if (step === 3 && paymentResult?.order_id) {
-            startPolling(paymentResult.order_id);
-        }
+        stopPolling();
+        pollingRef.current = setInterval(pollStatus, 6000);
+
         return () => stopPolling();
-    }, [step, paymentResult]);
+    }, [step, paymentResult?.order_id]);
 
     // ── Download QR (fetch atau fallback ke new tab jika CORS blocked) ───────────────
     const downloadQR = async (qrUrl) => {
@@ -364,7 +367,7 @@ const ProductPage = () => {
         if (!paymentResult?.order_id) return;
         setIsRefreshing(true);
         try {
-            const res = await api.get(`/payments/status/${paymentResult.order_id}`);
+            const res = await api.get(`/payments/status/${paymentResult.order_id}?force=true`);
             if (res.data?.data) setOrderStatus(res.data.data);
         } catch { /* ignore */ }
         setIsRefreshing(false);

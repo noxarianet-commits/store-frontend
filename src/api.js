@@ -17,7 +17,12 @@ api.interceptors.response.use(
     response => response,
     error => {
         const url = error.config?.url || '';
-        if (window.location.pathname.includes('admin') || window.location.pathname.includes('error') || url.includes('/validate')) {
+        if (
+            window.location.pathname.includes('admin') ||
+            window.location.pathname.includes('error') ||
+            url.includes('/validate') ||
+            url.includes('/payments/status')
+        ) {
             return Promise.reject(error);
         }
 
