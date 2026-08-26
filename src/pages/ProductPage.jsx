@@ -322,27 +322,25 @@ const ProductPage = () => {
         let zoneId = fieldData['zone_id'] || '';
 
         if (!customerId) {
-            notifyWarning('Masukkan ID target (User ID) terlebih dahulu');
+            notifyWarning('Masukkan ID target (User ID / No Tujuan) terlebih dahulu');
             return;
         }
 
         setIsValidating(true);
         try {
-            const currentVendor = selectedVariant?.vendor || product?.vendor || vendor || 'sekalipay';
-            if (currentVendor === 'okeconnect') {
-                // Untuk produk dari OkeConnect, tidak perlu validasi/pengecekan ke Sekalipay
-                setValidatedAccount({ valid: true, account_name: customerId, display_name: customerId });
-                notifySuccess(`Target ID disimpan: ${customerId}`);
-                return;
-            }
+            const currentVendor = activeVariant?.vendor || selectedVariant?.vendor || product?.vendor || vendor || 'sekalipay';
             const res = await api.validateAccount({
                 vendor: currentVendor,
-                variant_id: activeVariant.id || activeVariant.vendor_variant_id,
+                variant_id: activeVariant.id || activeVariant.vendor_variant_id || activeVariant.sku,
                 customer_id: customerId,
                 zone_id: zoneId || undefined,
+                product_id: product?.id,
+                product_name: product?.name,
+                brand: product?.brand,
+                category: product?.category,
             });
             setValidatedAccount(res.data);
-            notifySuccess(`Akun ditemukan: ${res.data?.account_name || res.data?.display_name}`);
+            notifySuccess(`Akun ditemukan: ${res.data?.account_name || res.data?.display_name || customerId}`);
         } catch (err) {
             notifyError(err.response?.data?.error || 'Gagal mengecek akun');
             setValidatedAccount(null);
@@ -350,6 +348,7 @@ const ProductPage = () => {
             setIsValidating(false);
         }
     };
+
 
 
     const handleSudahBayar = () => {
