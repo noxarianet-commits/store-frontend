@@ -9,7 +9,6 @@ import AdminLoginForm from '../components/admin/AdminLoginForm';
 import WelcomeMarquee from '../components/admin/WelcomeMarquee';
 import DashboardTab from '../components/admin/DashboardTab';
 import SekalipayTab from '../components/admin/SekalipayTab';
-import FincloudTab from '../components/admin/FincloudTab';
 import RevenueTab from '../components/admin/RevenueTab';
 import ProductsTab from '../components/admin/ProductsTab';
 import ProductModal from '../components/admin/ProductModal';
@@ -35,11 +34,6 @@ const AdminDashboard = () => {
     const [sekalipaySync, setSekalipaySync] = useState(null);
     const [sekalipayLoading, setSekalipayLoading] = useState(false);
     const [sekalipaySearch, setSekalipaySearch] = useState('');
-    const [fincloudProducts, setFincloudProducts] = useState([]);
-    const [fincloudBalance, setFincloudBalance] = useState(null);
-    const [fincloudSync, setFincloudSync] = useState(null);
-    const [fincloudLoading, setFincloudLoading] = useState(false);
-    const [fincloudSearch, setFincloudSearch] = useState('');
     const [okeconnectProducts, setOkeconnectProducts] = useState([]);
     const [okeconnectBalance, setOkeconnectBalance] = useState(null);
     const [okeconnectSync, setOkeconnectSync] = useState(null);
@@ -99,21 +93,6 @@ const AdminDashboard = () => {
         setSekalipayLoading(false);
     }, []);
 
-    const fetchFincloud = useCallback(async () => {
-        setFincloudLoading(true);
-        try {
-            const [prodRes, balRes, syncRes] = await Promise.all([
-                api.getAdminProducts({ vendor: 'fincloud' }).catch(() => ({ data: [] })),
-                api.getAdminBalance('fincloud').catch(() => ({ data: null })),
-                api.getAdminSyncStatus('fincloud').catch(() => ({ data: null }))
-            ]);
-            setFincloudProducts(prodRes.data || []);
-            setFincloudBalance(balRes.data?.data || balRes.data);
-            setFincloudSync(syncRes.data?.lastSync || syncRes.data);
-        } catch (e) { console.error('Gagal fetch fincloud:', e); }
-        setFincloudLoading(false);
-    }, []);
-
     const fetchOkeconnect = useCallback(async () => {
         setOkeconnectLoading(true);
         try {
@@ -133,7 +112,6 @@ const AdminDashboard = () => {
         setLoading(true);
         await Promise.all([fetchOrders(), fetchServices(), fetchSettings()]);
         if (activeTab === 'sekalipay') await fetchSekalipay();
-        if (activeTab === 'fincloud') await fetchFincloud();
         if (activeTab === 'okeconnect') await fetchOkeconnect();
         if (activeTab === 'featured') await fetchFeaturedProducts();
         setLoading(false);
@@ -175,13 +153,6 @@ const AdminDashboard = () => {
             return () => clearTimeout(timer);
         }
     }, [activeTab, isLogin, fetchFeaturedProducts]);
-
-    useEffect(() => {
-        if (isLogin && activeTab === 'fincloud') {
-            const timer = setTimeout(() => fetchFincloud(), 0);
-            return () => clearTimeout(timer);
-        }
-    }, [activeTab, isLogin, fetchFincloud]);
 
     useEffect(() => {
         if (isLogin && activeTab === 'okeconnect') {
@@ -302,76 +273,6 @@ const AdminDashboard = () => {
             notifySuccess(res.data.is_featured ? 'Produk ditandai sebagai unggulan!' : 'Produk dihapus dari unggulan.');
         } catch (err) {
             notifyError(err.response?.data?.error || 'Gagal mengubah status unggulan');
-        }
-    };
-
-    // ---- Fincloud handlers ----
-    const handleFincloudSync = async () => {
-        setSyncInProgress(true);
-        try {
-            const res = await api.triggerSync('fincloud', 'full');
-            notifySuccess(`Sync berhasil: ${res.data.syncedProducts || res.data.productCount || 0} produk disinkronkan`);
-            await fetchFincloud();
-        } catch (err) {
-            notifyError(err.response?.data?.error || 'Sync gagal');
-        }
-        setSyncInProgress(false);
-    };
-
-    const handleFincloudGlobalMarkup = async () => {
-        const val = parseInt(globalMarkupValue);
-        if (isNaN(val) || val < 0) { notifyWarning('Masukkan nilai markup yang valid'); return; }
-        try {
-            const res = await api.applyGlobalMarkup('fincloud', val);
-            notifySuccess(res.data.message);
-            setGlobalMarkupValue('');
-            await fetchFincloud();
-        } catch (err) {
-            notifyError(err.response?.data?.error || 'Gagal menerapkan markup');
-        }
-    };
-
-    const handleFincloudMarkupUpdate = async (productIdOrSku, markup) => {
-        try {
-            await api.updateAdminMarkup(productIdOrSku, { markup });
-            await fetchFincloud();
-            notifySuccess('Markup Fincloud berhasil diupdate!');
-        } catch (err) {
-            notifyError(err.response?.data?.error || 'Gagal update markup');
-        }
-    };
-
-    const handleFincloudToggleProduct = async (productIdOrSku) => {
-        try {
-            await api.toggleAdminProduct(productIdOrSku);
-            await fetchFincloud();
-            notifySuccess('Status produk berhasil diubah!');
-        } catch (err) {
-            notifyError(err.response?.data?.error || 'Gagal toggle produk');
-        }
-    };
-
-    const handleFincloudToggleBrandHidden = async (brand, is_hidden) => {
-        try {
-            const res = await api.patch(`/admin/fincloud/products/brand/${encodeURIComponent(brand)}/toggle`, { is_hidden });
-            await fetchFincloud();
-            notifySuccess(res.data.message || `Brand ${brand} berhasil diubah statusnya`);
-        } catch (err) {
-            notifyError(err.response?.data?.error || 'Gagal mengubah status brand');
-        }
-    };
-
-    const handleFincloudBulkMarkup = async (updates) => {
-        try {
-            for (const item of updates) {
-                await api.updateAdminMarkup(item.sku, { markup: item.markup });
-            }
-            await fetchFincloud();
-            notifySuccess(`${updates.length} markup berhasil disimpan!`);
-            return { success: true };
-        } catch (err) {
-            notifyError(err.response?.data?.error || 'Gagal menyimpan markup');
-            return { success: false };
         }
     };
 
@@ -543,20 +444,6 @@ const AdminDashboard = () => {
                             globalMarkupValue={globalMarkupValue} setGlobalMarkupValue={setGlobalMarkupValue}
                             expandedProduct={expandedProduct} setExpandedProduct={setExpandedProduct}
                             handleToggleVariantHidden={handleToggleVariantHidden}
-                        />
-                    )}
-                                        {activeTab === 'fincloud' && (
-                        <FincloudTab
-                            fincloudProducts={fincloudProducts} fincloudBalance={fincloudBalance}
-                            fincloudSync={fincloudSync} fincloudLoading={fincloudLoading}
-                            fincloudSearch={fincloudSearch} setFincloudSearch={setFincloudSearch}
-                            handleSync={handleFincloudSync} handleGlobalMarkup={handleFincloudGlobalMarkup}
-                            handleMarkupUpdate={handleFincloudMarkupUpdate} handleToggleProduct={handleFincloudToggleProduct}
-                            syncInProgress={syncInProgress}
-                            globalMarkupValue={globalMarkupValue} setGlobalMarkupValue={setGlobalMarkupValue}
-                            expandedProduct={expandedProduct} setExpandedProduct={setExpandedProduct}
-                            handleToggleBrandHidden={handleFincloudToggleBrandHidden}
-                            handleBulkMarkup={handleFincloudBulkMarkup}
                         />
                     )}
                     {activeTab === 'okeconnect' && (

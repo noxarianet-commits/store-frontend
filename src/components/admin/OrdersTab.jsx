@@ -13,7 +13,7 @@ const STATUS_CONFIG = {
 
 const VENDOR_CONFIG = {
     sekalipay: { label: 'Sekalipay', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
-    fincloud: { label: 'Fincloud', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+    okeconnect: { label: 'OkeConnect', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
 };
 
 const PAGE_SIZE = 20;

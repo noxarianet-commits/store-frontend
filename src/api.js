@@ -59,8 +59,4 @@ api.toggleAdminFeatured = (productId) => api.patch(`/admin/products/products/${p
 api.toggleVariantHidden = (variantId) => api.patch(`/admin/products/variants/${variantId}/toggle-hidden`);
 api.applyGlobalMarkup = (vendor, markup) => api.post('/admin/products/global-markup', { vendor, markup });
 
-// Legacy helper aliases
-api.getFincloudProducts = (params) => api.get('/products', { params: { ...params, vendor: 'fincloud' } });
-api.getFincloudCategories = () => api.get('/products/categories', { params: { vendor: 'fincloud' } });
-
 export default api;

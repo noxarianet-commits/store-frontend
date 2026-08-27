@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Loader2, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
 import { formatRp } from '../../utils/currencyUtils';
+import { normalizePhoneNumber } from '../../utils/phoneUtils';
 
 const BuyerDataForm = ({
     formData,
@@ -22,8 +23,10 @@ const BuyerDataForm = ({
 }) => {
     const isOkeconnect = vendor === 'okeconnect' || selectedVariant?.vendor === 'okeconnect';
     const isValidationAvailable = selectedVariant?.validation?.available || dynamicFields.some(f => f.key === 'customer_id') || isOkeconnect;
+    const isEwalletProduct = product?.category?.toLowerCase().includes('wallet') ||
+        /dana|ovo|gopay|gojek|shopee|linkaja|isaku|maxim/i.test(product?.name || '');
 
-    // ── Debounced auto-validation when typing User ID / Zone ID ──
+    // ── Invalidate previous validation when User ID / Zone ID is edited ──
     const prevTargetRef = useRef('');
 
     useEffect(() => {
@@ -33,7 +36,7 @@ const BuyerDataForm = ({
         const zoneId = fieldData['zone_id'] || '';
         const currentTargetKey = `${customerId || ''}_${zoneId || ''}_${selectedVariant?.id || ''}`;
 
-        // If target ID changed, invalidate previous validation
+        // If target ID changed, reset validation status
         if (currentTargetKey !== prevTargetRef.current) {
             prevTargetRef.current = currentTargetKey;
             if (validatedAccount && validatedAccount._lastTarget !== currentTargetKey) {
@@ -43,24 +46,18 @@ const BuyerDataForm = ({
                 if (typeof setValidationError === 'function') setValidationError(null);
             }
         }
-
-        if (!customerId || String(customerId).trim().length < 3) {
-            return;
-        }
-
-        // If already validated for this exact target, skip
-        if (validatedAccount?.valid && validatedAccount._lastTarget === currentTargetKey) {
-            return;
-        }
-
-        const timer = setTimeout(() => {
-            if (typeof handleValidateAccount === 'function') {
-                handleValidateAccount({ silent: true });
-            }
-        }, 1000);
-
-        return () => clearTimeout(timer);
     }, [fieldData, selectedVariant?.id, isValidationAvailable]);
+
+    const handleFieldBlur = (fieldKey, val) => {
+        if (!val) return;
+        const isTargetField = fieldKey === 'customer_id' || fieldKey === 'target' || fieldKey === 'note';
+        if (isEwalletProduct && isTargetField) {
+            const normalized = normalizePhoneNumber(val);
+            if (normalized && normalized !== val) {
+                setFieldData(prev => ({ ...prev, [fieldKey]: normalized }));
+            }
+        }
+    };
 
     return (
         <div>
@@ -107,7 +104,7 @@ const BuyerDataForm = ({
                             lowerLabel.includes('shopeepay')
                         ) {
                             const targetName = cleanedLabel.replace(/^[nN]omor\s+/i, '').replace(/^[nN]o\s+/i, '');
-                            return `Masukkan nomor tujuan (${targetName})`;
+                            return `Masukkan nomor tujuan 08... (${targetName})`;
                         }
                         
                         return `Masukkan ${cleanedLabel}`;
@@ -120,9 +117,11 @@ const BuyerDataForm = ({
                                     {cleanedLabel} {field.required && '*'}
                                 </label>
                                 {field.key === 'customer_id' && isValidationAvailable && (
-                                    <span className="text-[11px] text-purple-600 font-medium flex items-center gap-1">
+                                    <span className={`text-[11px] font-medium flex items-center gap-1 ${
+                                        validatedAccount?.valid ? 'text-green-600' : 'text-purple-600'
+                                    }`}>
                                         {isValidating && <Loader2 size={12} className="animate-spin text-purple-600" />}
-                                        {isValidating ? 'Mengecek ID...' : validatedAccount?.valid ? '✓ ID Terverifikasi' : 'Auto Cek ID'}
+                                        {isValidating ? 'Mengecek ID...' : validatedAccount?.valid ? '✓ ID Terverifikasi' : 'Wajib Cek ID'}
                                     </span>
                                 )}
                             </div>
@@ -134,6 +133,7 @@ const BuyerDataForm = ({
                                         if (field.key === 'provider_qty') setProviderQty(e.target.value);
                                         else setFieldData({...fieldData, [field.key]: e.target.value});
                                     }}
+                                    onBlur={(e) => handleFieldBlur(field.key, e.target.value)}
                                     placeholder={getPlaceholderText()}
                                     className={`w-full bg-white border rounded-xl p-3.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none transition-colors ${
                                         validatedAccount?.valid && (field.key === 'customer_id' || field.key === 'target')
@@ -158,60 +158,60 @@ const BuyerDataForm = ({
 
                 {/* ── Validation Status & Manual Trigger ── */}
                 {isValidationAvailable && (
-                    <div className="pt-1">
-                        {isValidating && (
-                            <div className="p-3 bg-purple-50/70 border border-purple-100 rounded-xl flex items-center gap-2.5 text-xs text-purple-700">
-                                <Loader2 size={15} className="animate-spin shrink-0 text-purple-600" />
-                                <span>Sedang memverifikasi nama akun ke server penyedia...</span>
-                            </div>
-                        )}
-
-                        {validatedAccount?.valid && !isValidating && (
-                            <div className="p-3.5 bg-green-50 border border-green-200 rounded-xl flex items-start gap-2.5">
-                                <CheckCircle2 size={18} className="text-green-600 shrink-0 mt-0.5" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-semibold text-green-700 uppercase tracking-wider">Akun Terverifikasi</p>
-                                    <p className="text-sm font-bold text-green-900 truncate">
-                                        {validatedAccount.account_name || validatedAccount.display_name || 'Valid'}
-                                    </p>
+                    <div className="pt-2">
+                        {isValidating ? (
+                            <button
+                                type="button"
+                                disabled
+                                className="w-full bg-purple-600/70 text-white py-3.5 rounded-xl text-sm font-bold flex justify-center items-center gap-2 cursor-wait"
+                            >
+                                <Loader2 size={16} className="animate-spin" />
+                                Sedang Mengecek Akun...
+                            </button>
+                        ) : validatedAccount?.valid ? (
+                            <div className="p-3.5 bg-green-50 border border-green-200 rounded-xl flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                    <CheckCircle2 size={18} className="text-green-600 shrink-0" />
+                                    <div className="min-w-0">
+                                        <p className="text-[11px] font-semibold text-green-700 uppercase tracking-wider">Akun Terverifikasi</p>
+                                        <p className="text-sm font-bold text-green-900 truncate">
+                                            {validatedAccount.account_name || validatedAccount.display_name || 'Valid'}
+                                        </p>
+                                    </div>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={() => handleValidateAccount({ silent: false })}
-                                    className="text-xs font-semibold text-green-700 hover:text-green-800 underline shrink-0 mt-0.5"
+                                    className="text-xs font-semibold text-green-700 hover:text-green-800 bg-green-100 hover:bg-green-200 px-3 py-1.5 rounded-lg transition-colors shrink-0"
                                 >
                                     Cek Ulang
                                 </button>
                             </div>
-                        )}
-
-                        {validationError && !isValidating && (
+                        ) : validationError ? (
                             <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2.5">
                                 <AlertCircle size={18} className="text-red-600 shrink-0 mt-0.5" />
                                 <div className="flex-1 min-w-0">
                                     <p className="text-xs font-semibold text-red-700 uppercase tracking-wider">Validasi Gagal</p>
-                                    <p className="text-xs text-red-900 leading-relaxed font-medium">
+                                    <p className="text-xs text-red-900 leading-relaxed font-medium mt-0.5">
                                         {validationError}
                                     </p>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={() => handleValidateAccount({ silent: false })}
-                                    className="text-xs font-bold text-red-700 hover:text-red-800 bg-red-100 px-2.5 py-1 rounded-lg shrink-0 mt-0.5"
+                                    className="text-xs font-bold text-red-700 hover:text-red-800 bg-red-100 hover:bg-red-200 px-3 py-1.5 rounded-lg shrink-0 transition-colors"
                                 >
                                     Coba Lagi
                                 </button>
                             </div>
-                        )}
-
-                        {!validatedAccount && !validationError && !isValidating && (
+                        ) : (
                             <button
                                 type="button"
                                 onClick={() => handleValidateAccount({ silent: false })}
-                                className="w-full bg-slate-100 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 border border-slate-200 text-slate-700 py-3 rounded-xl text-xs font-bold transition-all duration-200 flex justify-center items-center gap-2"
+                                className="w-full bg-purple-600 hover:bg-purple-700 active:scale-[0.99] text-white py-3.5 rounded-xl text-sm font-bold transition-all flex justify-center items-center gap-2 shadow-sm"
                             >
-                                <RefreshCw size={14} />
-                                Cek ID / Validasi Nama Akun Manual
+                                <CheckCircle2 size={16} />
+                                Cek ID / Validasi Akun
                             </button>
                         )}
                     </div>

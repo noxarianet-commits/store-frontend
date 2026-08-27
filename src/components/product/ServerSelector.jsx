@@ -29,9 +29,7 @@ const ServerSelector = ({ servers = [], activeVendor, onSelectServer }) => {
                         ? 'Sekalipay'
                         : server.vendor === 'okeconnect'
                             ? 'OkeConnect'
-                            : server.vendor === 'fincloud'
-                                ? 'Fincloud'
-                                : server.vendor;
+                            : server.vendor;
 
                     return (
                         <button

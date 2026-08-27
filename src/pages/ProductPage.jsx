@@ -80,7 +80,7 @@ const ProductPage = () => {
     });
 
     // Multi-Vendor State
-    const [vendor, setVendor] = useState('sekalipay'); // 'sekalipay' | 'okeconnect' | 'fincloud'
+    const [vendor, setVendor] = useState('sekalipay'); // 'sekalipay' | 'okeconnect'
 
     // Checkout states
     const [step, setStep] = useState(1);
@@ -318,7 +318,7 @@ const ProductPage = () => {
 
     // ── Cek ID / Validate Account ───────────────────────────────────────
     const handleValidateAccount = async (options = {}) => {
-        const isSilent = options.silent === true;
+        const isSilent = options?.silent === true;
         const activeVariant = selectedVariant || (product?.variants && product.variants.find(v => v.validation?.available));
 
         let customerId = fieldData['customer_id'] || fieldData['note'] || fieldData['target'] || (dynamicFields.length === 1 ? fieldData[dynamicFields[0].key] : '');
@@ -327,6 +327,21 @@ const ProductPage = () => {
         if (!customerId) {
             if (!isSilent) notifyWarning('Masukkan ID target (User ID / No Tujuan) terlebih dahulu');
             return;
+        }
+
+        // Normalize e-wallet / phone number to 08xxx (strip spaces, dashes, +62)
+        const isEwallet = product?.category?.toLowerCase().includes('wallet') ||
+            /dana|ovo|gopay|gojek|shopee|linkaja|isaku|maxim/i.test(product?.name || '') ||
+            (!zoneId && /^[0-9\s\-\+\(\)]+$/.test(customerId));
+
+        if (isEwallet) {
+            const normalized = normalizePhoneNumber(customerId);
+            if (normalized && normalized.startsWith('08')) {
+                customerId = normalized;
+                // Update fieldData so input displays the clean 08... format
+                const targetKey = fieldData['customer_id'] !== undefined ? 'customer_id' : (fieldData['target'] !== undefined ? 'target' : (fieldData['note'] !== undefined ? 'note' : (dynamicFields[0]?.key || 'customer_id')));
+                setFieldData(prev => ({ ...prev, [targetKey]: normalized }));
+            }
         }
 
         setIsValidating(true);
@@ -717,25 +732,11 @@ const ProductPage = () => {
     const steps = ['Checkout', 'Data Pembeli', 'Pembayaran'];
     const isServiceProduct = product?.is_service_table || product?.category?.toLowerCase().includes('jasa');
 
-    // Status badge config
-    const statusConfig = {
-        PENDING: { label: 'Menunggu Pembayaran', color: 'text-yellow-600', bg: 'bg-yellow-50 border-yellow-100', icon: <Clock size={16} className="text-yellow-600" /> },
-        PROCESSING: { label: 'Sedang Diproses', color: 'text-blue-600', bg: 'bg-blue-50 border-blue-100', icon: <Loader2 size={16} className="text-blue-600 animate-spin" /> },
-        COMPLETED: { label: 'Selesai!', color: 'text-green-600', bg: 'bg-green-50 border-green-100', icon: <CheckCircle2 size={16} className="text-green-600" /> },
-        FAILED: { label: 'Gagal', color: 'text-red-600', bg: 'bg-red-50 border-red-100', icon: <AlertCircle size={16} className="text-red-600" /> },
-        CANCELLED: { label: 'Dibatalkan', color: 'text-slate-500', bg: 'bg-slate-50 border-slate-100', icon: <AlertCircle size={16} className="text-slate-500" /> },
-    };
-
     // ── Compute dynamic fields (merge required_fields and validation.fields) ──
     const dynamicFields = [];
     if (selectedVariant) {
-        const isFincloud = vendor === 'fincloud';
-        const sekalipayValVariant = isFincloud ? product?.variants?.find(v => v.validation?.available) : null;
-
         const reqFields = selectedVariant.required_fields || [];
-        const valFields = isFincloud
-            ? (sekalipayValVariant?.validation?.fields || [])
-            : (selectedVariant.validation?.available ? (selectedVariant.validation.fields || []) : []);
+        const valFields = selectedVariant.validation?.available ? (selectedVariant.validation.fields || []) : [];
 
         const hasCustomerIdInVal = valFields.some(v => v.key === 'customer_id');
 
