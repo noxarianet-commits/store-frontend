@@ -92,6 +92,7 @@ const ProductPage = () => {
     const [fieldData, setFieldData] = useState({});
     const [providerQty, setProviderQty] = useState('');
     const [validatedAccount, setValidatedAccount] = useState(null);
+    const [validationError, setValidationError] = useState(null);
     const [isValidating, setIsValidating] = useState(false);
     const [isWaConfirmed, setIsWaConfirmed] = useState(false);
 
@@ -316,25 +317,26 @@ const ProductPage = () => {
     };
 
     // ── Cek ID / Validate Account ───────────────────────────────────────
-    const handleValidateAccount = async () => {
+    const handleValidateAccount = async (options = {}) => {
+        const isSilent = options.silent === true;
         const activeVariant = selectedVariant || (product?.variants && product.variants.find(v => v.validation?.available));
 
-        if (!activeVariant || !activeVariant.validation?.available) return;
-        
-        let customerId = fieldData['customer_id'] || fieldData['note'] || fieldData['target'] || '';
+        let customerId = fieldData['customer_id'] || fieldData['note'] || fieldData['target'] || (dynamicFields.length === 1 ? fieldData[dynamicFields[0].key] : '');
         let zoneId = fieldData['zone_id'] || '';
 
         if (!customerId) {
-            notifyWarning('Masukkan ID target (User ID / No Tujuan) terlebih dahulu');
+            if (!isSilent) notifyWarning('Masukkan ID target (User ID / No Tujuan) terlebih dahulu');
             return;
         }
 
         setIsValidating(true);
+        setValidationError(null);
         try {
-            const currentVendor = activeVariant?.vendor || selectedVariant?.vendor || product?.vendor || vendor || 'sekalipay';
+            const activeServer = product?.servers?.find(s => s.vendor === vendor) || product?.servers?.[0];
+            const currentVendor = selectedVariant?.vendor || activeServer?.vendor || vendor || 'sekalipay';
             const res = await api.validateAccount({
                 vendor: currentVendor,
-                variant_id: activeVariant.id || activeVariant.vendor_variant_id || activeVariant.sku,
+                variant_id: activeVariant?.id || activeVariant?.vendor_variant_id || activeVariant?.sku,
                 customer_id: customerId,
                 zone_id: zoneId || undefined,
                 product_id: product?.id,
@@ -342,11 +344,24 @@ const ProductPage = () => {
                 brand: product?.brand,
                 category: product?.category,
             });
-            setValidatedAccount(res.data);
-            notifySuccess(`Akun ditemukan: ${res.data?.account_name || res.data?.display_name || customerId}`);
+
+            const accountData = {
+                ...res.data,
+                valid: true,
+                _lastTarget: `${customerId}_${zoneId}_${selectedVariant?.id || ''}`,
+            };
+            setValidatedAccount(accountData);
+            setValidationError(null);
+            if (!isSilent) {
+                notifySuccess(`Akun ditemukan: ${accountData.account_name || accountData.display_name || customerId}`);
+            }
         } catch (err) {
-            notifyError(err.response?.data?.error || 'Gagal mengecek akun');
+            const errMsg = err.response?.data?.error || 'Gagal mengecek akun atau ID salah';
             setValidatedAccount(null);
+            setValidationError(errMsg);
+            if (!isSilent) {
+                notifyError(errMsg);
+            }
         } finally {
             setIsValidating(false);
         }
@@ -581,6 +596,14 @@ const ProductPage = () => {
             const activeServer = product?.servers?.find(s => s.vendor === vendor) || product?.servers?.[0];
             const targetProductId = selectedVariant?.product_id || activeServer?.product_id || product?.id;
             const currentVendor = selectedVariant?.vendor || activeServer?.vendor || vendor || 'sekalipay';
+
+            // Check if account validation is required
+            const isValidationNeeded = (currentVendor === 'okeconnect' || selectedVariant?.validation?.available) &&
+                dynamicFields.some(f => f.key === 'customer_id' || f.key === 'note' || f.key === 'target');
+
+            if (isValidationNeeded && !validatedAccount?.valid) {
+                return notifyWarning('Harap lakukan cek ID / validasi akun terlebih dahulu dan pastikan akun ditemukan!');
+            }
 
             const res = await api.post('/payments/create', {
                 vendor: currentVendor,
@@ -919,102 +942,121 @@ const ProductPage = () => {
                             </div>
                         )}
 
-                        {step === 2 && (
-                            <div>
-                                <BuyerDataForm
-                                    formData={formData}
-                                    handleFormChange={handleFormChange}
-                                    dynamicFields={dynamicFields}
-                                    fieldData={fieldData}
-                                    setFieldData={setFieldData}
-                                    providerQty={providerQty}
-                                    setProviderQty={setProviderQty}
-                                    selectedVariant={selectedVariant}
-                                    handleValidateAccount={handleValidateAccount}
-                                    isValidating={isValidating}
-                                    validatedAccount={validatedAccount}
-                                    vendor={vendor}
-                                    product={product}
-                                />
-                                
-                                {/* Order Summary */}
-                                {selectedVariant?.price > 0 && (
-                                    <div className="bg-purple-50/50 border border-purple-100 rounded-xl p-4 mb-5 text-sm">
-                                        <div className="flex justify-between text-slate-500 mb-1">
-                                            <span>{selectedVariant?.name}</span>
-                                            <span>{formatRp(computedPrice)}</span>
-                                        </div>
-                                        <div className="flex justify-between text-slate-800 font-bold border-t border-slate-100 pt-2 mt-2">
-                                            <span>Total</span>
-                                            <span className="text-purple-600">{formatRp(computedPrice)}<span className="text-slate-400 font-normal text-xs"> + fee QRIS</span></span>
-                                        </div>
-                                    </div>
-                                )}
+                        {step === 2 && (() => {
+                            const activeServer = product?.servers?.find(s => s.vendor === vendor) || product?.servers?.[0];
+                            const currentVendor = selectedVariant?.vendor || activeServer?.vendor || vendor || 'sekalipay';
+                            const isValidationRequired = (currentVendor === 'okeconnect' || selectedVariant?.validation?.available) &&
+                                dynamicFields.some(f => f.key === 'customer_id' || f.key === 'note' || f.key === 'target');
+                            const isAccountValid = !isValidationRequired || (validatedAccount && validatedAccount.valid === true);
 
-                                {/* Peringatan Konfirmasi WA */}
-                                {selectedVariant?.price > 0 && (
-                                    <div className="bg-amber-50/70 border border-amber-200/60 rounded-xl p-4 mb-5">
-                                        <div className="flex items-start gap-3">
-                                            <div className="p-2 bg-amber-100/80 rounded-lg shrink-0 text-amber-700">
-                                                <AlertTriangle size={18} className="animate-pulse" />
+                            return (
+                                <div>
+                                    <BuyerDataForm
+                                        formData={formData}
+                                        handleFormChange={handleFormChange}
+                                        dynamicFields={dynamicFields}
+                                        fieldData={fieldData}
+                                        setFieldData={setFieldData}
+                                        providerQty={providerQty}
+                                        setProviderQty={setProviderQty}
+                                        selectedVariant={selectedVariant}
+                                        handleValidateAccount={handleValidateAccount}
+                                        isValidating={isValidating}
+                                        validatedAccount={validatedAccount}
+                                        validationError={validationError}
+                                        setValidatedAccount={setValidatedAccount}
+                                        setValidationError={setValidationError}
+                                        vendor={vendor}
+                                        product={product}
+                                    />
+                                    
+                                    {/* Order Summary */}
+                                    {selectedVariant?.price > 0 && (
+                                        <div className="bg-purple-50/50 border border-purple-100 rounded-xl p-4 mb-5 text-sm">
+                                            <div className="flex justify-between text-slate-500 mb-1">
+                                                <span>{selectedVariant?.name}</span>
+                                                <span>{formatRp(computedPrice)}</span>
                                             </div>
-                                            <div className="flex-1 min-w-0">
-                                                <h4 className="text-amber-900 font-bold text-xs uppercase tracking-wider mb-1">Peringatan Konfirmasi</h4>
-                                                <p className="text-amber-800 text-xs leading-relaxed">
-                                                    Harap pastikan nomor WhatsApp dan alamat Email Anda <strong>benar dan aktif</strong> karena produk dan bukti transaksi akan dikirim via WhatsApp & Email. Jika terdapat kesalahan pengisian data, hal tersebut <strong>bukan tanggung jawab kami</strong>.
-                                                </p>
-                                                <label className="flex items-center gap-2.5 mt-3.5 cursor-pointer group">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={isWaConfirmed}
-                                                        onChange={(e) => setIsWaConfirmed(e.target.checked)}
-                                                        className="w-4 h-4 text-purple-600 border-slate-300 rounded focus:ring-purple-500 focus:ring-2 cursor-pointer transition-all"
-                                                    />
-                                                    <span className="text-xs text-amber-900 font-semibold select-none group-hover:text-amber-950 transition-colors">
-                                                        Saya mengkonfirmasi nomor WhatsApp & alamat Email saya benar & aktif
-                                                    </span>
-                                                </label>
+                                            <div className="flex justify-between text-slate-800 font-bold border-t border-slate-100 pt-2 mt-2">
+                                                <span>Total</span>
+                                                <span className="text-purple-600">{formatRp(computedPrice)}<span className="text-slate-400 font-normal text-xs"> + fee QRIS</span></span>
                                             </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
 
-                                <div className="flex gap-3 mt-6">
-                                    <button
-                                        onClick={() => { setStep(1); window.scrollTo({ top: 100, behavior: 'smooth' }); }}
-                                        disabled={isSubmitting}
-                                        className="w-1/3 bg-white hover:bg-slate-50 py-3.5 rounded-xl font-semibold text-slate-700 transition-colors border border-slate-200 text-sm disabled:opacity-50"
-                                    >Kembali</button>
-                                    <button
-                                        onClick={() => {
-                                            if (selectedVariant?.price === 0) {
-                                                handleCustomConsultation();
-                                            } else {
-                                                if (!isWaConfirmed) {
-                                                    notifyWarning('Harap centang konfirmasi nomor WhatsApp & alamat Email terlebih dahulu!');
-                                                    return;
+                                    {/* Peringatan Konfirmasi WA */}
+                                    {selectedVariant?.price > 0 && (
+                                        <div className="bg-amber-50/70 border border-amber-200/60 rounded-xl p-4 mb-5">
+                                            <div className="flex items-start gap-3">
+                                                <div className="p-2 bg-amber-100/80 rounded-lg shrink-0 text-amber-700">
+                                                    <AlertTriangle size={18} className="animate-pulse" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="text-amber-900 font-bold text-xs uppercase tracking-wider mb-1">Peringatan Konfirmasi</h4>
+                                                    <p className="text-amber-800 text-xs leading-relaxed">
+                                                        Harap pastikan nomor WhatsApp dan alamat Email Anda <strong>benar dan aktif</strong> karena produk dan bukti transaksi akan dikirim via WhatsApp & Email. Jika terdapat kesalahan pengisian data, hal tersebut <strong>bukan tanggung jawab kami</strong>.
+                                                    </p>
+                                                    <label className="flex items-center gap-2.5 mt-3.5 cursor-pointer group">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={isWaConfirmed}
+                                                            onChange={(e) => setIsWaConfirmed(e.target.checked)}
+                                                            className="w-4 h-4 text-purple-600 border-slate-300 rounded focus:ring-purple-500 focus:ring-2 cursor-pointer transition-all"
+                                                        />
+                                                        <span className="text-xs text-amber-900 font-semibold select-none group-hover:text-amber-950 transition-colors">
+                                                            Saya mengkonfirmasi nomor WhatsApp & alamat Email saya benar & aktif
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex gap-3 mt-6">
+                                        <button
+                                            onClick={() => { setStep(1); window.scrollTo({ top: 100, behavior: 'smooth' }); }}
+                                            disabled={isSubmitting}
+                                            className="w-1/3 bg-white hover:bg-slate-50 py-3.5 rounded-xl font-semibold text-slate-700 transition-colors border border-slate-200 text-sm disabled:opacity-50"
+                                        >Kembali</button>
+                                        <button
+                                            onClick={() => {
+                                                if (selectedVariant?.price === 0) {
+                                                    handleCustomConsultation();
+                                                } else {
+                                                    if (isValidationRequired && !isAccountValid) {
+                                                        notifyWarning('Harap verifikasi ID akun terlebih dahulu!');
+                                                        return;
+                                                    }
+                                                    if (!isWaConfirmed) {
+                                                        notifyWarning('Harap centang konfirmasi nomor WhatsApp & alamat Email terlebih dahulu!');
+                                                        return;
+                                                    }
+                                                    submitPayment();
                                                 }
-                                                submitPayment();
-                                            }
-                                        }}
-                                        disabled={isSubmitting || settings.shop_status?.isOpen === false}
-                                        className={`w-2/3 py-3.5 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
-                                            (selectedVariant?.price > 0 && !isWaConfirmed) || settings.shop_status?.isOpen === false
-                                                ? 'bg-purple-600/50 hover:bg-purple-600/50 text-white/80'
-                                                : 'bg-purple-600 hover:bg-purple-700 text-white'
-                                        }`}
-                                    >
-                                        {isSubmitting ? (
-                                            <><Loader2 size={16} className="animate-spin" /> Memproses...</>
-                                        ) : settings.shop_status?.isOpen === false ? (
-                                            'Toko Tutup'
-                                        ) : (
-                                            selectedVariant?.price === 0 ? 'Kirim ke WhatsApp' : <>Lanjut Bayar <ChevronRight size={16} /></>
-                                        )}
-                                    </button>
+                                            }}
+                                            disabled={isSubmitting || settings.shop_status?.isOpen === false || (selectedVariant?.price > 0 && (!isWaConfirmed || !isAccountValid)) || isValidating}
+                                            className={`w-2/3 py-3.5 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
+                                                (selectedVariant?.price > 0 && (!isWaConfirmed || !isAccountValid)) || settings.shop_status?.isOpen === false || isValidating
+                                                    ? 'bg-purple-600/50 hover:bg-purple-600/50 text-white/80'
+                                                    : 'bg-purple-600 hover:bg-purple-700 text-white'
+                                            }`}
+                                        >
+                                            {isSubmitting ? (
+                                                <><Loader2 size={16} className="animate-spin" /> Memproses...</>
+                                            ) : settings.shop_status?.isOpen === false ? (
+                                                'Toko Tutup'
+                                            ) : isValidating ? (
+                                                <><Loader2 size={16} className="animate-spin" /> Memverifikasi ID...</>
+                                            ) : (selectedVariant?.price > 0 && isValidationRequired && !isAccountValid) ? (
+                                                'Menunggu Validasi ID'
+                                            ) : (
+                                                selectedVariant?.price === 0 ? 'Kirim ke WhatsApp' : <>Lanjut Bayar <ChevronRight size={16} /></>
+                                            )}
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            );
+                        })()}
 
                         {step === 3 && (
                             <PaymentStep
