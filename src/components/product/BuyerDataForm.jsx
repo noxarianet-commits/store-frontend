@@ -57,7 +57,7 @@ const BuyerDataForm = ({
             if (typeof handleValidateAccount === 'function') {
                 handleValidateAccount({ silent: true });
             }
-        }, 700);
+        }, 1000);
 
         return () => clearTimeout(timer);
     }, [fieldData, selectedVariant?.id, isValidationAvailable]);
