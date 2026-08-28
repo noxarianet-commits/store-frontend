@@ -25,6 +25,7 @@ const BuyerDataForm = ({
     const isValidationAvailable = selectedVariant?.validation?.available || dynamicFields.some(f => f.key === 'customer_id') || isOkeconnect;
     const isEwalletProduct = product?.category?.toLowerCase().includes('wallet') ||
         /dana|ovo|gopay|gojek|shopee|linkaja|isaku|maxim/i.test(product?.name || '');
+    const isNumericGame = /mobile legend|magic chess|free fire/i.test(product?.name || '');
 
     // ── Invalidate previous validation when User ID / Zone ID is edited ──
     const prevTargetRef = useRef('');
@@ -50,7 +51,7 @@ const BuyerDataForm = ({
 
     const handleFieldBlur = (fieldKey, val) => {
         if (!val) return;
-        const isTargetField = fieldKey === 'customer_id' || fieldKey === 'target' || fieldKey === 'note';
+        const isTargetField = fieldKey === 'customer_id' || fieldKey === 'target' || fieldKey === 'note' || fieldKey === 'user_id';
         if (isEwalletProduct && isTargetField) {
             const normalized = normalizePhoneNumber(val);
             if (normalized && normalized !== val) {
@@ -89,6 +90,8 @@ const BuyerDataForm = ({
                 {/* ── Dynamic Fields from API ── */}
                 {dynamicFields.map((field, idx) => {
                     const cleanedLabel = field.label.replace(/[:*]/g, '').trim();
+                    const isTargetField = field.key === 'customer_id' || field.key === 'target' || field.key === 'note' || field.key === 'user_id';
+                    const isZoneField = field.key === 'zone_id';
                     
                     const getPlaceholderText = () => {
                         const lowerLabel = cleanedLabel.toLowerCase();
@@ -110,6 +113,8 @@ const BuyerDataForm = ({
                         return `Masukkan ${cleanedLabel}`;
                     };
 
+                    const isNumericOnly = (isEwalletProduct && isTargetField) || (isNumericGame && (isTargetField || isZoneField));
+
                     return (
                         <div key={`dyn-${idx}`}>
                             <div className="flex items-center justify-between mb-2">
@@ -127,11 +132,20 @@ const BuyerDataForm = ({
                             </div>
                             <div className="relative">
                                 <input
-                                    type={field.key === 'provider_qty' ? 'number' : 'text'}
+                                    type={field.key === 'provider_qty' ? 'number' : isNumericOnly ? 'tel' : 'text'}
+                                    inputMode={isNumericOnly ? 'numeric' : undefined}
                                     value={field.key === 'provider_qty' ? providerQty : (fieldData[field.key] || '')}
                                     onChange={(e) => {
-                                        if (field.key === 'provider_qty') setProviderQty(e.target.value);
-                                        else setFieldData({...fieldData, [field.key]: e.target.value});
+                                        let val = e.target.value;
+                                        if (isEwalletProduct && isTargetField) {
+                                            // Prevent entering letters in e-wallet destination field
+                                            val = val.replace(/[^0-9\s\-+]/g, '');
+                                        } else if (isNumericGame && (isTargetField || isZoneField)) {
+                                            // Prevent entering letters in game ID / Zone ID fields
+                                            val = val.replace(/[^0-9]/g, '');
+                                        }
+                                        if (field.key === 'provider_qty') setProviderQty(val);
+                                        else setFieldData({...fieldData, [field.key]: val});
                                     }}
                                     onBlur={(e) => handleFieldBlur(field.key, e.target.value)}
                                     placeholder={getPlaceholderText()}

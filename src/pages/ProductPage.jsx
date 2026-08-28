@@ -329,18 +329,41 @@ const ProductPage = () => {
             return;
         }
 
-        // Normalize e-wallet / phone number to 08xxx (strip spaces, dashes, +62)
+        // Check format for e-wallet / phone products
         const isEwallet = product?.category?.toLowerCase().includes('wallet') ||
-            /dana|ovo|gopay|gojek|shopee|linkaja|isaku|maxim/i.test(product?.name || '') ||
-            (!zoneId && /^[0-9\s\-\+\(\)]+$/.test(customerId));
+            /dana|ovo|gopay|gojek|shopee|linkaja|isaku|maxim/i.test(product?.name || '');
 
         if (isEwallet) {
+            if (/[a-zA-Z]/.test(customerId)) {
+                if (!isSilent) notifyError('Nomor tujuan e-wallet tidak boleh mengandung huruf! Contoh: 08123456789');
+                setValidationError('Nomor tujuan e-wallet tidak boleh mengandung huruf');
+                return;
+            }
             const normalized = normalizePhoneNumber(customerId);
-            if (normalized && normalized.startsWith('08')) {
-                customerId = normalized;
-                // Update fieldData so input displays the clean 08... format
-                const targetKey = fieldData['customer_id'] !== undefined ? 'customer_id' : (fieldData['target'] !== undefined ? 'target' : (fieldData['note'] !== undefined ? 'note' : (dynamicFields[0]?.key || 'customer_id')));
-                setFieldData(prev => ({ ...prev, [targetKey]: normalized }));
+            if (!normalized || !/^08[0-9]{8,13}$/.test(normalized)) {
+                if (!isSilent) notifyError('Format nomor e-wallet tidak valid. Harus diawali 08 (10-14 digit angka).');
+                setValidationError('Format nomor harus diawali 08 (10-14 digit angka)');
+                return;
+            }
+            customerId = normalized;
+            const targetKey = fieldData['customer_id'] !== undefined ? 'customer_id' : (fieldData['target'] !== undefined ? 'target' : (fieldData['note'] !== undefined ? 'note' : (dynamicFields[0]?.key || 'customer_id')));
+            setFieldData(prev => ({ ...prev, [targetKey]: normalized }));
+        } else if (product?.name?.toLowerCase().includes('mobile legend') || product?.name?.toLowerCase().includes('magic chess')) {
+            if (!/^\d+$/.test(customerId)) {
+                if (!isSilent) notifyError('User ID Mobile Legends harus berupa angka (tanpa huruf)');
+                setValidationError('User ID harus berupa angka');
+                return;
+            }
+            if (zoneId && !/^\d+$/.test(zoneId)) {
+                if (!isSilent) notifyError('Zone ID Mobile Legends harus berupa angka (tanpa huruf)');
+                setValidationError('Zone ID harus berupa angka');
+                return;
+            }
+        } else if (product?.name?.toLowerCase().includes('free fire')) {
+            if (!/^\d+$/.test(customerId)) {
+                if (!isSilent) notifyError('User ID Free Fire harus berupa angka (tanpa huruf)');
+                setValidationError('User ID harus berupa angka');
+                return;
             }
         }
 
