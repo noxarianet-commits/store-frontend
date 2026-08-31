@@ -1,5 +1,3 @@
-import React from 'react';
-
 const AnimatedBackground = () => {
   return (
     <div className="fixed inset-0 w-full h-full pointer-events-none overflow-hidden z-[-10] bg-[#FAF9FF]">
@@ -9,59 +7,37 @@ const AnimatedBackground = () => {
           background-size: 24px 24px;
         }
         .glow-sphere-1 {
-          animation: floatGlow1 20s ease-in-out infinite alternate;
+          animation: floatGlow1 22s ease-in-out infinite alternate;
           will-change: transform, opacity;
         }
         .glow-sphere-2 {
-          animation: floatGlow2 25s ease-in-out infinite alternate;
+          animation: floatGlow2 26s ease-in-out infinite alternate;
           will-change: transform, opacity;
         }
         .glow-sphere-3 {
-          animation: floatGlow3 18s ease-in-out infinite alternate;
+          animation: floatGlow3 20s ease-in-out infinite alternate;
           will-change: transform, opacity;
         }
-
-        @keyframes floatGlow1 {
-          0% {
-            transform: translate(0, 0) scale(1);
-            opacity: 0.55;
+        @media (max-width: 768px) {
+          .glow-sphere-1, .glow-sphere-2, .glow-sphere-3 {
+            opacity: 0.45 !important;
           }
-          100% {
-            transform: translate(8%, -6%) scale(1.15);
-            opacity: 0.8;
-          }
+          .bg-grid { opacity: 0.5; }
         }
-
-        @keyframes floatGlow2 {
-          0% {
-            transform: translate(0, 0) scale(1);
-            opacity: 0.6;
-          }
-          100% {
-            transform: translate(-10%, 8%) scale(1.1);
-            opacity: 0.85;
-          }
-        }
-
-        @keyframes floatGlow3 {
-          0% {
-            transform: translate(0, 0) scale(0.9);
-            opacity: 0.45;
-          }
-          100% {
-            transform: translate(6%, 6%) scale(1.05);
-            opacity: 0.7;
+        @media (prefers-reduced-motion: reduce) {
+          .glow-sphere-1, .glow-sphere-2, .glow-sphere-3 {
+            animation: none !important;
           }
         }
       `}</style>
 
-      {/* Grid Pattern */}
-      <div className="absolute inset-0 bg-grid opacity-80" />
+      {/* Grid Pattern — single source of truth (removed duplicate in index.css) */}
+      <div className="absolute inset-0 bg-grid opacity-70" />
 
-      {/* Soft Glows */}
-      <div className="glow-sphere-1 absolute top-[-15%] left-[-15%] w-[60vw] h-[60vw] rounded-full bg-[#EAE2FC] blur-[130px] mix-blend-multiply" />
-      <div className="glow-sphere-2 absolute bottom-[-15%] right-[-15%] w-[70vw] h-[70vw] rounded-full bg-[#E5DBFF] blur-[150px] mix-blend-multiply" />
-      <div className="glow-sphere-3 absolute top-[30%] left-[55%] w-[45vw] h-[45vw] rounded-full bg-[#F5E6FF] blur-[120px] mix-blend-multiply" />
+      {/* Soft Glows — toned down blur for performance, no mix-blend on mobile */}
+      <div className="glow-sphere-1 absolute top-[-12%] left-[-12%] w-[56vw] h-[56vw] rounded-full bg-[#EAE2FC] blur-[90px] md:blur-[110px] md:mix-blend-multiply max-w-[720px] max-h-[720px]" />
+      <div className="glow-sphere-2 absolute bottom-[-12%] right-[-12%] w-[62vw] h-[62vw] rounded-full bg-[#E5DBFF] blur-[100px] md:blur-[120px] md:mix-blend-multiply max-w-[820px] max-h-[820px]" />
+      <div className="glow-sphere-3 absolute top-[32%] left-[52%] w-[42vw] h-[42vw] rounded-full bg-[#F5E6FF] blur-[80px] md:blur-[100px] md:mix-blend-multiply max-w-[560px] max-h-[560px]" />
     </div>
   );
 };

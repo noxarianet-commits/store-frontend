@@ -4,23 +4,25 @@ import { Smartphone } from 'lucide-react';
 import { iconMap, iconColorMap, badgeColorMap, isProductSoldOut } from '../../utils/iconConfig';
 
 /**
- * ProductIcon — Renders product image or fallback Lucide icon.
+ * ProductIcon — 56px container, image cover, fallback brand tint.
+ * No geometric mask pretending organic — just rounded-2xl.
  */
-const ProductIcon = ({ product, fallbackIcon: FallbackIcon, className = '' }) => {
+const ProductIcon = ({ product, fallbackIcon: FallbackIcon }) => {
     const [imageError, setImageError] = useState(false);
     const imageUrl = product.image || product.icon;
-    const iconColor = iconColorMap[product.icon] || 'bg-purple-50 text-purple-600 border border-purple-100';
+    const iconColor = iconColorMap[product.icon] || 'bg-brandSoft text-brand border border-brandBorder';
 
     const isUrl = imageUrl && (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('/'));
 
     if (isUrl && !imageError) {
         return (
-            <div className={`w-16 h-16 rounded-2xl overflow-hidden transition-all duration-300 mb-4 mt-1 group-hover:scale-110 border border-slate-100 bg-slate-50 flex items-center justify-center ${className}`}>
+            <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0 border border-slate-100 bg-white flex items-center justify-center">
                 <img
                     src={imageUrl}
                     alt={product.name}
-                    className="w-full h-full object-cover rounded-2xl"
+                    className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"
+                    loading="lazy"
                     onError={() => setImageError(true)}
                 />
             </div>
@@ -28,21 +30,19 @@ const ProductIcon = ({ product, fallbackIcon: FallbackIcon, className = '' }) =>
     }
 
     return (
-        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 mb-4 mt-1 ${iconColor} group-hover:scale-110 ${className}`}>
-            <FallbackIcon size={30} />
+        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${iconColor}`}>
+            <FallbackIcon size={26} strokeWidth={1.9} />
         </div>
     );
 };
 
 /**
- * ProductCard — Reusable card for products and services.
- * @param {object} props
- * @param {object} props.product - Product data
- * @param {boolean} [props.showPrice] - Whether to show starting price (for services)
+ * ProductCard — refined: 16px radius, 4px more breathing, solid hover (border + lift),
+ * not scale-on-icon. Inline sold-out, not overlay.
  */
 const ProductCard = ({ product, showPrice = false }) => {
     const IconComp = iconMap[product.icon] || Smartphone;
-    const badgeStyle = badgeColorMap[product.badgeColor] || { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-100' };
+    const badgeStyle = badgeColorMap[product.badgeColor] || { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200' };
     const isSoldOut = isProductSoldOut(product);
 
     // Determine link target
@@ -56,7 +56,6 @@ const ProductCard = ({ product, showPrice = false }) => {
         productLink = `/product/${product.id}`;
     }
 
-    // Starting price for services
     const startingPrice = showPrice && product.variants && product.variants.length > 0
         ? Math.min(...product.variants.map(v => v.price))
         : 0;
@@ -64,34 +63,54 @@ const ProductCard = ({ product, showPrice = false }) => {
     return (
         <Link
             to={productLink}
-            className={`group relative bg-white hover:bg-purple-50/5 border border-purple-100 hover:border-purple-300 rounded-2xl p-5 transition-all duration-300 flex flex-col items-center text-center shadow-[0_2px_8px_rgba(124,58,237,0.02)] hover:shadow-[0_8px_20px_rgba(124,58,237,0.06)] ${isSoldOut ? 'opacity-60' : ''}`}
+            className={`group relative bg-white border rounded-2xl p-4 flex flex-col items-start text-left transition-all duration-300 shadow-soft hover:shadow-soft-lg hover:-translate-y-0.5 ${
+                isSoldOut ? 'opacity-60 border-slate-200' : 'border-brandBorder hover:border-purple-300'
+            }`}
         >
-            {isSoldOut && (
-                <span className="absolute top-3 left-3 text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider border bg-red-50 text-red-600 border-red-100 z-10">
-                    Habis
-                </span>
-            )}
-            {product.badge && !isSoldOut && (
-                <span className={`absolute top-3 right-3 text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider border ${badgeStyle.bg} ${badgeStyle.text} ${badgeStyle.border}`}>
-                    {product.badge}
-                </span>
-            )}
-            <ProductIcon product={product} fallbackIcon={IconComp} />
-            <span className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 font-semibold">
+            {/* Top row: icon + badge */}
+            <div className="flex items-start justify-between w-full mb-3">
+                <ProductIcon product={product} fallbackIcon={IconComp} />
+                <div className="flex flex-col items-end gap-1.5">
+                    {isSoldOut ? (
+                        <span className="text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider border bg-red-50 text-red-600 border-red-100">
+                            Habis
+                        </span>
+                    ) : product.badge ? (
+                        <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider border ${badgeStyle.bg} ${badgeStyle.text} ${badgeStyle.border}`}>
+                            {product.badge}
+                        </span>
+                    ) : null}
+                </div>
+            </div>
+
+            {/* Category — 10px uppercase, muted but 4.5:1 */}
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.08em] leading-none mb-1.5">
                 {product.category}
             </span>
-            <h3 className="text-sm font-extrabold text-slate-800 leading-tight mb-0.5 group-hover:text-purple-600 transition-colors">
+
+            {/* Name — 13px, line-clamp 2, measure tight */}
+            <h3 className="text-[13px] font-bold text-ink leading-[1.35] line-clamp-2 min-h-[36px] group-hover:text-brand transition-colors">
                 {product.name}
             </h3>
+
+            {/* Subtitle / price */}
             {product.subtitle && (
-                <p className={`text-[11px] ${showPrice ? 'text-purple-600 font-semibold mb-1 px-2 text-[9px]' : 'text-slate-500'}`}>
+                <p className={`text-[11px] leading-snug line-clamp-1 mt-1 ${showPrice ? 'text-slate-500' : 'text-slate-500'}`}>
                     {product.subtitle}
                 </p>
             )}
             {showPrice && (
-                <p className="text-[11px] text-purple-600 font-bold">
+                <p className="text-[12px] font-bold text-brand mt-1">
                     {startingPrice > 0 ? `Mulai Rp ${startingPrice.toLocaleString('id-ID')}` : 'Tanya via Chat'}
                 </p>
+            )}
+
+            {/* Bottom affordance — subtle arrow on hover, not needed for sold out */}
+            {!isSoldOut && (
+                <span className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400 group-hover:text-brand transition-colors">
+                    Lihat detail
+                    <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+                </span>
             )}
         </Link>
     );

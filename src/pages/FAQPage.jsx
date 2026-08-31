@@ -51,7 +51,7 @@ const ALL_FAQS = [
 const FAQItem = ({ item, isOpen, onToggle }) => (
     <div
         className={`border rounded-2xl overflow-hidden transition-all duration-200 ${
-            isOpen ? 'border-purple-300 shadow-md shadow-purple-100' : 'border-slate-200 hover:border-purple-200'
+            isOpen ? 'border-purple-300 shadow-md shadow-purple-100' : 'border-slate-200 hover:border-brandBorder'
         } bg-white`}
     >
         <button
@@ -64,7 +64,7 @@ const FAQItem = ({ item, isOpen, onToggle }) => (
                 {item.q}
             </span>
             <span className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
-                isOpen ? 'bg-purple-100 text-purple-600' : 'bg-slate-100 text-slate-500'
+                isOpen ? 'bg-purple-100 text-brand' : 'bg-slate-100 text-slate-500'
             }`}>
                 {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </span>
@@ -103,7 +103,7 @@ const FAQPage = () => {
                 {/* Back button */}
                 <button
                     onClick={() => navigate(-1)}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-purple-600 transition-all mb-8 text-sm font-medium shadow-sm"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-brand transition-all mb-8 text-sm font-medium shadow-sm"
                 >
                     <ArrowLeft size={16} /> Kembali
                 </button>
@@ -111,7 +111,7 @@ const FAQPage = () => {
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                        <HelpCircle className="text-purple-600" size={22} />
+                        <HelpCircle className="text-brand" size={22} />
                     </div>
                     <h1 className="text-3xl font-extrabold text-slate-900">FAQ</h1>
                 </div>
@@ -132,7 +132,7 @@ const FAQPage = () => {
                 </div>
 
                 {/* CTA */}
-                <div className="mt-10 p-6 rounded-3xl bg-gradient-to-br from-purple-50 to-white border border-purple-100 text-center">
+                <div className="mt-10 p-6 rounded-3xl bg-gradient-to-br from-purple-50 to-white border border-brandBorder text-center">
                     <p className="text-sm text-slate-600 mb-4">
                         Masih punya pertanyaan? Hubungi kami langsung via WhatsApp.
                     </p>
@@ -148,7 +148,7 @@ const FAQPage = () => {
 
                 {/* Footer link */}
                 <div className="mt-6 text-center">
-                    <Link to="/" className="text-xs text-slate-400 hover:text-purple-600 transition">
+                    <Link to="/" className="text-xs text-slate-400 hover:text-brand transition">
                         ← Kembali ke Beranda
                     </Link>
                 </div>

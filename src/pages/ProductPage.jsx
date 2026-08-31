@@ -701,16 +701,16 @@ const ProductPage = () => {
 
     // ── Loading Skeleton ────────────────────────────────────────────────
     if (loading) return (
-        <div className="min-h-screen font-sans text-slate-800">
-            <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-purple-100/50 shadow-sm">
-                <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+        <div className="min-h-screen font-sans text-ink bg-surface">
+            <nav className="sticky top-0 z-50 bg-white/75 backdrop-blur-md border-b border-brandBorder shadow-sm">
+                <div className="max-w-[1160px] mx-auto px-6 py-4 flex justify-between items-center">
                     <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-lg bg-slate-100 animate-pulse" />
+                        <div className="w-9 h-9 rounded-xl bg-slate-100 animate-pulse" />
                         <div className="w-24 h-5 rounded bg-slate-100 animate-pulse" />
                     </div>
                 </div>
             </nav>
-            <main className="max-w-2xl mx-auto px-4 py-10">
+            <main className="max-w-[640px] mx-auto px-4 py-10">
                 <div className="mb-8">
                     <div className="w-20 h-3 rounded bg-slate-100 animate-pulse mb-3" />
                     <div className="w-48 h-7 rounded bg-slate-100 animate-pulse" />
@@ -728,7 +728,7 @@ const ProductPage = () => {
                 </div>
                 <div className="space-y-3">
                     {[1, 2, 3].map((i) => (
-                        <div key={i} className="bg-white border border-purple-100 rounded-2xl p-5 animate-pulse shadow-sm">
+                        <div key={i} className="bg-white border border-brandBorder rounded-2xl p-5 animate-pulse shadow-soft">
                             <div className="flex items-start justify-between">
                                 <div>
                                     <div className="w-32 h-4 rounded bg-slate-100 mb-2" />
@@ -744,10 +744,11 @@ const ProductPage = () => {
     );
 
     if (!product) return (
-        <div className="min-h-screen flex items-center justify-center">
-            <div className="text-center">
-                <p className="text-slate-800 text-lg font-bold mb-2">Produk tidak ditemukan.</p>
-                <Link to="/" className="text-purple-600 text-sm hover:underline">Kembali ke beranda</Link>
+        <div className="min-h-screen flex items-center justify-center bg-surface">
+            <div className="text-center bg-white border border-brandBorder rounded-2xl p-8 shadow-soft max-w-sm mx-4">
+                <p className="text-ink text-base font-bold mb-1">Produk tidak ditemukan</p>
+                <p className="text-sm text-slate-500 mb-4">Link mungkin salah atau produk telah dihapus.</p>
+                <Link to="/" className="inline-flex items-center justify-center h-10 px-5 bg-brand hover:bg-brandDark text-white rounded-xl text-sm font-semibold transition-colors">Kembali ke beranda</Link>
             </div>
         </div>
     );
@@ -818,35 +819,35 @@ const ProductPage = () => {
     const validTexts = displayTexts.filter(t => t);
 
     return (
-        <div className="min-h-screen font-sans text-slate-800">
+        <div className="min-h-screen font-sans text-ink bg-surface">
             {/* HEADER */}
-            <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-purple-100/50 shadow-sm">
-                <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+            <nav className="sticky top-0 z-50 bg-white/75 backdrop-blur-md border-b border-brandBorder shadow-sm">
+                <div className="max-w-[1160px] mx-auto px-6 py-4 flex justify-between items-center">
                     <Link to="/" className="flex items-center gap-2.5">
-                        <img src="/logo.png" alt="noxarianet" className="w-9 h-9 rounded-lg object-contain" />
-                        <span className="text-xl font-bold tracking-tight text-slate-900">noxaria<span className="text-purple-600">net</span></span>
+                        <img src="/logo.png" alt="noxarianet" className="w-9 h-9 rounded-xl object-contain border border-slate-100" />
+                        <span className="text-xl font-bold tracking-tight text-ink">noxaria<span className="text-brand">net</span></span>
                     </Link>
                 </div>
             </nav>
 
-            <main className="max-w-2xl mx-auto px-4 py-10">
-                {/* Product Header */}
-                <div className="mb-8">
-                    <span className="text-xs font-semibold text-purple-600 uppercase tracking-wider">{product.category}</span>
-                    <h1 className="text-2xl font-extrabold text-slate-900 mt-1">{product.name}</h1>
+            <main className="max-w-[640px] mx-auto px-4 py-8 md:py-10">
+                {/* Product Header — more space above, tighter below */}
+                <div className="mb-6">
+                    <span className="inline-flex items-center text-[11px] font-bold text-brand uppercase tracking-[0.08em] bg-brandSoft border border-brandBorder rounded-full px-2.5 py-1">{product.category}</span>
+                    <h1 className="text-[22px] md:text-[26px] font-extrabold text-ink tracking-[-0.02em] leading-tight mt-3">{product.name}</h1>
                 </div>
 
                 {/* Toko Tutup Banner */}
                 {settings.shop_status?.isOpen === false && (
-                    <div className="mb-6 bg-amber-50 border border-amber-100 rounded-2xl p-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center shrink-0">
-                                <AlertTriangle className="text-amber-600" size={22} />
+                    <div className="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                        <div className="flex items-start gap-3">
+                            <div className="w-9 h-9 bg-white border border-amber-200 rounded-xl flex items-center justify-center shrink-0">
+                                <AlertTriangle className="text-amber-600" size={18} />
                             </div>
                             <div>
-                                <p className="text-sm font-bold text-amber-800">Toko Sedang Tutup</p>
-                                <p className="text-xs text-slate-500">
-                                    {settings.shop_status.message || 'Mohon maaf, toko kami sedang tutup sementara dan tidak menerima pesanan baru.'}
+                                <p className="text-[13px] font-bold text-amber-800">Toko sedang tutup</p>
+                                <p className="text-xs text-amber-700/80 leading-relaxed">
+                                    {settings.shop_status.message || 'Mohon maaf, toko sedang tutup sementara dan tidak menerima pesanan baru.'}
                                 </p>
                             </div>
                         </div>
@@ -855,56 +856,47 @@ const ProductPage = () => {
 
                 {/* Sold Out Banner */}
                 {product.status === 'sold_out' && (
-                    <div className="mb-6 bg-red-50 border border-red-100 rounded-2xl p-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center shrink-0">
-                                <AlertCircle className="text-red-600" size={22} />
+                    <div className="mb-6 bg-red-50 border border-red-200 rounded-2xl p-4">
+                        <div className="flex items-start gap-3">
+                            <div className="w-9 h-9 bg-white border border-red-200 rounded-xl flex items-center justify-center shrink-0">
+                                <AlertCircle className="text-red-600" size={18} />
                             </div>
                             <div>
-                                <p className="text-sm font-bold text-red-600">Stok Habis</p>
-                                <p className="text-xs text-slate-500">Produk ini sedang tidak tersedia. Silakan cek kembali nanti.</p>
+                                <p className="text-[13px] font-bold text-red-700">Stok habis</p>
+                                <p className="text-xs text-red-700/70 leading-relaxed">Produk ini sedang tidak tersedia. Silakan cek kembali nanti.</p>
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* Step Progress */}
-                <div className="flex items-center gap-2 mb-8">
+                {/* Step Progress — tight group, generous separation below heading */}
+                <div className="flex items-center gap-1.5 mb-6">
                     {steps.map((s, i) => (
                         <Fragment key={i}>
-                            <div className={`flex items-center gap-2 ${step > i + 1 ? 'text-purple-600' : step === i + 1 ? 'text-slate-800' : 'text-slate-400'}`}>
-                                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border transition-all relative ${
-                                    step > i + 1 ? 'bg-purple-600 border-purple-600 text-white' : step === i + 1 ? 'border-purple-500 text-purple-600 bg-purple-50 ring-2 ring-purple-500/20' : 'border-slate-200 text-slate-400'
+                            <div className={`flex items-center gap-2 ${step > i + 1 ? 'text-brand' : step === i + 1 ? 'text-ink' : 'text-slate-400'}`}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border transition-all relative shrink-0 ${
+                                    step > i + 1 ? 'bg-brand border-brand text-white shadow-sm' : step === i + 1 ? 'border-brand text-brand bg-brandSoft' : 'border-slate-200 text-slate-400 bg-white'
                                 }`}>
-                                    {step > i + 1 ? (
-                                        <CheckCircle2 size={14} />
-                                    ) : step === i + 1 ? (
-                                        <>
-                                            <span className="absolute inset-0 rounded-full border border-purple-400 animate-ping opacity-75 pointer-events-none" />
-                                            <span className="relative">{i + 1}</span>
-                                        </>
-                                    ) : (
-                                        i + 1
-                                    )}
+                                    {step > i + 1 ? <CheckCircle2 size={14} /> : step === i + 1 ? <span className="relative">{i + 1}</span> : i + 1}
                                 </div>
-                                <span className="text-xs font-medium hidden sm:block">{s}</span>
+                                <span className="text-xs font-semibold hidden sm:block whitespace-nowrap">{s}</span>
                             </div>
                             {i < steps.length - 1 && (
-                                <div className={`flex-1 h-px transition-all ${step > i + 1 ? 'bg-purple-500' : 'bg-slate-200'}`} />
+                                <div className={`flex-1 h-0.5 mx-1.5 rounded-full transition-colors ${step > i + 1 ? 'bg-brand' : 'bg-slate-200'}`} />
                             )}
                         </Fragment>
                     ))}
                 </div>
 
-                {/* Card */}
+                {/* Card — shadow-soft, no halo */}
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={step}
-                        initial={{ opacity: 0, y: 16 }}
+                        initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -16 }}
-                        transition={{ duration: 0.25 }}
-                        className="bg-white border border-purple-100 rounded-2xl p-6 shadow-sm"
+                        exit={{ opacity: 0, y: -12 }}
+                        transition={{ duration: 0.28, ease: [0.25,0.1,0.25,1] }}
+                        className="bg-white border border-brandBorder rounded-2xl p-5 md:p-6 shadow-soft"
                     >
                         {step === 1 && (
                             <div>
@@ -913,7 +905,7 @@ const ProductPage = () => {
                                     activeVendor={vendor}
                                     onSelectServer={handleSelectServer}
                                 />
-                                <h2 className="text-base font-bold text-slate-900 mb-5">Pilih Paket</h2>
+                                <h2 className="text-[14px] font-extrabold text-ink tracking-[-0.02em] mb-4">Pilih Paket</h2>
                                 <VariantSelector 
                                     variants={
                                         (product?.servers?.find(s => s.vendor === vendor)?.variants) ||
@@ -928,11 +920,11 @@ const ProductPage = () => {
                                 {/* Features */}
                                 {product.features && product.features.length > 0 && (
                                     <div className="border-t border-slate-100 pt-5 mb-6 mt-6">
-                                        <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Fitur Termasuk</p>
-                                        <div className="grid grid-cols-2 gap-2">
+                                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.06em] mb-3">Fitur termasuk</p>
+                                        <div className="grid grid-cols-2 gap-2.5">
                                             {product.features.map((f, i) => (
-                                                <div key={i} className="flex items-center gap-2 text-sm text-slate-600">
-                                                    <CheckCircle2 size={14} className="text-purple-600 shrink-0" />{f}
+                                                <div key={i} className="flex items-center gap-2 text-[13px] text-slate-700">
+                                                    <CheckCircle2 size={13} className="text-brand shrink-0" />{f}
                                                 </div>
                                             ))}
                                         </div>
@@ -941,7 +933,7 @@ const ProductPage = () => {
                                 <div className="flex gap-3 mt-6">
                                     <button
                                         onClick={() => { window.scrollTo(0, 0); navigate('/'); }}
-                                        className="w-1/3 bg-white hover:bg-slate-50 py-3.5 rounded-xl font-semibold text-slate-700 transition-colors border border-slate-200 text-sm"
+                                        className="w-1/3 bg-white hover:bg-slate-50 h-12 rounded-xl font-semibold text-slate-700 transition-colors border border-slate-200 text-[13px]"
                                     >Kembali</button>
                                     <button
                                         onClick={() => {
@@ -954,13 +946,13 @@ const ProductPage = () => {
                                             }
                                         }}
                                         disabled={product.status === 'sold_out' || !selectedVariant || (selectedVariant.stock === 0) || settings.shop_status?.isOpen === false}
-                                        className={`w-2/3 font-semibold py-3.5 rounded-xl transition flex items-center justify-center gap-2 text-sm ${
+                                        className={`w-2/3 font-semibold h-12 rounded-xl transition flex items-center justify-center gap-2 text-[13px] ${
                                             (product.status === 'sold_out' || !selectedVariant || (selectedVariant.stock === 0) || settings.shop_status?.isOpen === false)
                                                 ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
-                                                : 'bg-purple-600 hover:bg-purple-700 text-white'
+                                                : 'bg-brand hover:bg-brandDark text-white shadow-sm'
                                         }`}
                                     >
-                                        {(product.status === 'sold_out' || !selectedVariant || (selectedVariant.stock === 0)) ? 'Stok Habis' : settings.shop_status?.isOpen === false ? 'Toko Tutup' : isServiceProduct ? <>Hubungi WhatsApp <ChevronRight size={16} /></> : <>Lanjutkan <ChevronRight size={16} /></>}
+                                        {(product.status === 'sold_out' || !selectedVariant || (selectedVariant.stock === 0)) ? 'Stok Habis' : settings.shop_status?.isOpen === false ? 'Toko Tutup' : isServiceProduct ? <>Hubungi WhatsApp <ChevronRight size={15} /></> : <>Lanjutkan <ChevronRight size={15} /></>}
                                     </button>
                                 </div>
                             </div>
@@ -996,14 +988,14 @@ const ProductPage = () => {
                                     
                                     {/* Order Summary */}
                                     {selectedVariant?.price > 0 && (
-                                        <div className="bg-purple-50/50 border border-purple-100 rounded-xl p-4 mb-5 text-sm">
-                                            <div className="flex justify-between text-slate-500 mb-1">
-                                                <span>{selectedVariant?.name}</span>
-                                                <span>{formatRp(computedPrice)}</span>
+                                        <div className="bg-brandSoft border border-brandBorder rounded-xl p-4 mb-5 text-[13px]">
+                                            <div className="flex justify-between text-slate-600 mb-1">
+                                                <span className="truncate pr-4">{selectedVariant?.name}</span>
+                                                <span className="font-semibold tabular shrink-0">{formatRp(computedPrice)}</span>
                                             </div>
-                                            <div className="flex justify-between text-slate-800 font-bold border-t border-slate-100 pt-2 mt-2">
+                                            <div className="flex justify-between text-ink font-bold border-t border-brandBorder pt-2.5 mt-2.5">
                                                 <span>Total</span>
-                                                <span className="text-purple-600">{formatRp(computedPrice)}<span className="text-slate-400 font-normal text-xs"> + fee QRIS</span></span>
+                                                <span className="text-brand tabular">{formatRp(computedPrice)}<span className="text-slate-400 font-normal text-xs"> + fee QRIS</span></span>
                                             </div>
                                         </div>
                                     )}
@@ -1025,7 +1017,7 @@ const ProductPage = () => {
                                                             type="checkbox"
                                                             checked={isWaConfirmed}
                                                             onChange={(e) => setIsWaConfirmed(e.target.checked)}
-                                                            className="w-4 h-4 text-purple-600 border-slate-300 rounded focus:ring-purple-500 focus:ring-2 cursor-pointer transition-all"
+                                                            className="w-4 h-4 text-brand border-slate-300 rounded focus:ring-purple-500 focus:ring-2 cursor-pointer transition-all"
                                                         />
                                                         <span className="text-xs text-amber-900 font-semibold select-none group-hover:text-amber-950 transition-colors">
                                                             Saya mengkonfirmasi nomor WhatsApp & alamat Email saya benar & aktif
@@ -1040,7 +1032,7 @@ const ProductPage = () => {
                                         <button
                                             onClick={() => { setStep(1); window.scrollTo({ top: 100, behavior: 'smooth' }); }}
                                             disabled={isSubmitting}
-                                            className="w-1/3 bg-white hover:bg-slate-50 py-3.5 rounded-xl font-semibold text-slate-700 transition-colors border border-slate-200 text-sm disabled:opacity-50"
+                                            className="w-1/3 bg-white hover:bg-slate-50 h-12 rounded-xl font-semibold text-slate-700 transition-colors border border-slate-200 text-[13px] disabled:opacity-50"
                                         >Kembali</button>
                                         <button
                                             onClick={() => {
@@ -1059,10 +1051,10 @@ const ProductPage = () => {
                                                 }
                                             }}
                                             disabled={isSubmitting || settings.shop_status?.isOpen === false || (selectedVariant?.price > 0 && (!isWaConfirmed || !isAccountValid)) || isValidating}
-                                            className={`w-2/3 py-3.5 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
+                                            className={`w-2/3 h-12 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 text-[13px] disabled:opacity-50 disabled:cursor-not-allowed shadow-sm ${
                                                 (selectedVariant?.price > 0 && (!isWaConfirmed || !isAccountValid)) || settings.shop_status?.isOpen === false || isValidating
-                                                    ? 'bg-purple-600/50 hover:bg-purple-600/50 text-white/80'
-                                                    : 'bg-purple-600 hover:bg-purple-700 text-white'
+                                                    ? 'bg-ink/40 text-white/80'
+                                                    : 'bg-brand hover:bg-brandDark text-white'
                                             }`}
                                         >
                                             {isSubmitting ? (

@@ -2,103 +2,76 @@ import { useEffect, useState } from 'react';
 import { Search } from 'lucide-react';
 
 /**
- * HeroSection — Hero banner with status badge, heading, and typewriter search bar.
+ * HeroSection — Compact, simple. Tight vertical rhythm, single focus: search.
+ * No gradient text, no extra pill rows. Mobile-first.
  */
 const HeroSection = ({ settings, searchQuery, onSearchChange }) => {
     const [typedPlaceholder, setTypedPlaceholder] = useState('');
     const [isFocused, setIsFocused] = useState(false);
 
-    // Typewriter Effect for Search Placeholder
     useEffect(() => {
         if (isFocused || searchQuery) return;
-
-        const phrases = [
-            'CapCut Premium',
-            'Mobile Legends',
-            'Jasa Pembuatan Website',
-            'Free Fire',
-            'Script Bot WhatsApp',
-            'Spotify Premium',
-            'Netflix Premium',
-            'PUBG Mobile',
-            'Canva Pro',
-            'ChatGPT Plus',
-        ];
-
-        let phraseIdx = 0;
-        let charIdx = 0;
-        let isDeleting = false;
-        let timeout;
-
+        const phrases = ['CapCut Premium','Mobile Legends','Spotify Premium','Free Fire','Canva Pro','Netflix','PUBG UC'];
+        let phraseIdx = 0, charIdx = 0, isDeleting = false, timeout;
         const tick = () => {
-            const currentPhrase = phrases[phraseIdx];
+            const cur = phrases[phraseIdx];
             if (!isDeleting) {
-                setTypedPlaceholder(currentPhrase.substring(0, charIdx + 1));
+                setTypedPlaceholder(cur.substring(0, charIdx + 1));
                 charIdx++;
-                if (charIdx === currentPhrase.length) {
-                    isDeleting = true;
-                    timeout = setTimeout(tick, 1500);
-                    return;
-                }
-                timeout = setTimeout(tick, 80);
+                if (charIdx === cur.length) { isDeleting = true; timeout = setTimeout(tick, 1400); return; }
+                timeout = setTimeout(tick, 85);
             } else {
-                setTypedPlaceholder(currentPhrase.substring(0, charIdx - 1));
+                setTypedPlaceholder(cur.substring(0, charIdx - 1));
                 charIdx--;
-                if (charIdx === 0) {
-                    isDeleting = false;
-                    phraseIdx = (phraseIdx + 1) % phrases.length;
-                    timeout = setTimeout(tick, 400);
-                    return;
-                }
+                if (charIdx === 0) { isDeleting = false; phraseIdx = (phraseIdx + 1) % phrases.length; timeout = setTimeout(tick, 400); return; }
                 timeout = setTimeout(tick, 40);
             }
         };
-
         timeout = setTimeout(tick, 500);
         return () => clearTimeout(timeout);
     }, [isFocused, searchQuery]);
 
     const siteContent = settings.site_content || {
-        heroTitle: 'Solusi Digital Cerdas,',
-        heroSubtitle: 'Untuk Kebutuhan Tanpa Batas.',
-        heroDesc: 'Tingkatkan produktivitas dan hiburanmu dengan layanan premium terjangkau.',
+        heroTitle: 'Semua Kebutuhan Digital —',
+        heroSubtitle: 'Beres dalam Hitungan Detik.',
+        heroDesc: 'Top up game, e-wallet, sampai aplikasi premium. Proses otomatis, bayar via QRIS.',
     };
 
     return (
-        <section className="text-center pt-16 pb-10">
+        <section className="text-center pt-6 md:pt-8 pb-6">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-full px-4 py-1.5 mb-6 shadow-sm">
-                <span className={`w-2.5 h-2.5 ${settings.shop_status?.isOpen ? 'bg-green-500' : 'bg-red-500'} rounded-full animate-pulse`} />
-                <span className="text-[10px] font-bold text-purple-700 uppercase tracking-wider">
-                    {settings.shop_status?.isOpen ? 'Toko Buka - Ready Order' : 'Toko Sedang Tutup'}
+            <div className="inline-flex items-center gap-2 bg-white border border-brandBorder rounded-full px-3.5 py-1.5 mb-4 shadow-sm">
+                <span className="relative flex h-2 w-2">
+                    <span className={`absolute inline-flex h-full w-full rounded-full ${settings.shop_status?.isOpen ? 'bg-emerald-400' : 'bg-red-400'} opacity-30 animate-ping`} />
+                    <span className={`relative inline-flex rounded-full h-2 w-2 ${settings.shop_status?.isOpen ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                </span>
+                <span className="text-[11px] font-bold text-ink tracking-wide">
+                    {settings.shop_status?.isOpen ? 'Toko Buka • Ready Order' : 'Toko Tutup Sementara'}
                 </span>
             </div>
 
-            {/* Heading */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-900 mb-5 leading-tight tracking-tight">
-                {siteContent.heroTitle}<br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-indigo-600 to-violet-700">
-                    {siteContent.heroSubtitle}
-                </span>
+            {/* Heading — compact */}
+            <h1 className="font-display font-extrabold text-ink leading-[0.98] tracking-[-0.025em] max-w-[640px] mx-auto text-[26px] leading-[1.05] sm:text-[30px] md:text-[36px]">
+                <span className="block">{siteContent.heroTitle}</span>
+                <span className="block text-brand">{siteContent.heroSubtitle}</span>
             </h1>
 
-            {/* Subtitle */}
-            <p className="text-base text-slate-500 max-w-xl mx-auto leading-relaxed mb-10">
+            <p className="text-[13px] md:text-[13.5px] leading-relaxed text-slate-600 max-w-[48ch] mx-auto mt-3">
                 {siteContent.heroDesc}
             </p>
 
-            {/* Search Bar */}
-            <div className="max-w-xl mx-auto mb-8">
-                <div className="relative">
-                    <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            {/* Search — 44-48px, restrained */}
+            <div className="max-w-[520px] mx-auto mt-5">
+                <div className="relative group">
+                    <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand transition-colors" />
                     <input
                         type="text"
-                        placeholder={isFocused ? 'Ketik nama produk...' : typedPlaceholder || 'Cari produk...'}
+                        placeholder={isFocused ? 'Ketik nama produk...' : (typedPlaceholder ? `Cari ${typedPlaceholder}...` : 'Cari produk...')}
                         value={searchQuery}
                         onChange={(e) => onSearchChange(e.target.value)}
                         onFocus={() => setIsFocused(true)}
                         onBlur={() => setIsFocused(false)}
-                        className="w-full bg-white border border-slate-200/80 rounded-2xl py-4 pl-12 pr-4 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-600/10 focus:border-purple-600 shadow-sm transition-all duration-200"
+                        className="w-full bg-white border border-slate-200 rounded-full h-[44px] md:h-[46px] pl-10 pr-4 text-[13px] text-ink placeholder:text-slate-400 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 shadow-soft transition-all"
                     />
                 </div>
             </div>

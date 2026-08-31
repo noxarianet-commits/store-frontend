@@ -43,7 +43,6 @@ const WebsiteOrderPage = () => {
         if (!description.trim()) { notifyWarning('Jelaskan kebutuhan website Anda!'); return; }
 
         setSending(true);
-
         const message = [
             '🌐 *ORDER JASA PEMBUATAN WEBSITE*',
             '',
@@ -55,9 +54,7 @@ const WebsiteOrderPage = () => {
             '',
             'Mohon info lebih lanjut. Terima kasih!',
         ].join('\n');
-
         window.open(getWaUrl(settings, message), '_blank');
-
         setSending(false);
         notifySuccess('Pesanan dikirim ke WhatsApp!');
     };
@@ -65,156 +62,103 @@ const WebsiteOrderPage = () => {
     const SelectedTypeIcon = websiteTypes.find(t => t.value === websiteType)?.icon || Globe;
 
     return (
-        <div className="min-h-screen font-sans text-slate-800">
-            {/* HEADER */}
-            <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-purple-100/50 shadow-sm shadow-purple-600/[0.01]">
-                <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+        <div className="min-h-screen font-sans text-ink bg-surface">
+            <nav className="sticky top-0 z-50 bg-white/75 backdrop-blur-md border-b border-brandBorder shadow-sm">
+                <div className="max-w-[1160px] mx-auto px-6 py-4 flex justify-between items-center">
                     <Link to="/" className="flex items-center gap-2.5">
-                        <img src="/logo.png" alt="noxarianet" className="w-9 h-9 rounded-lg object-contain" />
-                        <span className="text-xl font-bold tracking-tight text-slate-900">noxaria<span className="text-purple-600">net</span></span>
+                        <img src="/logo.png" alt="noxarianet" className="w-9 h-9 rounded-xl object-contain border border-slate-100" />
+                        <span className="text-xl font-bold tracking-tight text-ink">noxaria<span className="text-brand">net</span></span>
                     </Link>
                 </div>
             </nav>
 
-            <main className="max-w-2xl mx-auto px-4 py-10">
-                {/* Back */}
+            <main className="max-w-[640px] mx-auto px-4 py-8 md:py-10">
                 <button
                     onClick={() => { window.scrollTo(0, 0); navigate('/'); }}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-purple-600 transition-all mb-8 text-sm font-medium shadow-sm"
+                    className="inline-flex items-center gap-2 px-4 h-9 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-brand transition-colors mb-6 text-[13px] font-semibold shadow-sm"
                 >
-                    <ArrowLeft size={16} /> Kembali
+                    <ArrowLeft size={14} /> Kembali
                 </button>
 
-                {/* Header */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-8"
-                >
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
                     <div className="flex items-center gap-3 mb-3">
-                        <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center">
-                            <Globe className="text-purple-600" size={24} />
+                        <div className="w-12 h-12 rounded-2xl bg-brandSoft border border-brandBorder flex items-center justify-center">
+                            <Globe className="text-brand" size={20} />
                         </div>
                         <div>
-                            <span className="text-xs font-semibold text-purple-600 uppercase tracking-wider">Layanan Jasa</span>
-                            <h1 className="text-2xl font-extrabold text-slate-900">Pembuatan Website</h1>
+                            <span className="text-[11px] font-bold text-brand uppercase tracking-[0.08em]">Layanan Jasa</span>
+                            <h1 className="text-[22px] font-extrabold text-ink tracking-[-0.02em] leading-none mt-1">Pembuatan Website</h1>
                         </div>
                     </div>
-                    <p className="text-sm text-slate-500 leading-relaxed">
-                        Isi form di bawah untuk konsultasi & order jasa pembuatan website. Pesanan akan langsung dikirim ke WhatsApp customer service kami.
+                    <p className="text-[13px] text-slate-600 leading-relaxed">
+                        Isi form untuk konsultasi & order. Pesanan langsung dikirim ke WhatsApp CS kami — respon 1–3 menit.
                     </p>
                 </motion.div>
 
-                {/* Form */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="space-y-5"
-                >
-                    {/* Budget */}
-                    <div className="bg-white border border-purple-100 rounded-2xl p-5 shadow-sm">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block">💰 Range Budget</label>
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="space-y-4">
+                    <div className="bg-white border border-brandBorder rounded-2xl p-5 shadow-soft">
+                        <label className="text-[11px] font-bold text-slate-600 uppercase tracking-[0.06em] mb-3 block">Range Budget</label>
                         <select
                             value={budget}
                             onChange={(e) => setBudget(e.target.value)}
-                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3.5 text-sm text-slate-800 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/10 transition-all appearance-none cursor-pointer shadow-sm"
+                            className="w-full bg-white border border-slate-200 rounded-xl h-[48px] px-4 text-[14px] text-ink focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 transition-all cursor-pointer"
                         >
                             {budgetOptions.map((opt) => (
-                                <option key={opt.value} value={opt.value} className="bg-white text-slate-800">
-                                    {opt.label}
-                                </option>
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
                             ))}
                         </select>
                     </div>
 
-                    {/* Website Type */}
-                    <div className="bg-white border border-purple-100 rounded-2xl p-5 shadow-sm">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block">🖥️ Jenis Website</label>
+                    <div className="bg-white border border-brandBorder rounded-2xl p-5 shadow-soft">
+                        <label className="text-[11px] font-bold text-slate-600 uppercase tracking-[0.06em] mb-3 block">Jenis Website</label>
                         <select
                             value={websiteType}
                             onChange={(e) => setWebsiteType(e.target.value)}
-                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3.5 text-sm text-slate-800 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/10 transition-all appearance-none cursor-pointer shadow-sm"
+                            className="w-full bg-white border border-slate-200 rounded-xl h-[48px] px-4 text-[14px] text-ink focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 transition-all cursor-pointer"
                         >
                             {websiteTypes.map((opt) => (
-                                <option key={opt.value} value={opt.value} className="bg-white text-slate-800">
-                                    {opt.label}
-                                </option>
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
                             ))}
                         </select>
                         {websiteType && (
-                            <div className="mt-3 flex items-center gap-2 text-xs text-purple-700 bg-purple-50 border border-purple-100 rounded-lg px-3 py-2">
+                            <div className="mt-3 flex items-center gap-2 text-xs font-medium text-brand bg-brandSoft border border-brandBorder rounded-xl px-3 py-2.5">
                                 <SelectedTypeIcon size={14} />
                                 <span>{websiteTypes.find(t => t.value === websiteType)?.desc}</span>
                             </div>
                         )}
                     </div>
 
-                    {/* Description */}
-                    <div className="bg-white border border-purple-100 rounded-2xl p-5 shadow-sm">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block">📋 Kebutuhan / Flow Website</label>
+                    <div className="bg-white border border-brandBorder rounded-2xl p-5 shadow-soft">
+                        <label className="text-[11px] font-bold text-slate-600 uppercase tracking-[0.06em] mb-3 block">Kebutuhan / Flow Website</label>
                         <textarea
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            placeholder="Jelaskan kebutuhan website Anda, contoh:&#10;- Saya butuh landing page untuk bisnis kopi&#10;- Ada halaman home, about, contact&#10;- Desain modern dan responsive&#10;- Integrasi WhatsApp"
+                            placeholder="Jelaskan kebutuhan Anda, contoh:
+- Landing page untuk bisnis kopi
+- Halaman home, about, contact
+- Desain modern responsive
+- Integrasi WhatsApp"
                             rows={6}
-                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/10 transition-all resize-none shadow-sm"
+                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-[14px] text-ink placeholder:text-slate-400 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 transition-all resize-none"
                         />
-                        <p className="text-[11px] text-slate-400 mt-2">Semakin detail penjelasan Anda, semakin akurat estimasi yang kami berikan.</p>
+                        <p className="text-[11px] text-slate-400 mt-2">Semakin detail, semakin akurat estimasinya.</p>
                     </div>
 
-                    {/* Summary Preview */}
                     {(budget || websiteType || description) && (
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="bg-purple-50/50 border border-purple-100 rounded-2xl p-5"
-                        >
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Ringkasan Pesanan</p>
-                            <div className="space-y-2 text-sm">
-                                {budget && (
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle2 size={14} className="text-purple-600" />
-                                        <span className="text-slate-500">Budget:</span>
-                                        <span className="text-slate-800 font-semibold">{budget}</span>
-                                    </div>
-                                )}
-                                {websiteType && (
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle2 size={14} className="text-purple-600" />
-                                        <span className="text-slate-500">Jenis:</span>
-                                        <span className="text-slate-800 font-semibold">{websiteType}</span>
-                                    </div>
-                                )}
-                                {description && (
-                                    <div className="flex items-start gap-2">
-                                        <CheckCircle2 size={14} className="text-purple-600 mt-0.5" />
-                                        <div>
-                                            <span className="text-slate-500">Kebutuhan:</span>
-                                            <p className="text-slate-800 text-xs mt-1 whitespace-pre-wrap">{description}</p>
-                                        </div>
-                                    </div>
-                                )}
+                        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="bg-brandSoft border border-brandBorder rounded-2xl p-5">
+                            <p className="text-[11px] font-bold text-slate-600 uppercase tracking-[0.06em] mb-3">Ringkasan</p>
+                            <div className="space-y-2 text-[13px]">
+                                {budget && <div className="flex items-center gap-2"><CheckCircle2 size={13} className="text-brand shrink-0" /><span className="text-slate-500">Budget:</span><span className="text-ink font-semibold">{budget}</span></div>}
+                                {websiteType && <div className="flex items-center gap-2"><CheckCircle2 size={13} className="text-brand shrink-0" /><span className="text-slate-500">Jenis:</span><span className="text-ink font-semibold">{websiteType}</span></div>}
+                                {description && <div className="flex items-start gap-2"><CheckCircle2 size={13} className="text-brand mt-0.5 shrink-0" /><div><span className="text-slate-500">Kebutuhan:</span><p className="text-ink text-xs mt-1 whitespace-pre-wrap leading-relaxed">{description}</p></div></div>}
                             </div>
                         </motion.div>
                     )}
 
-                    {/* Send Button */}
-                    <button
-                        onClick={handleSendWA}
-                        disabled={sending}
-                        className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 text-sm shadow-md shadow-green-600/10 active:scale-[0.98]"
-                    >
-                        {sending ? (
-                            <>Mengirim...</>
-                        ) : (
-                            <><Send size={16} /> Kirim via WhatsApp</>
-                        )}
+                    <button onClick={handleSendWA} disabled={sending} className="w-full h-12 bg-[#1d9e48] hover:bg-[#15803d] disabled:opacity-50 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2 text-[13px] shadow-sm">
+                        {sending ? 'Mengirim...' : <><Send size={15} /> Kirim via WhatsApp</>}
                     </button>
-
-                    <p className="text-center text-[11px] text-slate-400">
-                        Pesanan akan dikirim ke WhatsApp Customer Service noxarianet.
-                    </p>
+                    <p className="text-center text-[11px] text-slate-400">Pesanan dikirim ke WhatsApp Customer Service.</p>
                 </motion.div>
             </main>
         </div>

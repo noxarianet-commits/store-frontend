@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { Loader2, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { formatRp } from '../../utils/currencyUtils';
 import { normalizePhoneNumber } from '../../utils/phoneUtils';
 
@@ -27,25 +27,19 @@ const BuyerDataForm = ({
         /dana|ovo|gopay|gojek|shopee|linkaja|isaku|maxim/i.test(product?.name || '');
     const isNumericGame = /mobile legend|magic chess|free fire/i.test(product?.name || '');
 
-    // ── Invalidate previous validation when User ID / Zone ID is edited ──
     const prevTargetRef = useRef('');
 
     useEffect(() => {
         if (!isValidationAvailable) return;
-
         const customerId = fieldData['customer_id'] || fieldData['target'] || (dynamicFields.length === 1 ? fieldData[dynamicFields[0].key] : '');
         const zoneId = fieldData['zone_id'] || '';
         const currentTargetKey = `${customerId || ''}_${zoneId || ''}_${selectedVariant?.id || ''}`;
-
-        // If target ID changed, reset validation status
         if (currentTargetKey !== prevTargetRef.current) {
             prevTargetRef.current = currentTargetKey;
             if (validatedAccount && validatedAccount._lastTarget !== currentTargetKey) {
                 if (typeof setValidatedAccount === 'function') setValidatedAccount(null);
             }
-            if (validationError) {
-                if (typeof setValidationError === 'function') setValidationError(null);
-            }
+            if (validationError && typeof setValidationError === 'function') setValidationError(null);
         }
     }, [fieldData, selectedVariant?.id, isValidationAvailable]);
 
@@ -54,79 +48,65 @@ const BuyerDataForm = ({
         const isTargetField = fieldKey === 'customer_id' || fieldKey === 'target' || fieldKey === 'note' || fieldKey === 'user_id';
         if (isEwalletProduct && isTargetField) {
             const normalized = normalizePhoneNumber(val);
-            if (normalized && normalized !== val) {
-                setFieldData(prev => ({ ...prev, [fieldKey]: normalized }));
-            }
+            if (normalized && normalized !== val) setFieldData(prev => ({ ...prev, [fieldKey]: normalized }));
         }
     };
 
     return (
         <div>
-            <h2 className="text-base font-bold text-slate-900 mb-5">Informasi Pembeli</h2>
+            <h2 className="text-[14px] font-extrabold text-ink tracking-[-0.02em] mb-1">Informasi Pembeli</h2>
+            <p className="text-xs text-slate-500 mb-5">Data ini dipakai untuk pengiriman & notifikasi pesanan.</p>
+
             <div className="space-y-4 mb-6">
                 <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-2">Nomor WhatsApp (Aktif)</label>
+                    <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-[0.06em] mb-2">Nomor WhatsApp Aktif <span className="text-red-500">*</span></label>
                     <input
                         name="wa_number"
-                        type="number"
+                        type="tel"
+                        inputMode="numeric"
                         value={formData.wa_number}
                         onChange={handleFormChange}
-                        placeholder="Contoh: 08123456789"
-                        className="w-full bg-white border border-slate-200 rounded-xl p-3.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-colors"
+                        placeholder="08xxxxxxxxxx"
+                        className="w-full bg-white border border-slate-200 rounded-xl h-[48px] px-4 text-[14px] text-ink placeholder:text-slate-400 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 transition-colors"
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-2">Alamat Email Gmail</label>
+                    <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-[0.06em] mb-2">Email <span className="text-red-500">*</span></label>
                     <input
                         name="email"
                         type="email"
                         value={formData.email}
                         onChange={handleFormChange}
-                        placeholder="Contoh: nama@gmail.com"
-                        className="w-full bg-white border border-slate-200 rounded-xl p-3.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-colors"
+                        placeholder="nama@gmail.com"
+                        className="w-full bg-white border border-slate-200 rounded-xl h-[48px] px-4 text-[14px] text-ink placeholder:text-slate-400 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 transition-colors"
                     />
+                    <p className="text-[11px] text-slate-400 mt-1.5">Detail pesanan otomatis dikirim ke email ini.</p>
                 </div>
 
-                {/* ── Dynamic Fields from API ── */}
                 {dynamicFields.map((field, idx) => {
                     const cleanedLabel = field.label.replace(/[:*]/g, '').trim();
                     const isTargetField = field.key === 'customer_id' || field.key === 'target' || field.key === 'note' || field.key === 'user_id';
                     const isZoneField = field.key === 'zone_id';
-                    
                     const getPlaceholderText = () => {
                         const lowerLabel = cleanedLabel.toLowerCase();
-                        
-                        if (
-                            lowerLabel.includes('nomor') || 
-                            lowerLabel.includes('no') || 
-                            lowerLabel.includes('phone') || 
-                            lowerLabel.includes('gopay') || 
-                            lowerLabel.includes('dana') || 
-                            lowerLabel.includes('ovo') || 
-                            lowerLabel.includes('linkaja') || 
-                            lowerLabel.includes('shopeepay')
-                        ) {
+                        if (lowerLabel.includes('nomor') || lowerLabel.includes('no ') || lowerLabel.includes('phone') || lowerLabel.includes('dana') || lowerLabel.includes('ovo') || lowerLabel.includes('gopay') || lowerLabel.includes('linkaja') || lowerLabel.includes('shopeepay')) {
                             const targetName = cleanedLabel.replace(/^[nN]omor\s+/i, '').replace(/^[nN]o\s+/i, '');
-                            return `Masukkan nomor tujuan 08... (${targetName})`;
+                            return `08xxxxxxxxxx (${targetName})`;
                         }
-                        
                         return `Masukkan ${cleanedLabel}`;
                     };
-
                     const isNumericOnly = (isEwalletProduct && isTargetField) || (isNumericGame && (isTargetField || isZoneField));
 
                     return (
                         <div key={`dyn-${idx}`}>
                             <div className="flex items-center justify-between mb-2">
-                                <label className="block text-xs font-medium text-slate-500">
-                                    {cleanedLabel} {field.required && '*'}
+                                <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-[0.06em]">
+                                    {cleanedLabel} {field.required && <span className="text-red-500">*</span>}
                                 </label>
                                 {field.key === 'customer_id' && isValidationAvailable && (
-                                    <span className={`text-[11px] font-medium flex items-center gap-1 ${
-                                        validatedAccount?.valid ? 'text-green-600' : 'text-purple-600'
-                                    }`}>
-                                        {isValidating && <Loader2 size={12} className="animate-spin text-purple-600" />}
-                                        {isValidating ? 'Mengecek ID...' : validatedAccount?.valid ? '✓ ID Terverifikasi' : 'Wajib Cek ID'}
+                                    <span className={`text-[11px] font-semibold flex items-center gap-1 ${validatedAccount?.valid ? 'text-emerald-600' : 'text-brand'}`}>
+                                        {isValidating && <Loader2 size={11} className="animate-spin" />}
+                                        {isValidating ? 'Mengecek...' : validatedAccount?.valid ? 'Terverifikasi' : 'Wajib cek ID'}
                                     </span>
                                 )}
                             </div>
@@ -137,95 +117,67 @@ const BuyerDataForm = ({
                                     value={field.key === 'provider_qty' ? providerQty : (fieldData[field.key] || '')}
                                     onChange={(e) => {
                                         let val = e.target.value;
-                                        if (isEwalletProduct && isTargetField) {
-                                            // Prevent entering letters in e-wallet destination field
-                                            val = val.replace(/[^0-9\s\-+]/g, '');
-                                        } else if (isNumericGame && (isTargetField || isZoneField)) {
-                                            // Prevent entering letters in game ID / Zone ID fields
-                                            val = val.replace(/[^0-9]/g, '');
-                                        }
+                                        if (isEwalletProduct && isTargetField) val = val.replace(/[^0-9\s\-+]/g, '');
+                                        else if (isNumericGame && (isTargetField || isZoneField)) val = val.replace(/[^0-9]/g, '');
                                         if (field.key === 'provider_qty') setProviderQty(val);
-                                        else setFieldData({...fieldData, [field.key]: val});
+                                        else setFieldData({ ...fieldData, [field.key]: val });
                                     }}
                                     onBlur={(e) => handleFieldBlur(field.key, e.target.value)}
                                     placeholder={getPlaceholderText()}
-                                    className={`w-full bg-white border rounded-xl p-3.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none transition-colors ${
+                                    className={`w-full bg-white border rounded-xl h-[48px] px-4 text-[14px] text-ink placeholder:text-slate-400 focus:outline-none focus:ring-2 transition-colors ${
                                         validatedAccount?.valid && (field.key === 'customer_id' || field.key === 'target')
-                                            ? 'border-green-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/10'
+                                            ? 'border-emerald-300 focus:border-emerald-400 focus:ring-emerald-500/10'
                                             : validationError && (field.key === 'customer_id' || field.key === 'target')
-                                                ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/10'
-                                                : 'border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10'
+                                                ? 'border-red-300 focus:border-red-400 focus:ring-red-500/10'
+                                                : 'border-slate-200 focus:border-brand focus:ring-brand/10'
                                     }`}
                                 />
                                 {isValidating && (field.key === 'customer_id' || field.key === 'target') && (
                                     <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
-                                        <Loader2 size={16} className="animate-spin text-purple-500" />
+                                        <Loader2 size={16} className="animate-spin text-brand" />
                                     </div>
                                 )}
                             </div>
                             {field.key === 'provider_qty' && selectedVariant?.provider_meta && (
-                                <p className="text-[10px] text-slate-400 mt-1">Min: {formatRp(selectedVariant.provider_meta.min_qty)} | Max: {formatRp(selectedVariant.provider_meta.max_qty)}</p>
+                                <p className="text-[11px] text-slate-500 mt-1.5">Min {formatRp(selectedVariant.provider_meta.min_qty)} • Maks {formatRp(selectedVariant.provider_meta.max_qty)}</p>
                             )}
                         </div>
                     );
                 })}
 
-                {/* ── Validation Status & Manual Trigger ── */}
                 {isValidationAvailable && (
-                    <div className="pt-2">
+                    <div className="pt-1">
                         {isValidating ? (
-                            <button
-                                type="button"
-                                disabled
-                                className="w-full bg-purple-600/70 text-white py-3.5 rounded-xl text-sm font-bold flex justify-center items-center gap-2 cursor-wait"
-                            >
-                                <Loader2 size={16} className="animate-spin" />
-                                Sedang Mengecek Akun...
+                            <button type="button" disabled className="w-full bg-ink/80 text-white h-12 rounded-xl text-[13px] font-bold flex justify-center items-center gap-2 cursor-wait">
+                                <Loader2 size={16} className="animate-spin" /> Mengecek akun...
                             </button>
                         ) : validatedAccount?.valid ? (
-                            <div className="p-3.5 bg-green-50 border border-green-200 rounded-xl flex items-center justify-between gap-3">
+                            <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between gap-3">
                                 <div className="flex items-center gap-2.5 min-w-0">
-                                    <CheckCircle2 size={18} className="text-green-600 shrink-0" />
+                                    <CheckCircle2 size={18} className="text-emerald-600 shrink-0" />
                                     <div className="min-w-0">
-                                        <p className="text-[11px] font-semibold text-green-700 uppercase tracking-wider">Akun Terverifikasi</p>
-                                        <p className="text-sm font-bold text-green-900 truncate">
-                                            {validatedAccount.account_name || validatedAccount.display_name || 'Valid'}
-                                        </p>
+                                        <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-[0.06em]">Terverifikasi</p>
+                                        <p className="text-[13px] font-bold text-emerald-900 truncate">{validatedAccount.account_name || validatedAccount.display_name || 'Valid'}</p>
                                     </div>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => handleValidateAccount({ silent: false })}
-                                    className="text-xs font-semibold text-green-700 hover:text-green-800 bg-green-100 hover:bg-green-200 px-3 py-1.5 rounded-lg transition-colors shrink-0"
-                                >
-                                    Cek Ulang
+                                <button type="button" onClick={() => handleValidateAccount({ silent: false })} className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 bg-white border border-emerald-200 hover:bg-emerald-50 px-3 py-1.5 rounded-full transition-colors shrink-0">
+                                    Cek ulang
                                 </button>
                             </div>
                         ) : validationError ? (
                             <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2.5">
-                                <AlertCircle size={18} className="text-red-600 shrink-0 mt-0.5" />
+                                <AlertCircle size={16} className="text-red-600 shrink-0 mt-0.5" />
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-semibold text-red-700 uppercase tracking-wider">Validasi Gagal</p>
-                                    <p className="text-xs text-red-900 leading-relaxed font-medium mt-0.5">
-                                        {validationError}
-                                    </p>
+                                    <p className="text-[11px] font-bold text-red-700 uppercase tracking-[0.06em]">Validasi gagal</p>
+                                    <p className="text-xs text-red-800 leading-relaxed font-medium mt-0.5">{validationError}</p>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => handleValidateAccount({ silent: false })}
-                                    className="text-xs font-bold text-red-700 hover:text-red-800 bg-red-100 hover:bg-red-200 px-3 py-1.5 rounded-lg shrink-0 transition-colors"
-                                >
-                                    Coba Lagi
+                                <button type="button" onClick={() => handleValidateAccount({ silent: false })} className="text-xs font-bold text-red-700 bg-white border border-red-200 hover:bg-red-50 px-3 py-1.5 rounded-full shrink-0 transition-colors">
+                                    Coba lagi
                                 </button>
                             </div>
                         ) : (
-                            <button
-                                type="button"
-                                onClick={() => handleValidateAccount({ silent: false })}
-                                className="w-full bg-purple-600 hover:bg-purple-700 active:scale-[0.99] text-white py-3.5 rounded-xl text-sm font-bold transition-all flex justify-center items-center gap-2 shadow-sm"
-                            >
-                                <CheckCircle2 size={16} />
-                                Cek ID / Validasi Akun
+                            <button type="button" onClick={() => handleValidateAccount({ silent: false })} className="w-full bg-brand hover:bg-brandDark text-white h-12 rounded-xl text-[13px] font-bold transition-colors flex justify-center items-center gap-2 shadow-sm">
+                                <CheckCircle2 size={16} /> Cek ID / Validasi Akun
                             </button>
                         )}
                     </div>
