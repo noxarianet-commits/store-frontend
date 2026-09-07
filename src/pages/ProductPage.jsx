@@ -2,16 +2,16 @@ import { useEffect, useState, useRef, Fragment } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    ArrowLeft, CheckCircle2, Copy, Star, ChevronRight,
-    Shield, AlertTriangle, AlertCircle, Clock, RefreshCw,
-    Loader2, Wifi, Info, Download
+    CheckCircle2, ChevronRight,
+    AlertTriangle, AlertCircle,
+    Loader2
 } from 'lucide-react';
 import api from '../api';
 import Swal from 'sweetalert2';
 import { notifySuccess, notifyError, notifyWarning, showAlert } from '../utils/notify';
 import { normalizePhoneNumber } from '../utils/phoneUtils';
 import { formatRp } from '../utils/currencyUtils';
-import { getWaNumber, getWaUrl } from '../utils/waUtils';
+import { getWaUrl } from '../utils/waUtils';
 
 // New Modular Components
 import ServerSelector from '../components/product/ServerSelector';
@@ -19,51 +19,6 @@ import VariantSelector from '../components/product/VariantSelector';
 import BuyerDataForm from '../components/product/BuyerDataForm';
 import PaymentStep from '../components/product/PaymentStep';
 
-// ══════════════════════════════════════════════════════════════════════════
-// HELPER — Order Process Label & Color
-// ══════════════════════════════════════════════════════════════════════════
-const ORDER_PROCESS_CONFIG = {
-    auto: { label: 'Instan', color: 'text-green-600', bg: 'bg-green-50 border-green-100' },
-    h2h: { label: 'Instan', color: 'text-green-600', bg: 'bg-green-50 border-green-100' },
-    manual: { label: 'Manual', color: 'text-yellow-600', bg: 'bg-yellow-50 border-yellow-100' },
-    smm: { label: 'SMM', color: 'text-blue-600', bg: 'bg-blue-50 border-blue-100' },
-};
-
-function isVariantOutOfStock(variant) {
-    return variant.stock === 0 || variant.stock === null || variant.stock === undefined;
-}
-
-// ══════════════════════════════════════════════════════════════════════════
-// SUB-COMPONENT — Countdown Timer
-// ══════════════════════════════════════════════════════════════════════════
-function CountdownTimer({ expiredAt }) {
-    const [remaining, setRemaining] = useState('');
-
-    useEffect(() => {
-        if (!expiredAt) return;
-        const tick = () => {
-            const diff = new Date(expiredAt) - new Date();
-            if (diff <= 0) {
-                setRemaining('Kadaluarsa');
-                return;
-            }
-            const m = Math.floor(diff / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
-            setRemaining(`${m}:${s.toString().padStart(2, '0')}`);
-        };
-        tick();
-        const id = setInterval(tick, 1000);
-        return () => clearInterval(id);
-    }, [expiredAt]);
-
-    if (!expiredAt) return null;
-    return (
-        <div className="flex items-center gap-1.5 text-yellow-600 text-xs font-semibold">
-            <Clock size={13} />
-            <span>Kadaluarsa dalam: <span className="font-mono font-bold">{remaining}</span></span>
-        </div>
-    );
-}
 
 // ══════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
@@ -98,8 +53,8 @@ const ProductPage = () => {
 
     // Testimonial
     const [testimonialMsg, setTestimonialMsg] = useState('');
-    const [conceptMsg, setConceptMsg] = useState('');
-    const [budget, setBudget] = useState('500k-1jt');
+    const [conceptMsg] = useState('');
+    const [budget] = useState('500k-1jt');
     const [rating, setRating] = useState(5);
     const [testimonialSubmitted, setTestimonialSubmitted] = useState(false);
 
@@ -701,8 +656,8 @@ const ProductPage = () => {
 
     // ── Loading Skeleton ────────────────────────────────────────────────
     if (loading) return (
-        <div className="min-h-screen font-sans text-slate-800">
-            <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-purple-100/50 shadow-sm">
+        <div className="checkout-page min-h-screen font-sans text-slate-800">
+            <nav className="public-nav sticky top-0 z-50">
                 <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
                     <div className="flex items-center gap-2.5">
                         <div className="w-9 h-9 rounded-lg bg-slate-100 animate-pulse" />
@@ -744,7 +699,7 @@ const ProductPage = () => {
     );
 
     if (!product) return (
-        <div className="min-h-screen flex items-center justify-center">
+        <div className="checkout-page min-h-screen flex items-center justify-center">
             <div className="text-center">
                 <p className="text-slate-800 text-lg font-bold mb-2">Produk tidak ditemukan.</p>
                 <Link to="/" className="text-purple-600 text-sm hover:underline">Kembali ke beranda</Link>
@@ -818,9 +773,9 @@ const ProductPage = () => {
     const validTexts = displayTexts.filter(t => t);
 
     return (
-        <div className="min-h-screen font-sans text-slate-800">
+        <div className="checkout-page min-h-screen font-sans text-slate-800">
             {/* HEADER */}
-            <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-purple-100/50 shadow-sm">
+            <nav className="public-nav sticky top-0 z-50">
                 <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
                     <Link to="/" className="flex items-center gap-2.5">
                         <img src="/logo.png" alt="noxarianet" className="w-9 h-9 rounded-lg object-contain" />
@@ -872,15 +827,15 @@ const ProductPage = () => {
                 <div className="flex items-center gap-2 mb-8">
                     {steps.map((s, i) => (
                         <Fragment key={i}>
-                            <div className={`flex items-center gap-2 ${step > i + 1 ? 'text-purple-600' : step === i + 1 ? 'text-slate-800' : 'text-slate-400'}`}>
+                            <div className={`flex items-center gap-2 ${step > i + 1 ? 'text-[var(--coral-dark)]' : step === i + 1 ? 'text-[var(--ink)]' : 'text-[var(--muted)]'}`}>
                                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border transition-all relative ${
-                                    step > i + 1 ? 'bg-purple-600 border-purple-600 text-white' : step === i + 1 ? 'border-purple-500 text-purple-600 bg-purple-50 ring-2 ring-purple-500/20' : 'border-slate-200 text-slate-400'
+                                    step > i + 1 ? 'bg-[var(--coral)] border-[var(--coral)] text-white' : step === i + 1 ? 'border-[var(--coral)] text-[var(--coral-dark)] bg-[#fae7df] ring-2 ring-[#e86b4f]/20' : 'border-[var(--line)] text-[var(--muted)]'
                                 }`}>
                                     {step > i + 1 ? (
                                         <CheckCircle2 size={14} />
                                     ) : step === i + 1 ? (
                                         <>
-                                            <span className="absolute inset-0 rounded-full border border-purple-400 animate-ping opacity-75 pointer-events-none" />
+                                            <span className="absolute inset-0 rounded-full border border-[var(--coral)] animate-ping opacity-75 pointer-events-none" />
                                             <span className="relative">{i + 1}</span>
                                         </>
                                     ) : (

@@ -5,11 +5,11 @@ import { ArrowLeft, FileText } from 'lucide-react';
 const TOS = () => {
     const navigate = useNavigate();
     return (
-        <div className="min-h-screen text-slate-800 p-6 md:p-12 font-sans">
+        <div className="info-page min-h-screen text-slate-800 p-6 md:p-12 font-sans">
             <div className="max-w-3xl mx-auto">
                 <button
                     onClick={() => navigate(-1)}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-purple-600 transition-all mb-8 text-sm font-medium shadow-sm"
+                    className="public-back inline-flex items-center gap-2 px-4 py-2 transition-all mb-8 text-sm font-medium"
                 >
                     <ArrowLeft size={16} /> Kembali
                 </button>

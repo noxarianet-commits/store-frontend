@@ -60,11 +60,11 @@ const FAQItem = ({ item, isOpen, onToggle }) => (
             id={`faq-item-${item.id}`}
             aria-expanded={isOpen}
         >
-            <span className={`font-semibold text-sm leading-snug ${isOpen ? 'text-purple-700' : 'text-slate-800'}`}>
+            <span className={`font-semibold text-sm leading-snug ${isOpen ? 'text-[var(--coral-dark)]' : 'text-[var(--ink)]'}`}>
                 {item.q}
             </span>
             <span className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
-                isOpen ? 'bg-purple-100 text-purple-600' : 'bg-slate-100 text-slate-500'
+                isOpen ? 'bg-[#fae7df] text-[var(--coral-dark)]' : 'bg-[#eeeae2] text-[var(--muted)]'
             }`}>
                 {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </span>
@@ -98,12 +98,12 @@ const FAQPage = () => {
     const toggle = (id) => setOpenId(prev => (prev === id ? null : id));
 
     return (
-        <div className="min-h-screen text-slate-800 p-6 md:p-12 font-sans">
+        <div className="faq-page min-h-screen text-slate-800 p-6 md:p-12 font-sans">
             <div className="max-w-3xl mx-auto">
                 {/* Back button */}
                 <button
                     onClick={() => navigate(-1)}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-purple-600 transition-all mb-8 text-sm font-medium shadow-sm"
+                    className="public-back inline-flex items-center gap-2 px-4 py-2 transition-all mb-8 text-sm font-medium"
                 >
                     <ArrowLeft size={16} /> Kembali
                 </button>

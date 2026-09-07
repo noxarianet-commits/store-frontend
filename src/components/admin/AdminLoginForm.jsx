@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Store, Eye, EyeOff } from 'lucide-react';
 
 const AdminLoginForm = ({ loginData, setLoginData, showLoginPassword, setShowLoginPassword, handleLogin }) => (
-    <div className="min-h-screen flex items-center justify-center bg-[#0A031A] px-4">
+    <div className="admin-login min-h-screen flex items-center justify-center bg-[#0A031A] px-4">
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

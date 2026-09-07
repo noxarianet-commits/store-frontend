@@ -1,83 +1,42 @@
-import React from 'react';
+import { Check, CircleAlert } from 'lucide-react';
 import { formatRp } from '../../utils/currencyUtils';
 
 const ORDER_PROCESS_CONFIG = {
-    auto: { label: 'Instan', color: 'text-green-600', bg: 'bg-green-50 border-green-100' },
-    h2h: { label: 'Instan', color: 'text-green-600', bg: 'bg-green-50 border-green-100' },
-    manual: { label: 'Manual', color: 'text-yellow-600', bg: 'bg-yellow-50 border-yellow-100' },
-    smm: { label: 'SMM', color: 'text-blue-600', bg: 'bg-blue-50 border-blue-100' },
+    auto: { label: 'Instan', color: 'text-[var(--teal)]', bg: 'bg-[var(--teal-soft)]' },
+    h2h: { label: 'Instan', color: 'text-[var(--teal)]', bg: 'bg-[var(--teal-soft)]' },
+    manual: { label: 'Manual', color: 'text-[var(--gold)]', bg: 'bg-[#f7eedb]' },
+    smm: { label: 'SMM', color: 'text-[var(--coral-dark)]', bg: 'bg-[#fae7df]' },
 };
 
-function isVariantOutOfStock(variant) {
-    return variant.stock === 0 || variant.stock === null || variant.stock === undefined;
-}
+const isVariantOutOfStock = (variant) => variant.stock === 0 || variant.stock === null || variant.stock === undefined;
 
 const VariantSelector = ({ variants, selectedVariant, setSelectedVariant, showAllVariants, setShowAllVariants }) => {
-    if (!variants || variants.length === 0) return null;
-
+    if (!variants?.length) return null;
     const variantsToDisplay = showAllVariants ? variants : variants.slice(0, 10);
     const shouldTruncate = variants.length > 10 && !showAllVariants;
 
     return (
         <div className="mb-6">
-            <div className="relative">
-                <div className={`grid grid-cols-2 sm:grid-cols-3 gap-3 p-0.5 ${shouldTruncate ? 'max-h-[380px] overflow-y-auto no-scrollbar' : ''}`}>
-                    {variantsToDisplay.map((variant) => {
-                        const isSelected = selectedVariant?.id === variant.id;
-                        const outOfStock = isVariantOutOfStock(variant);
-                        const processConfig = ORDER_PROCESS_CONFIG[variant.order_process?.toLowerCase()];
-                        
-                        return (
-                            <button
-                                key={variant.id}
-                                onClick={() => {
-                                    if (!outOfStock) setSelectedVariant(variant);
-                                }}
-                                disabled={outOfStock}
-                                className={`flex flex-col justify-between p-3 sm:p-3.5 rounded-xl border-2 transition-all duration-300 text-left relative overflow-hidden group min-h-[90px] ${
-                                    outOfStock
-                                        ? 'border-slate-100 bg-slate-50 opacity-60 cursor-not-allowed'
-                                        : isSelected
-                                            ? 'border-purple-500 bg-purple-50 shadow-sm shadow-purple-100'
-                                            : 'border-slate-200 bg-white hover:border-purple-300 hover:bg-purple-50/30'
-                                }`}
-                            >
-                                <div className="flex flex-col gap-0.5 w-full">
-                                    <span className={`text-[11px] sm:text-xs font-bold leading-snug ${outOfStock ? 'text-slate-400 line-through' : isSelected ? 'text-purple-700' : 'text-slate-700'}`}>
-                                        {variant.name}
-                                    </span>
-                                    <span className={`text-[11px] sm:text-xs font-extrabold ${outOfStock ? 'text-slate-400' : isSelected ? 'text-purple-600' : 'text-slate-600'}`}>
-                                        {(variant.sell_price || variant.price) > 0 ? formatRp(variant.sell_price || variant.price) : 'Chat'}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between items-center mt-2 w-full">
-                                    {outOfStock ? (
-                                        <span className="text-[9px] text-red-500 font-semibold">Habis</span>
-                                    ) : (
-                                        processConfig && (
-                                            <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded border ${processConfig.bg} ${processConfig.color} inline-block w-max`}>
-                                                {processConfig.label}
-                                            </span>
-                                        )
-                                    )}
-                                </div>
-                            </button>
-                        );
-                    })}
-                </div>
-                {shouldTruncate && (
-                    <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none z-10" />
-                )}
+            <div className={`grid grid-cols-1 sm:grid-cols-2 gap-2 ${shouldTruncate ? 'max-h-[380px] overflow-y-auto pr-1' : ''}`}>
+                {variantsToDisplay.map((variant) => {
+                    const isSelected = selectedVariant?.id === variant.id;
+                    const outOfStock = isVariantOutOfStock(variant);
+                    const processConfig = ORDER_PROCESS_CONFIG[variant.order_process?.toLowerCase()];
+                    return (
+                        <button key={variant.id} type="button" onClick={() => !outOfStock && setSelectedVariant(variant)} disabled={outOfStock} className={`flex min-h-[82px] items-center justify-between gap-3 p-3 text-left transition-all ${outOfStock ? 'border border-[var(--line)] bg-[#eeeae2] opacity-60 cursor-not-allowed' : isSelected ? 'border-2 border-[var(--coral)] bg-[#fff7f1]' : 'border border-[var(--line)] bg-[var(--surface)] hover:border-[var(--line-strong)]'}`}>
+                            <span className="min-w-0">
+                                <span className={`block text-xs font-bold leading-snug ${outOfStock ? 'text-[var(--muted)] line-through' : 'text-[var(--ink)]'}`}>{variant.name}</span>
+                                {processConfig && <span className={`mt-2 inline-block px-1.5 py-0.5 font-mono text-[9px] uppercase ${processConfig.bg} ${processConfig.color}`}>{processConfig.label}</span>}
+                            </span>
+                            <span className="shrink-0 text-right">
+                                <span className={`block font-mono text-xs font-medium ${outOfStock ? 'text-[var(--muted)]' : 'text-[var(--teal)]'}`}>{(variant.sell_price || variant.price) > 0 ? formatRp(variant.sell_price || variant.price) : 'Chat'}</span>
+                                {outOfStock ? <CircleAlert size={14} className="ml-auto mt-2 text-[var(--danger)]" /> : isSelected ? <Check size={15} className="ml-auto mt-2 text-[var(--coral)]" /> : null}
+                            </span>
+                        </button>
+                    );
+                })}
             </div>
-
-            {variants.length > 10 && (
-                <button
-                    onClick={() => setShowAllVariants(!showAllVariants)}
-                    className="w-full py-3 mt-4 flex items-center justify-center gap-2 text-sm font-medium text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-xl transition-colors border border-purple-200"
-                >
-                    {showAllVariants ? 'Sembunyikan' : `Lihat Semua Varian (${variants.length})`}
-                </button>
-            )}
+            {variants.length > 10 && <button type="button" onClick={() => setShowAllVariants(!showAllVariants)} className="mt-3 w-full border-b border-[var(--line-strong)] py-2 text-left font-mono text-[10px] uppercase tracking-[.08em] text-[var(--coral-dark)]">{showAllVariants ? 'Sembunyikan varian' : `Lihat semua varian (${variants.length})`}</button>}
         </div>
     );
 };

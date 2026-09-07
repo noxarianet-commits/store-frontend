@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { Loader2, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { formatRp } from '../../utils/currencyUtils';
 import { normalizePhoneNumber } from '../../utils/phoneUtils';
 

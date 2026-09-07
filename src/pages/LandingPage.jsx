@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Megaphone, X, ChevronDown, ChevronUp, ShoppingBag, CheckCircle2 } from 'lucide-react';
+import { Megaphone, X, ChevronDown, ChevronUp } from 'lucide-react';
 import api from '../api';
 import HeroSection from '../components/home/HeroSection';
 import CategoryTabs from '../components/home/CategoryTabs';
@@ -129,7 +129,7 @@ const LandingPage = () => {
     const counts = computeCounts(allProducts);
 
     return (
-        <div className="w-full font-sans text-gray-200 min-h-screen bg-grid-pattern">
+        <div className="store-page w-full min-h-screen">
 
             {/* ═══ MARQUEE STATUS ═══ */}
             {settings.shop_status?.message && (
@@ -139,12 +139,9 @@ const LandingPage = () => {
                         : 'bg-purple-600/10 border-purple-500/10'
                 }`}>
                     <div className={`animate-marquee inline-block text-[10px] font-bold uppercase tracking-[0.2em] ${
-                        settings.shop_status.isOpen === false ? 'text-red-400' : 'text-purple-400'
+                        settings.shop_status.isOpen === false ? 'text-[var(--danger)]' : 'text-[var(--coral-dark)]'
                     }`}>
-                        {Array(6).fill(
-                            settings.shop_status.isOpen === false 
-                                ? `🔴 TOKO SEDANG TUTUP — ${settings.shop_status.message}`
-                                : settings.shop_status.message
+                        {Array(6).fill(settings.shop_status.isOpen === false ? `TOKO SEDANG TUTUP — ${settings.shop_status.message}` : settings.shop_status.message
                         ).join(' \u00A0•\u00A0 ')}
                     </div>
                 </div>
@@ -160,16 +157,16 @@ const LandingPage = () => {
             />
 
             {/* ═══ HEADER ═══ */}
-            <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-purple-100/50 shadow-sm shadow-purple-600/[0.01]">
+            <nav className="store-nav sticky top-0 z-50">
                 <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
                     <Link to="/" className="flex items-center gap-2.5">
                         <img src="/logo.png" alt="noxarianet" className="w-9 h-9 rounded-lg object-contain" />
-                        <span className="text-xl font-bold tracking-tight text-slate-900">noxaria<span className="text-purple-600">net</span></span>
+                        <span className="brand-lockup text-xl font-extrabold tracking-tight">noxaria<span className="brand-accent">net</span></span>
                     </Link>
                 </div>
             </nav>
 
-            <main className="max-w-6xl mx-auto px-6">
+            <main className="max-w-[1180px] mx-auto px-5 sm:px-8">
                 <HeroSection
                     settings={settings}
                     searchQuery={searchQuery}
@@ -183,12 +180,12 @@ const LandingPage = () => {
                 />
 
                 {/* ═══ PRODUCT GRID ═══ */}
-                <section className="mb-12">
+                <section id="catalog" className="mb-12">
                     {loading ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        <div className="catalog-grid">
                             {Array.from({ length: 10 }).map((_, i) => (
-                                <div key={i} className="bg-white border border-purple-100 rounded-2xl p-5 flex flex-col items-center text-center animate-pulse shadow-sm">
-                                    <div className="w-12 h-12 rounded-xl bg-slate-100 mb-3" />
+                                <div key={i} className="catalog-card animate-pulse">
+                                    <div className="catalog-card-icon bg-slate-100" />
                                     <div className="w-10 h-2.5 rounded bg-slate-100 mb-2" />
                                     <div className="w-16 h-3.5 rounded bg-slate-100 mb-1" />
                                     <div className="w-12 h-2 rounded bg-slate-100" />
@@ -204,7 +201,7 @@ const LandingPage = () => {
                             </p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        <div className="catalog-grid">
                             {filteredProducts.map((product, index) => (
                                 <motion.div
                                     key={product.id}
@@ -223,25 +220,9 @@ const LandingPage = () => {
                 </section>
 
                 {/* ═══ STATS SECTION ═══ */}
-                <section className="mb-10 max-w-sm mx-auto text-center">
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-purple-600">Statistik Terpercaya</span>
-                    <h3 className="text-sm font-extrabold text-slate-900 mt-1 mb-4">Dipercaya Ribuan Pengguna</h3>
-                    <div className="grid grid-cols-2 gap-3.5">
-                        <div className="bg-white border border-slate-100 rounded-2xl p-3.5 flex flex-col items-center justify-center shadow-[0_2px_10px_-4px_rgba(124,58,237,0.08)]">
-                            <div className="w-9 h-9 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 mb-2">
-                                <ShoppingBag size={18} />
-                            </div>
-                            <span className="text-base font-black text-emerald-600 leading-none">10.000+</span>
-                            <span className="text-[10px] font-semibold text-slate-400 mt-1.5">Total Transaksi</span>
-                        </div>
-                        <div className="bg-white border border-slate-100 rounded-2xl p-3.5 flex flex-col items-center justify-center shadow-[0_2px_10px_-4px_rgba(124,58,237,0.08)]">
-                            <div className="w-9 h-9 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600 mb-2">
-                                <CheckCircle2 size={18} />
-                            </div>
-                            <span className="text-base font-black text-purple-600 leading-none">10.000+</span>
-                            <span className="text-[10px] font-semibold text-slate-400 mt-1.5">Pesanan Berhasil</span>
-                        </div>
-                    </div>
+                <section id="trust" className="catalog-stats">
+                    <div className="catalog-stat"><strong>10.000+</strong><span>Total transaksi</span></div>
+                    <div className="catalog-stat"><strong>10.000+</strong><span>Pesanan berhasil</span></div>
                 </section>
 
                 <TestimonialCarousel
@@ -255,15 +236,15 @@ const LandingPage = () => {
             </main>
 
             {/* ═══ FOOTER ═══ */}
-            <footer className="border-t border-purple-100 bg-white/80 backdrop-blur-md">
-                <div className="max-w-6xl mx-auto px-6 py-10">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
+            <footer className="catalog-footer">
+                <div className="max-w-[1180px] mx-auto px-5 sm:px-8">
+                    <div className="catalog-footer-grid">
                         <div>
                             <div className="flex items-center gap-2 mb-4">
                                 <img src="/logo.png" alt="noxarianet" className="w-7 h-7 rounded object-contain" />
-                                <span className="text-lg font-bold text-slate-900">noxaria<span className="text-purple-600">net</span></span>
+                                <span className="brand-lockup text-lg font-bold">noxaria<span className="brand-accent">net</span></span>
                             </div>
-                            <p className="text-[10px] font-extrabold text-slate-800 uppercase tracking-widest mb-1.5">Ekosistem Layanan Digital Otomatis</p>
+                            <p className="font-mono text-[10px] uppercase tracking-[.1em] mb-1.5">Ekosistem layanan digital otomatis</p>
                             <p className="text-xs text-slate-500 leading-relaxed">
                                 Noxarianet Store menyediakan layanan top up e-wallet, aplikasi premium, dan kebutuhan digital lainnya yang diproses secara otomatis, cepat, dan aman dalam satu platform.
                             </p>
@@ -282,7 +263,7 @@ const LandingPage = () => {
                                         rel="noreferrer" 
                                         className="hover:text-purple-600 transition font-medium text-purple-600 flex items-center gap-1"
                                     >
-                                        Buat Website <span className="text-[10px] bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded-md font-bold border border-purple-100">Hot</span>
+                                        Buat Website <span className="font-mono text-[9px] text-[var(--coral-dark)]">Hot</span>
                                     </a>
                                 </li>
                             </ul>
@@ -303,7 +284,7 @@ const LandingPage = () => {
                             </div>
                         </div>
                     </div>
-                    <div className="text-center text-[11px] text-slate-400 border-t border-slate-100 pt-6">
+                    <div className="catalog-footer-bottom text-center">
                         © {new Date().getFullYear()} Noxarianet Store. Seluruh hak cipta dilindungi undang-undang.
                     </div>
                 </div>
@@ -328,14 +309,13 @@ const FAQSection = () => {
     return (
         <section className="mb-14">
             {/* Section header */}
-            <div className="flex items-center justify-between mb-5">
+            <div className="catalog-section-head">
                 <div>
-                    <h2 className="text-lg font-extrabold text-slate-900">Pertanyaan Umum</h2>
-                    <p className="text-xs text-slate-500 mt-0.5">FAQ seputar layanan kami</p>
+                    <div><h2>Pertanyaan Umum</h2><p>FAQ seputar layanan kami</p></div>
                 </div>
                 <Link
                     to="/faq"
-                    className="px-3.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-600 border border-purple-100 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm shadow-purple-100/50 hover:scale-[1.02] active:scale-[0.98]"
+                    className="font-mono text-[11px] text-[var(--coral-dark)] hover:underline"
                 >
                     Lihat Semua →
                 </Link>
@@ -348,8 +328,8 @@ const FAQSection = () => {
                     return (
                         <div
                             key={item.id}
-                            className={`border rounded-2xl overflow-hidden transition-all duration-200 bg-white ${
-                                isOpen ? 'border-purple-300 shadow-sm shadow-purple-100' : 'border-slate-200 hover:border-purple-200'
+                            className={`border overflow-hidden transition-all duration-200 bg-[var(--surface)] ${
+                                isOpen ? 'border-[var(--coral)]' : 'border-[var(--line)] hover:border-[var(--line-strong)]'
                             }`}
                         >
                             <button
@@ -358,11 +338,11 @@ const FAQSection = () => {
                                 aria-expanded={isOpen}
                                 className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left"
                             >
-                                <span className={`font-semibold text-sm leading-snug ${isOpen ? 'text-purple-700' : 'text-slate-800'}`}>
+                                <span className={`font-semibold text-sm leading-snug ${isOpen ? 'text-[var(--coral-dark)]' : 'text-[var(--ink)]'}`}>
                                     {item.q}
                                 </span>
                                 <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
-                                    isOpen ? 'bg-purple-100 text-purple-600' : 'bg-slate-100 text-slate-400'
+                                    isOpen ? 'bg-[#fae7df] text-[var(--coral-dark)]' : 'bg-[#eeeae2] text-[var(--muted)]'
                                 }`}>
                                     {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                                 </span>
@@ -375,7 +355,7 @@ const FAQSection = () => {
                                         exit={{ height: 0, opacity: 0 }}
                                         transition={{ duration: 0.2, ease: 'easeInOut' }}
                                     >
-                                        <div className="px-5 pb-4 pt-3 text-sm text-slate-600 leading-relaxed border-t border-slate-100">
+                                        <div className="px-5 pb-4 pt-3 text-sm text-[var(--muted)] leading-relaxed border-t border-[var(--line)]">
                                             {item.a}
                                         </div>
                                     </motion.div>
@@ -405,20 +385,20 @@ const InfoModal = ({ show, settings, onClose, onDismiss24h, onJoinWA }) => {
             {show && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-                    <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} transition={{ type: 'spring', stiffness: 320, damping: 26 }} className="relative w-full max-w-[290px] bg-white rounded-3xl p-5 shadow-2xl">
+                    <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} transition={{ type: 'spring', stiffness: 320, damping: 26 }} className="relative w-full max-w-[320px] bg-[var(--surface)] border border-[var(--line)] rounded-[var(--radius)] p-5 shadow-[var(--shadow)]">
                         <button onClick={onClose} className="absolute top-3.5 right-3.5 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all">
                             <X size={16} />
                         </button>
                         <div className="flex flex-col items-center text-center mb-4 mt-1">
-                            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center mb-3 shadow-md shadow-purple-500/20">
+                            <div className="w-12 h-12 bg-[var(--coral)] rounded-[var(--radius)] flex items-center justify-center mb-3 shadow-md shadow-[#e86b4f]/20">
                                 <Megaphone className="text-white" size={22} />
                             </div>
-                            <h2 className="text-lg font-extrabold text-gray-900">Info Penting! 📢</h2>
+                            <h2 className="text-lg font-extrabold text-[var(--ink)]">Info Penting!</h2>
                             <p className="text-xs text-gray-600 mt-2 leading-relaxed px-1">
                                 {settings?.info_modal_text || 'Bergabunglah dengan grup WhatsApp kami untuk mendapatkan info promo, update produk, dan penawaran eksklusif terbaru!'}
                             </p>
                         </div>
-                        <div className="border-t border-gray-100 mb-4" />
+                        <div className="border-t border-[var(--line)] mb-4" />
                         <div className="flex flex-col gap-2.5 items-center w-full">
                             <a href={waLink} target="_blank" rel="noreferrer" onClick={onJoinWA} className="w-full py-3 px-4 rounded-xl bg-[#25D366] text-white font-bold hover:bg-[#1da851] active:scale-95 transition-all text-xs flex items-center justify-center gap-2 shadow-md shadow-[#25D366]/20">
                                 <WaSvg /> Gabung Grup WhatsApp

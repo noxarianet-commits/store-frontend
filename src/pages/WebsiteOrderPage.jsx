@@ -65,9 +65,9 @@ const WebsiteOrderPage = () => {
     const SelectedTypeIcon = websiteTypes.find(t => t.value === websiteType)?.icon || Globe;
 
     return (
-        <div className="min-h-screen font-sans text-slate-800">
+        <div className="consult-page min-h-screen font-sans text-slate-800">
             {/* HEADER */}
-            <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-purple-100/50 shadow-sm shadow-purple-600/[0.01]">
+            <nav className="public-nav sticky top-0 z-50">
                 <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
                     <Link to="/" className="flex items-center gap-2.5">
                         <img src="/logo.png" alt="noxarianet" className="w-9 h-9 rounded-lg object-contain" />

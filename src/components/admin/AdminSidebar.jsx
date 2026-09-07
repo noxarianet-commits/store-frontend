@@ -18,7 +18,7 @@ const AdminSidebar = ({ activeTab, setActiveTab, handleLogout, isMobileMenuOpen,
     return (
         <>
             {/* Mobile Navbar */}
-            <div className="md:hidden sticky top-0 z-[60] bg-[#0E0E0E]/95 backdrop-blur-md border-b border-white/5 p-4 flex justify-between items-center relative">
+            <div className="admin-sidebar md:hidden sticky top-0 z-[60] bg-[#0E0E0E]/95 backdrop-blur-md border-b border-white/5 p-4 flex justify-between items-center relative">
                 <div className="flex items-center gap-3">
                     <img src="/logo.png" className="w-8 h-8 rounded-lg" alt="" />
                     <span className="text-xl font-bold text-white">noxaria<span className="text-purple-400">net</span></span>
@@ -60,7 +60,7 @@ const AdminSidebar = ({ activeTab, setActiveTab, handleLogout, isMobileMenuOpen,
             </div>
 
             {/* Desktop Sidebar */}
-            <aside className="hidden md:flex w-64 bg-[#0E0E0E] border-r border-white/5 p-6 flex-col">
+            <aside className="admin-sidebar hidden md:flex w-64 bg-[#0E0E0E] border-r border-white/5 p-6 flex-col">
                 <div className="flex items-center gap-3 mb-10 px-2">
                     <img src="/logo.png" className="w-8 h-8 rounded-lg" alt="" />
                     <span className="text-xl font-bold text-white">noxaria<span className="text-purple-400">net</span></span>

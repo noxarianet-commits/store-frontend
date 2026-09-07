@@ -401,7 +401,7 @@ const AdminDashboard = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[#0A031A]">
+            <div className="admin-shell min-h-screen flex items-center justify-center bg-[#0A031A]">
                 <div className="flex flex-col items-center gap-4">
                     <Loader2 size={40} className="animate-spin text-purple-500" />
                     <p className="text-gray-500 text-sm">Memuat data...</p>
@@ -412,7 +412,7 @@ const AdminDashboard = () => {
 
     if (error) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[#0A031A] px-4">
+            <div className="admin-shell min-h-screen flex items-center justify-center bg-[#0A031A] px-4">
                 <div className="text-center bg-[#0E0E0E] border border-red-500/20 rounded-3xl p-8 max-w-md">
                     <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
                     <h2 className="text-xl font-bold text-white mb-2">Gagal Memuat Data</h2>
@@ -424,7 +424,7 @@ const AdminDashboard = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#0A031A] flex flex-col md:flex-row">
+        <div className="admin-shell min-h-screen bg-[#0A031A] flex flex-col md:flex-row">
             <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} handleLogout={handleLogout} isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
 
             <main className="flex-1 overflow-auto w-full">
