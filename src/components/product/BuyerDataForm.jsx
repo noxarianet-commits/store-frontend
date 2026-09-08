@@ -1,7 +1,8 @@
-import React, { useEffect, useRef } from 'react';
-import { Loader2, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { formatRp } from '../../utils/currencyUtils';
 import { normalizePhoneNumber } from '../../utils/phoneUtils';
+import { getTargetIdentifier, getSafeAccountName } from '../../utils/accountValidationUtils';
 
 const BuyerDataForm = ({
     formData,
@@ -21,8 +22,11 @@ const BuyerDataForm = ({
     vendor,
     product,
 }) => {
+    const fieldsList = Array.isArray(dynamicFields) ? dynamicFields : [];
     const isOkeconnect = vendor === 'okeconnect' || selectedVariant?.vendor === 'okeconnect';
-    const isValidationAvailable = selectedVariant?.validation?.available || dynamicFields.some(f => f.key === 'customer_id') || isOkeconnect;
+    const isValidationAvailable = selectedVariant?.validation?.available ||
+        fieldsList.some(f => f.key === 'customer_id' || f.key === 'user_id' || f.key === 'target' || f.key === 'note') ||
+        isOkeconnect;
     const isEwalletProduct = product?.category?.toLowerCase().includes('wallet') ||
         /dana|ovo|gopay|gojek|shopee|linkaja|isaku|maxim/i.test(product?.name || '');
     const isNumericGame = /mobile legend|magic chess|free fire/i.test(product?.name || '');
@@ -33,25 +37,35 @@ const BuyerDataForm = ({
     useEffect(() => {
         if (!isValidationAvailable) return;
 
-        const customerId = fieldData['customer_id'] || fieldData['target'] || (dynamicFields.length === 1 ? fieldData[dynamicFields[0].key] : '');
-        const zoneId = fieldData['zone_id'] || '';
-        const currentTargetKey = `${customerId || ''}_${zoneId || ''}_${selectedVariant?.id || ''}`;
+        const currentTargetKey = getTargetIdentifier(dynamicFields, fieldData, selectedVariant);
+
+        if (!prevTargetRef.current) {
+            prevTargetRef.current = currentTargetKey;
+            return;
+        }
 
         // If target ID changed, reset validation status
         if (currentTargetKey !== prevTargetRef.current) {
             prevTargetRef.current = currentTargetKey;
-            if (validatedAccount && validatedAccount._lastTarget !== currentTargetKey) {
+            if (validatedAccount && validatedAccount._lastTarget && validatedAccount._lastTarget !== currentTargetKey) {
                 if (typeof setValidatedAccount === 'function') setValidatedAccount(null);
             }
             if (validationError) {
                 if (typeof setValidationError === 'function') setValidationError(null);
             }
         }
-    }, [fieldData, selectedVariant?.id, isValidationAvailable]);
+    }, [fieldData, selectedVariant, isValidationAvailable, dynamicFields, validatedAccount, setValidatedAccount, setValidationError, validationError]);
+
+    // Keep prevTargetRef aligned with validatedAccount when validation succeeds
+    useEffect(() => {
+        if (validatedAccount?._lastTarget) {
+            prevTargetRef.current = validatedAccount._lastTarget;
+        }
+    }, [validatedAccount]);
 
     const handleFieldBlur = (fieldKey, val) => {
         if (!val) return;
-        const isTargetField = fieldKey === 'customer_id' || fieldKey === 'target' || fieldKey === 'note' || fieldKey === 'user_id';
+        const isTargetField = fieldKey === 'customer_id' || fieldKey === 'target' || fieldKey === 'note' || fieldKey === 'user_id' || fieldKey === 'phone' || fieldKey === 'no_hp';
         if (isEwalletProduct && isTargetField) {
             const normalized = normalizePhoneNumber(val);
             if (normalized && normalized !== val) {
@@ -88,10 +102,11 @@ const BuyerDataForm = ({
                 </div>
 
                 {/* ── Dynamic Fields from API ── */}
-                {dynamicFields.map((field, idx) => {
-                    const cleanedLabel = field.label.replace(/[:*]/g, '').trim();
-                    const isTargetField = field.key === 'customer_id' || field.key === 'target' || field.key === 'note' || field.key === 'user_id';
-                    const isZoneField = field.key === 'zone_id';
+                {(dynamicFields || []).map((field, idx) => {
+                    const rawLabel = field?.label || field?.name || field?.key || `Input ${idx + 1}`;
+                    const cleanedLabel = typeof rawLabel === 'string' ? rawLabel.replace(/[:*]/g, '').trim() : String(rawLabel);
+                    const isTargetField = field?.key === 'customer_id' || field?.key === 'target' || field?.key === 'note' || field?.key === 'user_id' || field?.key === 'phone' || field?.key === 'no_hp';
+                    const isZoneField = field?.key === 'zone_id' || field?.key === 'server_id';
                     
                     const getPlaceholderText = () => {
                         const lowerLabel = cleanedLabel.toLowerCase();
@@ -119,9 +134,9 @@ const BuyerDataForm = ({
                         <div key={`dyn-${idx}`}>
                             <div className="flex items-center justify-between mb-2">
                                 <label className="block text-xs font-medium text-slate-500">
-                                    {cleanedLabel} {field.required && '*'}
+                                    {cleanedLabel} {field?.required && '*'}
                                 </label>
-                                {field.key === 'customer_id' && isValidationAvailable && (
+                                {isTargetField && isValidationAvailable && (
                                     <span className={`text-[11px] font-medium flex items-center gap-1 ${
                                         validatedAccount?.valid ? 'text-green-600' : 'text-purple-600'
                                     }`}>
@@ -132,9 +147,9 @@ const BuyerDataForm = ({
                             </div>
                             <div className="relative">
                                 <input
-                                    type={field.key === 'provider_qty' ? 'number' : isNumericOnly ? 'tel' : 'text'}
+                                    type={field?.key === 'provider_qty' ? 'number' : isNumericOnly ? 'tel' : 'text'}
                                     inputMode={isNumericOnly ? 'numeric' : undefined}
-                                    value={field.key === 'provider_qty' ? providerQty : (fieldData[field.key] || '')}
+                                    value={field?.key === 'provider_qty' ? providerQty : (fieldData[field?.key] || '')}
                                     onChange={(e) => {
                                         let val = e.target.value;
                                         if (isEwalletProduct && isTargetField) {
@@ -144,26 +159,26 @@ const BuyerDataForm = ({
                                             // Prevent entering letters in game ID / Zone ID fields
                                             val = val.replace(/[^0-9]/g, '');
                                         }
-                                        if (field.key === 'provider_qty') setProviderQty(val);
-                                        else setFieldData({...fieldData, [field.key]: val});
+                                        if (field?.key === 'provider_qty') setProviderQty(val);
+                                        else setFieldData({...fieldData, [field?.key]: val});
                                     }}
-                                    onBlur={(e) => handleFieldBlur(field.key, e.target.value)}
+                                    onBlur={(e) => handleFieldBlur(field?.key, e.target.value)}
                                     placeholder={getPlaceholderText()}
                                     className={`w-full bg-white border rounded-xl p-3.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none transition-colors ${
-                                        validatedAccount?.valid && (field.key === 'customer_id' || field.key === 'target')
+                                        validatedAccount?.valid && isTargetField
                                             ? 'border-green-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/10'
-                                            : validationError && (field.key === 'customer_id' || field.key === 'target')
+                                            : validationError && isTargetField
                                                 ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/10'
                                                 : 'border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10'
                                     }`}
                                 />
-                                {isValidating && (field.key === 'customer_id' || field.key === 'target') && (
+                                {isValidating && isTargetField && (
                                     <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
                                         <Loader2 size={16} className="animate-spin text-purple-500" />
                                     </div>
                                 )}
                             </div>
-                            {field.key === 'provider_qty' && selectedVariant?.provider_meta && (
+                            {field?.key === 'provider_qty' && selectedVariant?.provider_meta && (
                                 <p className="text-[10px] text-slate-400 mt-1">Min: {formatRp(selectedVariant.provider_meta.min_qty)} | Max: {formatRp(selectedVariant.provider_meta.max_qty)}</p>
                             )}
                         </div>
@@ -189,7 +204,7 @@ const BuyerDataForm = ({
                                     <div className="min-w-0">
                                         <p className="text-[11px] font-semibold text-green-700 uppercase tracking-wider">Akun Terverifikasi</p>
                                         <p className="text-sm font-bold text-green-900 truncate">
-                                            {validatedAccount.account_name || validatedAccount.display_name || 'Valid'}
+                                            {getSafeAccountName(validatedAccount)}
                                         </p>
                                     </div>
                                 </div>
@@ -207,7 +222,9 @@ const BuyerDataForm = ({
                                 <div className="flex-1 min-w-0">
                                     <p className="text-xs font-semibold text-red-700 uppercase tracking-wider">Validasi Gagal</p>
                                     <p className="text-xs text-red-900 leading-relaxed font-medium mt-0.5">
-                                        {validationError}
+                                        {typeof validationError === 'string'
+                                            ? validationError
+                                            : (validationError?.message || validationError?.error || 'Validasi gagal. Silakan periksa kembali ID.')}
                                     </p>
                                 </div>
                                 <button

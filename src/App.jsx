@@ -15,6 +15,7 @@ import ErrorPage from './pages/ErrorPage';
 import FloatingButtons from './components/FloatingButtons';
 import ScrollToTop from './components/ScrollToTop';
 import AnimatedBackground from './components/AnimatedBackground';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   const [settings, setSettings] = useState({});
@@ -30,7 +31,7 @@ function App() {
   }, []);
 
   return (
-    <>
+    <ErrorBoundary>
       <ScrollToTop />
       <AnimatedBackground />
       <Routes>
@@ -48,7 +49,7 @@ function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       <FloatingButtons settings={settings} />
-    </>
+    </ErrorBoundary>
   );
 }
 

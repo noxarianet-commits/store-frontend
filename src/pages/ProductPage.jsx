@@ -17,6 +17,7 @@ import { getWaNumber, getWaUrl } from '../utils/waUtils';
 import ServerSelector from '../components/product/ServerSelector';
 import VariantSelector from '../components/product/VariantSelector';
 import BuyerDataForm from '../components/product/BuyerDataForm';
+import { getTargetIdentifier, getSafeAccountName } from '../utils/accountValidationUtils';
 import PaymentStep from '../components/product/PaymentStep';
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -321,8 +322,11 @@ const ProductPage = () => {
         const isSilent = options?.silent === true;
         const activeVariant = selectedVariant || (product?.variants && product.variants.find(v => v.validation?.available));
 
-        let customerId = fieldData['customer_id'] || fieldData['note'] || fieldData['target'] || (dynamicFields.length === 1 ? fieldData[dynamicFields[0].key] : '');
-        let zoneId = fieldData['zone_id'] || '';
+        const targetField = (dynamicFields || []).find(f => f.key !== 'zone_id' && f.key !== 'server_id' && f.key !== 'provider_qty');
+        const primaryTargetKey = targetField?.key || 'customer_id';
+
+        let customerId = (fieldData[primaryTargetKey] || fieldData['customer_id'] || fieldData['user_id'] || fieldData['target'] || fieldData['note'] || (dynamicFields.length === 1 ? fieldData[dynamicFields[0].key] : '') || '').toString().trim();
+        let zoneId = (fieldData['zone_id'] || fieldData['server_id'] || '').toString().trim();
 
         if (!customerId) {
             if (!isSilent) notifyWarning('Masukkan ID target (User ID / No Tujuan) terlebih dahulu');
@@ -346,7 +350,7 @@ const ProductPage = () => {
                 return;
             }
             customerId = normalized;
-            const targetKey = fieldData['customer_id'] !== undefined ? 'customer_id' : (fieldData['target'] !== undefined ? 'target' : (fieldData['note'] !== undefined ? 'note' : (dynamicFields[0]?.key || 'customer_id')));
+            const targetKey = fieldData[primaryTargetKey] !== undefined ? primaryTargetKey : (fieldData['customer_id'] !== undefined ? 'customer_id' : (fieldData['target'] !== undefined ? 'target' : (fieldData['note'] !== undefined ? 'note' : (dynamicFields[0]?.key || 'customer_id'))));
             setFieldData(prev => ({ ...prev, [targetKey]: normalized }));
         } else if (product?.name?.toLowerCase().includes('mobile legend') || product?.name?.toLowerCase().includes('magic chess')) {
             if (!/^\d+$/.test(customerId)) {
@@ -367,6 +371,8 @@ const ProductPage = () => {
             }
         }
 
+        const currentTargetKey = `${customerId}_${zoneId}_${(activeVariant || selectedVariant)?.id || ''}`;
+
         setIsValidating(true);
         setValidationError(null);
         try {
@@ -383,18 +389,30 @@ const ProductPage = () => {
                 category: product?.category,
             });
 
+            const rawAccountName = res.data?.account_name ?? res.data?.display_name ?? res.data?.customer_name ?? res.data?.username ?? res.data?.nickname ?? res.data?.name;
+            const safeName = typeof rawAccountName === 'string' && rawAccountName.trim()
+                ? rawAccountName.trim()
+                : (typeof rawAccountName === 'number'
+                    ? String(rawAccountName)
+                    : (rawAccountName && typeof rawAccountName === 'object'
+                        ? (rawAccountName.name || rawAccountName.username || rawAccountName.nickname || rawAccountName.display_name || rawAccountName.account_name || customerId)
+                        : customerId));
+
             const accountData = {
                 ...res.data,
+                account_name: safeName,
+                display_name: safeName,
                 valid: true,
-                _lastTarget: `${customerId}_${zoneId}_${selectedVariant?.id || ''}`,
+                _lastTarget: currentTargetKey,
             };
             setValidatedAccount(accountData);
             setValidationError(null);
             if (!isSilent) {
-                notifySuccess(`Akun ditemukan: ${accountData.account_name || accountData.display_name || customerId}`);
+                notifySuccess(`Akun ditemukan: ${safeName}`);
             }
         } catch (err) {
-            const errMsg = err.response?.data?.error || 'Gagal mengecek akun atau ID salah';
+            const rawErr = err.response?.data?.error || err.response?.data?.message || err.message || 'Gagal mengecek akun atau ID salah';
+            const errMsg = typeof rawErr === 'string' ? rawErr : (rawErr?.message || 'Gagal mengecek akun atau ID salah');
             setValidatedAccount(null);
             setValidationError(errMsg);
             if (!isSilent) {
@@ -524,11 +542,16 @@ const ProductPage = () => {
                         return initialVendor;
                     });
 
-                    // Auto-select first in-stock variant
+                    // Auto-select first in-stock variant if none selected yet
                     const activeServer = foundProduct.servers?.find(s => s.vendor === initialVendor) || foundProduct.servers?.[0];
                     const activeVariants = activeServer?.variants || foundProduct.variants || [];
                     const firstInStock = activeVariants.find(v => v.stock > 0);
-                    setSelectedVariant(firstInStock || activeVariants[0] || null);
+                    setSelectedVariant(prev => {
+                        if (prev && activeVariants.some(v => (v.id === prev.id || v.sku === prev.sku) && (v.vendor === prev.vendor))) {
+                            return prev;
+                        }
+                        return firstInStock || activeVariants[0] || null;
+                    });
                 }
                 setLoading(false);
             } catch (err) {

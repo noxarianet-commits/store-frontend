@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import api from '../api';
 import { notifySuccess, notifyError, notifyWarning, confirmAction } from '../utils/notify';
+import { isTokenExpired } from '../utils/authUtils';
 
 import AdminSidebar from '../components/admin/AdminSidebar';
 import AdminLoginForm from '../components/admin/AdminLoginForm';
@@ -56,7 +57,6 @@ const AdminDashboard = () => {
     const [editingOrder, setEditingOrder] = useState(null);
 
     // Password change
-    const [showPasswordForm, setShowPasswordForm] = useState(false);
     const [passwordData, setPasswordData] = useState({ current_password: '', new_password: '', confirm_password: '' });
 
     const [orderRefreshCounter, setOrderRefreshCounter] = useState(0);
@@ -110,11 +110,20 @@ const AdminDashboard = () => {
 
     const fetchData = async () => {
         setLoading(true);
-        await Promise.all([fetchOrders(), fetchServices(), fetchSettings()]);
-        if (activeTab === 'sekalipay') await fetchSekalipay();
-        if (activeTab === 'okeconnect') await fetchOkeconnect();
-        if (activeTab === 'featured') await fetchFeaturedProducts();
-        setLoading(false);
+        try {
+            await Promise.all([fetchOrders(), fetchServices(), fetchSettings()]);
+            if (activeTab === 'sekalipay') await fetchSekalipay();
+            if (activeTab === 'okeconnect') await fetchOkeconnect();
+            if (activeTab === 'featured') await fetchFeaturedProducts();
+        } catch (err) {
+            console.error('fetchData error:', err);
+            if (err?.response?.status === 401 || err?.response?.status === 403) {
+                localStorage.removeItem('adminToken');
+                setIsLogin(false);
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
     const fetchFeaturedProducts = useCallback(async () => {
@@ -129,15 +138,37 @@ const AdminDashboard = () => {
     useEffect(() => {
         const timer = setTimeout(() => {
             const token = localStorage.getItem('adminToken');
-            if (token) {
+            if (token && !isTokenExpired(token)) {
                 setIsLogin(true);
                 fetchData();
             } else {
+                if (token) {
+                    localStorage.removeItem('adminToken');
+                    notifyWarning('Sesi login telah berakhir. Silakan login kembali.');
+                }
+                setIsLogin(false);
                 setLoading(false);
             }
         }, 0);
         return () => clearTimeout(timer);
         // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    useEffect(() => {
+        let lastNotif = 0;
+        const handleSessionExpired = (e) => {
+            localStorage.removeItem('adminToken');
+            setIsLogin(false);
+            setLoading(false);
+            const now = Date.now();
+            if (now - lastNotif > 2500) {
+                lastNotif = now;
+                notifyWarning(e.detail?.message || 'Sesi login telah berakhir. Silakan login kembali.');
+            }
+        };
+
+        window.addEventListener('admin:session_expired', handleSessionExpired);
+        return () => window.removeEventListener('admin:session_expired', handleSessionExpired);
     }, []);
 
     useEffect(() => {

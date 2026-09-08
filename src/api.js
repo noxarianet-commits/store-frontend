@@ -17,6 +17,24 @@ api.interceptors.response.use(
     response => response,
     error => {
         const url = error.config?.url || '';
+        const status = error.response?.status;
+        const isLoginAttempt = url.includes('/admin/login');
+        const isAdminSessionError = !isLoginAttempt && (
+            status === 401 ||
+            (status === 403 && (url.includes('/admin') || Boolean(localStorage.getItem('adminToken'))))
+        );
+
+        if (isAdminSessionError) {
+            const message = error.response?.data?.error || 'Sesi login telah berakhir. Silakan login kembali.';
+            localStorage.removeItem('adminToken');
+            window.dispatchEvent(new CustomEvent('admin:session_expired', { detail: { message } }));
+
+            if (!window.location.pathname.includes('admin')) {
+                window.location.href = '/admin-dashboard';
+            }
+            return Promise.reject(error);
+        }
+
         if (
             window.location.pathname.includes('admin') ||
             window.location.pathname.includes('error') ||
@@ -30,7 +48,6 @@ api.interceptors.response.use(
             // Network error atau server mati total
             window.location.href = '/error?type=network';
         } else {
-            const status = error.response.status;
             if (status === 429) {
                 // Rate limit
                 window.location.href = '/error?type=ratelimit';
