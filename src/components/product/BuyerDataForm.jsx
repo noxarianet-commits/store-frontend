@@ -23,10 +23,7 @@ const BuyerDataForm = ({
     product,
 }) => {
     const fieldsList = Array.isArray(dynamicFields) ? dynamicFields : [];
-    const isOkeconnect = vendor === 'okeconnect' || selectedVariant?.vendor === 'okeconnect';
-    const isValidationAvailable = selectedVariant?.validation?.available ||
-        fieldsList.some(f => f.key === 'customer_id' || f.key === 'user_id' || f.key === 'target' || f.key === 'note') ||
-        isOkeconnect;
+    const isValidationAvailable = Boolean(selectedVariant?.validation?.available);
     const isEwalletProduct = product?.category?.toLowerCase().includes('wallet') ||
         /dana|ovo|gopay|gojek|shopee|linkaja|isaku|maxim/i.test(product?.name || '');
     const isNumericGame = /mobile legend|magic chess|free fire/i.test(product?.name || '');

@@ -322,6 +322,11 @@ const ProductPage = () => {
         const isSilent = options?.silent === true;
         const activeVariant = selectedVariant || (product?.variants && product.variants.find(v => v.validation?.available));
 
+        // Jika varian tidak mendukung validasi, jangan lakukan validasi
+        if (activeVariant?.validation && activeVariant.validation.available === false) {
+            return;
+        }
+
         const targetField = (dynamicFields || []).find(f => f.key !== 'zone_id' && f.key !== 'server_id' && f.key !== 'provider_qty');
         const primaryTargetKey = targetField?.key || 'customer_id';
 
@@ -413,6 +418,20 @@ const ProductPage = () => {
         } catch (err) {
             const rawErr = err.response?.data?.error || err.response?.data?.message || err.message || 'Gagal mengecek akun atau ID salah';
             const errMsg = typeof rawErr === 'string' ? rawErr : (rawErr?.message || 'Gagal mengecek akun atau ID salah');
+
+            // Jika produk tidak memerlukan validasi (VALIDATION_NOT_AVAILABLE), jangan blokir user
+            if (errMsg.includes('VALIDATION_NOT_AVAILABLE') || err.response?.data?.validation_available === false) {
+                setValidatedAccount({
+                    valid: true,
+                    validation_available: false,
+                    account_name: customerId,
+                    display_name: customerId,
+                    _lastTarget: currentTargetKey,
+                });
+                setValidationError(null);
+                return;
+            }
+
             setValidatedAccount(null);
             setValidationError(errMsg);
             if (!isSilent) {
@@ -658,8 +677,8 @@ const ProductPage = () => {
             const targetProductId = selectedVariant?.product_id || activeServer?.product_id || product?.id;
             const currentVendor = selectedVariant?.vendor || activeServer?.vendor || vendor || 'sekalipay';
 
-            // Check if account validation is required
-            const isValidationNeeded = (currentVendor === 'okeconnect' || selectedVariant?.validation?.available) &&
+            // Check if account validation is required (only if variant has validation available)
+            const isValidationNeeded = Boolean(selectedVariant?.validation?.available) &&
                 dynamicFields.some(f => f.key === 'customer_id' || f.key === 'note' || f.key === 'target');
 
             if (isValidationNeeded && !validatedAccount?.valid) {
