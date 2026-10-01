@@ -8,7 +8,8 @@ import CategoryTabs from '../components/home/CategoryTabs';
 import ProductCard from '../components/home/ProductCard';
 import TestimonialCarousel from '../components/home/TestimonialCarousel';
 import { getWaNumber, getWaUrl, formatWaDisplay, getWaGroupLink } from '../utils/waUtils';
-
+import { useAuth } from '../contexts/AuthContext';
+import UserMenu from '../components/auth/UserMenu';
 /**
  * Filter products by active tab and search query.
  * @param {Array} products - All products
@@ -71,6 +72,8 @@ const LandingPage = () => {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState('all');
+    
+    const { user, isLoading: authLoading } = useAuth();
 
     // Info Modal state
     const [showInfoModal, setShowInfoModal] = useState(false);
@@ -166,6 +169,18 @@ const LandingPage = () => {
                         <img src="/logo.png" alt="noxarianet" className="w-9 h-9 rounded-lg object-contain" />
                         <span className="text-xl font-bold tracking-tight text-slate-900">noxaria<span className="text-purple-600">net</span></span>
                     </Link>
+                    
+                    <div>
+                        {!authLoading && (
+                            user ? (
+                                <UserMenu />
+                            ) : (
+                                <Link to="/auth" className="text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 px-5 py-2 rounded-xl transition-colors shadow-md shadow-purple-500/20">
+                                    Masuk
+                                </Link>
+                            )
+                        )}
+                    </div>
                 </div>
             </nav>
 

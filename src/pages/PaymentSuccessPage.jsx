@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import api from '../api';
 import { getWaUrl } from '../utils/waUtils';
+import { saveOrderAccessToken } from '../utils/orderToken';
 
 // ══════════════════════════════════════════════════════════════════════════
 // PaymentSuccessPage
@@ -17,6 +18,14 @@ const PaymentSuccessPage = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const orderId = searchParams.get('order_id');
+
+    // Token akses order ikut di return_url dari payment gateway. Simpan ke
+    // sessionStorage supaya request polling berikutnya bisa menyertakan header
+    // X-Order-Token (order ID saja tidak dianggap sebagai bukti kepemilikan).
+    useEffect(() => {
+        const token = searchParams.get('access_token');
+        if (orderId && token) saveOrderAccessToken(orderId, token);
+    }, [orderId, searchParams]);
 
     const [orderData, setOrderData] = useState(null);
     const [loading, setLoading] = useState(true);

@@ -16,6 +16,9 @@ import FloatingButtons from './components/FloatingButtons';
 import ScrollToTop from './components/ScrollToTop';
 import AnimatedBackground from './components/AnimatedBackground';
 import ErrorBoundary from './components/ErrorBoundary';
+import { AuthProvider } from './contexts/AuthContext';
+import AuthPage from './pages/AuthPage';
+import UserDashboardPage from './pages/UserDashboardPage';
 
 function App() {
   const [settings, setSettings] = useState({});
@@ -32,23 +35,27 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <ScrollToTop />
-      <AnimatedBackground />
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/product/:id" element={<ProductPage />} />
-        <Route path="/service/:id" element={<ProductPage />} />
-        <Route path="/checkout/success" element={<PaymentSuccessPage />} />
-        <Route path="/garansi" element={<Garansi />} />
-        <Route path="/tos" element={<TOS />} />
-        <Route path="/cara" element={<CaraOrder />} />
-        <Route path="/website-order" element={<WebsiteOrderPage />} />
-        <Route path="/admin-dashboard" element={<AdminDashboard />} />
-        <Route path="/faq" element={<FAQPage />} />
-        <Route path="/error" element={<ErrorPage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      <FloatingButtons settings={settings} />
+      <AuthProvider>
+        <ScrollToTop />
+        <AnimatedBackground />
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/product/:id" element={<ProductPage />} />
+          <Route path="/service/:id" element={<ProductPage />} />
+          <Route path="/checkout/success" element={<PaymentSuccessPage />} />
+          <Route path="/garansi" element={<Garansi />} />
+          <Route path="/tos" element={<TOS />} />
+          <Route path="/cara" element={<CaraOrder />} />
+          <Route path="/website-order" element={<WebsiteOrderPage />} />
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/faq" element={<FAQPage />} />
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/dashboard" element={<UserDashboardPage />} />
+          <Route path="/error" element={<ErrorPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <FloatingButtons settings={settings} />
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

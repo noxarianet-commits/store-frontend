@@ -12,6 +12,7 @@ import { notifySuccess, notifyError, notifyWarning, showAlert } from '../utils/n
 import { normalizePhoneNumber } from '../utils/phoneUtils';
 import { formatRp } from '../utils/currencyUtils';
 import { getWaNumber, getWaUrl } from '../utils/waUtils';
+import { saveOrderAccessToken } from '../utils/orderToken';
 
 // New Modular Components
 import ServerSelector from '../components/product/ServerSelector';
@@ -19,6 +20,7 @@ import VariantSelector from '../components/product/VariantSelector';
 import BuyerDataForm from '../components/product/BuyerDataForm';
 import { getTargetIdentifier, getSafeAccountName } from '../utils/accountValidationUtils';
 import PaymentStep from '../components/product/PaymentStep';
+import { useAuth } from '../contexts/AuthContext';
 
 // ══════════════════════════════════════════════════════════════════════════
 // HELPER — Order Process Label & Color
@@ -108,6 +110,9 @@ const ProductPage = () => {
     const [copied, setCopied] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
+    const { user } = useAuth();
+    const [paymentMethod, setPaymentMethod] = useState('gateway');
+
     // Payment result (setelah createPayment berhasil)
     const [paymentResult, setPaymentResult] = useState(null);
     const [orderStatus, setOrderStatus] = useState(null);
@@ -141,6 +146,19 @@ const ProductPage = () => {
         } catch (e) { /* ignore */ }
         hasRestored.current = true;
     }, []);
+
+    // ── Autofill form pembeli jika user login ──────────────────────────
+    useEffect(() => {
+        if (user) {
+            setFormData(prev => {
+                const updates = {};
+                if (!prev.wa_number && user.phone) updates.wa_number = user.phone;
+                if (!prev.email && user.email) updates.email = user.email;
+                if (Object.keys(updates).length === 0) return prev;
+                return { ...prev, ...updates };
+            });
+        }
+    }, [user]);
 
     useEffect(() => {
         // Jangan save sebelum restore selesai (mencegah timpa data saat mount)
@@ -322,8 +340,12 @@ const ProductPage = () => {
         const isSilent = options?.silent === true;
         const activeVariant = selectedVariant || (product?.variants && product.variants.find(v => v.validation?.available));
 
-        // Jika varian tidak mendukung validasi, jangan lakukan validasi
-        if (activeVariant?.validation && activeVariant.validation.available === false) {
+        const activeServer = product?.servers?.find(s => s.vendor === vendor) || product?.servers?.[0];
+        const currentVendor = selectedVariant?.vendor || activeServer?.vendor || vendor || product?.vendor || 'sekalipay';
+        const isOkeconnect = currentVendor === 'okeconnect';
+
+        // Jika varian tidak mendukung validasi (kecuali vendor okeconnect yang mewajibkan validasi), jangan lakukan validasi
+        if (!isOkeconnect && activeVariant?.validation && activeVariant.validation.available === false) {
             return;
         }
 
@@ -609,7 +631,7 @@ const ProductPage = () => {
     }, [vendor, product]);
 
     const handleFormChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
     const copyToClipboard = (text) => {
@@ -677,9 +699,9 @@ const ProductPage = () => {
             const targetProductId = selectedVariant?.product_id || activeServer?.product_id || product?.id;
             const currentVendor = selectedVariant?.vendor || activeServer?.vendor || vendor || 'sekalipay';
 
-            // Check if account validation is required (only if variant has validation available)
-            const isValidationNeeded = Boolean(selectedVariant?.validation?.available) &&
-                dynamicFields.some(f => f.key === 'customer_id' || f.key === 'note' || f.key === 'target');
+            // Check if account validation is required (if variant has validation available or vendor is okeconnect)
+            const isValidationNeeded = (currentVendor === 'okeconnect' || Boolean(selectedVariant?.validation?.available)) &&
+                dynamicFields.some(f => f.key === 'customer_id' || f.key === 'note' || f.key === 'target' || f.key === 'user_id' || f.key === 'phone' || f.key === 'no_hp');
 
             if (isValidationNeeded && !validatedAccount?.valid) {
                 return notifyWarning('Harap lakukan cek ID / validasi akun terlebih dahulu dan pastikan akun ditemukan!');
@@ -701,12 +723,14 @@ const ProductPage = () => {
                 user_id: fieldData.customer_id || fieldData.user_id,
                 zone_id: fieldData.zone_id,
                 provider_qty: isOpenDenom ? parseInt(providerQty) : undefined,
+                payment_type: paymentMethod === 'balance' ? 'balance' : 'gateway'
             });
 
 
             if (res.data?.success) {
-                setPaymentResult(res.data.data);
-                setOrderStatus({ status: 'PENDING', ...res.data.data });
+                saveOrderAccessToken(res.data.data.order_id, res.data.data.access_token);
+                setPaymentResult({ ...res.data.data, payment_type: paymentMethod === 'balance' ? 'balance' : 'gateway' });
+                setOrderStatus({ status: paymentMethod === 'balance' ? 'PROCESSING' : 'PENDING', ...res.data.data });
                 setStep(3);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
@@ -1012,7 +1036,7 @@ const ProductPage = () => {
                             const activeServer = product?.servers?.find(s => s.vendor === vendor) || product?.servers?.[0];
                             const currentVendor = selectedVariant?.vendor || activeServer?.vendor || vendor || 'sekalipay';
                             const isValidationRequired = (currentVendor === 'okeconnect' || selectedVariant?.validation?.available) &&
-                                dynamicFields.some(f => f.key === 'customer_id' || f.key === 'note' || f.key === 'target');
+                                dynamicFields.some(f => f.key === 'customer_id' || f.key === 'note' || f.key === 'target' || f.key === 'user_id' || f.key === 'phone' || f.key === 'no_hp');
                             const isAccountValid = !isValidationRequired || (validatedAccount && validatedAccount.valid === true);
 
                             return (
@@ -1020,6 +1044,7 @@ const ProductPage = () => {
                                     <BuyerDataForm
                                         formData={formData}
                                         handleFormChange={handleFormChange}
+                                        setFormData={setFormData}
                                         dynamicFields={dynamicFields}
                                         fieldData={fieldData}
                                         setFieldData={setFieldData}
@@ -1045,7 +1070,36 @@ const ProductPage = () => {
                                             </div>
                                             <div className="flex justify-between text-slate-800 font-bold border-t border-slate-100 pt-2 mt-2">
                                                 <span>Total</span>
-                                                <span className="text-purple-600">{formatRp(computedPrice)}<span className="text-slate-400 font-normal text-xs"> + fee QRIS</span></span>
+                                                <span className="text-purple-600">{formatRp(computedPrice)}{paymentMethod === 'gateway' && <span className="text-slate-400 font-normal text-xs"> + fee QRIS</span>}</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Payment Method Selector */}
+                                    {selectedVariant?.price > 0 && user && (
+                                        <div className="mb-5 border border-slate-200 rounded-xl overflow-hidden">
+                                            <div className="bg-slate-50 p-3 border-b border-slate-200">
+                                                <h3 className="text-sm font-bold text-slate-800">Metode Pembayaran</h3>
+                                            </div>
+                                            <div className="p-2 space-y-1">
+                                                <label className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${paymentMethod === 'gateway' ? 'bg-purple-50 border-purple-200' : 'border-transparent hover:bg-slate-50'}`}>
+                                                    <div className="flex items-center gap-3">
+                                                        <input type="radio" name="payment_method" value="gateway" checked={paymentMethod === 'gateway'} onChange={() => setPaymentMethod('gateway')} className="w-4 h-4 text-purple-600 border-slate-300 focus:ring-purple-500" />
+                                                        <span className="text-sm font-semibold text-slate-700">QRIS (Otomatis)</span>
+                                                    </div>
+                                                </label>
+                                                <label className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${paymentMethod === 'balance' ? 'bg-purple-50 border-purple-200' : 'border-transparent hover:bg-slate-50'} ${user.balance < computedPrice ? 'opacity-50' : ''}`}>
+                                                    <div className="flex items-center gap-3">
+                                                        <input type="radio" name="payment_method" value="balance" checked={paymentMethod === 'balance'} disabled={user.balance < computedPrice} onChange={() => setPaymentMethod('balance')} className="w-4 h-4 text-purple-600 border-slate-300 focus:ring-purple-500" />
+                                                        <div>
+                                                            <span className="text-sm font-semibold text-slate-700 block">Saldo Akun</span>
+                                                            <span className="text-xs text-slate-500">Tersedia: {formatRp(user.balance)}</span>
+                                                        </div>
+                                                    </div>
+                                                    {user.balance < computedPrice && (
+                                                        <span className="text-xs text-red-500 font-medium">Saldo tidak cukup</span>
+                                                    )}
+                                                </label>
                                             </div>
                                         </div>
                                     )}

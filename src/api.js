@@ -1,16 +1,53 @@
 import axios from 'axios';
+import { getOrderAccessToken } from './utils/orderToken';
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 });
 
-// Add a request interceptor to include the admin token
-api.interceptors.request.use(config => {
-    const token = localStorage.getItem('adminToken');
+// Order ID bisa ditebak, jadi backend mewajibkan X-Order-Token untuk
+// /payments/status/:orderId dan /payments/cancel. Token diambil otomatis dari
+// sessionStorage supaya purchaser tidak perlu mengirimnya manual.
+function attachOrderAccessToken(config) {
+    const url = config.url || '';
+    let orderId = null;
+
+    const statusMatch = url.match(/\/payments\/status\/([^/?]+)/);
+    if (statusMatch) {
+        orderId = decodeURIComponent(statusMatch[1]);
+    } else if (url.includes('/payments/cancel')) {
+        // order_id ada di body request
+        try {
+            orderId = typeof config.data === 'string' ? JSON.parse(config.data).order_id : config.data?.order_id;
+        } catch { /* body bukan JSON */ }
+    }
+
+    const token = getOrderAccessToken(orderId);
     if (token) {
-        config.headers['Authorization'] = `Bearer ${token}`;
+        config.headers['X-Order-Token'] = token;
     }
     return config;
+}
+
+// Add a request interceptor to include the admin or user token
+api.interceptors.request.use(config => {
+    const adminToken = localStorage.getItem('adminToken');
+    const userToken = localStorage.getItem('userToken');
+    
+    // Determine context: admin dashboard pages use adminToken, all other pages use userToken
+    const isAdminPage = window.location.pathname.includes('admin');
+    const isAdminApiCall = config.url && (config.url.includes('/admin') || config.url.includes('/orders'));
+    
+    if ((isAdminPage || isAdminApiCall) && adminToken) {
+        config.headers['Authorization'] = `Bearer ${adminToken}`;
+    } else if (userToken) {
+        config.headers['Authorization'] = `Bearer ${userToken}`;
+    } else if (adminToken) {
+        // Fallback: attach admin token if no user token (backward compat)
+        config.headers['Authorization'] = `Bearer ${adminToken}`;
+    }
+
+    return attachOrderAccessToken(config);
 });
 
 api.interceptors.response.use(
@@ -19,7 +56,8 @@ api.interceptors.response.use(
         const url = error.config?.url || '';
         const status = error.response?.status;
         const isLoginAttempt = url.includes('/admin/login');
-        const isAdminSessionError = !isLoginAttempt && (
+        const isUserAuthRoute = url.includes('/auth/') || url.includes('/balance');
+        const isAdminSessionError = !isLoginAttempt && !isUserAuthRoute && (
             status === 401 ||
             (status === 403 && (url.includes('/admin') || Boolean(localStorage.getItem('adminToken'))))
         );
@@ -38,6 +76,10 @@ api.interceptors.response.use(
         if (
             window.location.pathname.includes('admin') ||
             window.location.pathname.includes('error') ||
+            window.location.pathname.includes('/auth') ||
+            window.location.pathname.includes('/dashboard') ||
+            url.includes('/auth/') ||
+            url.includes('/balance') ||
             url.includes('/validate') ||
             url.includes('/payments/status')
         ) {
@@ -75,5 +117,21 @@ api.toggleAdminProduct = (productId) => api.patch(`/admin/products/products/${pr
 api.toggleAdminFeatured = (productId) => api.patch(`/admin/products/products/${productId}/featured`);
 api.toggleVariantHidden = (variantId) => api.patch(`/admin/products/variants/${variantId}/toggle-hidden`);
 api.applyGlobalMarkup = (vendor, markup) => api.post('/admin/products/global-markup', { vendor, markup });
+
+// Auth
+api.authRegister = (data) => api.post('/auth/register', data);
+api.authLogin = (data) => api.post('/auth/login', data);
+api.authProfile = () => api.get('/auth/profile');
+api.authUpdateProfile = (data) => api.put('/auth/profile', data);
+api.authChangePassword = (data) => api.put('/auth/password', data);
+api.getUserOrders = (params) => api.get('/auth/orders', { params });
+
+// Balance
+api.getBalance = () => api.get('/balance');
+api.createTopup = (data) => api.post('/balance/topup', data);
+api.getTopupStatus = (id) => api.get(`/balance/topup/${id}/status`);
+api.getPendingTopup = () => api.get('/balance/topup/pending');
+api.cancelPendingTopup = (id) => api.post('/balance/topup/cancel', { id });
+api.getBalanceHistory = (params) => api.get('/balance/history', { params });
 
 export default api;

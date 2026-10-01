@@ -3,10 +3,12 @@ import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { formatRp } from '../../utils/currencyUtils';
 import { normalizePhoneNumber } from '../../utils/phoneUtils';
 import { getTargetIdentifier, getSafeAccountName } from '../../utils/accountValidationUtils';
+import { useAuth } from '../../contexts/AuthContext';
 
 const BuyerDataForm = ({
     formData,
     handleFormChange,
+    setFormData,
     dynamicFields,
     fieldData,
     setFieldData,
@@ -23,10 +25,43 @@ const BuyerDataForm = ({
     product,
 }) => {
     const fieldsList = Array.isArray(dynamicFields) ? dynamicFields : [];
-    const isValidationAvailable = Boolean(selectedVariant?.validation?.available);
+    const activeServer = product?.servers?.find(s => (s.vendor || '').toLowerCase() === (vendor || '').toLowerCase()) || product?.servers?.[0];
+    const currentVendor = (selectedVariant?.vendor || activeServer?.vendor || vendor || product?.vendor || '').toLowerCase();
+    const isOkeconnect = currentVendor === 'okeconnect';
+    const hasTargetField = fieldsList.some(f =>
+        f.key === 'customer_id' || f.key === 'target' || f.key === 'note' || f.key === 'user_id' || f.key === 'phone' || f.key === 'no_hp'
+    );
+    const isValidationAvailable = Boolean(selectedVariant?.validation?.available) || (isOkeconnect && (hasTargetField || fieldsList.length === 0));
     const isEwalletProduct = product?.category?.toLowerCase().includes('wallet') ||
         /dana|ovo|gopay|gojek|shopee|linkaja|isaku|maxim/i.test(product?.name || '');
     const isNumericGame = /mobile legend|magic chess|free fire/i.test(product?.name || '');
+
+    const { user } = useAuth();
+
+    // ── Autofill No WhatsApp & Email jika user sudah login ──
+    useEffect(() => {
+        if (!user) return;
+
+        if (typeof setFormData === 'function') {
+            setFormData(prev => {
+                const updates = {};
+                if (!prev.wa_number && user.phone) updates.wa_number = user.phone;
+                if (!prev.email && user.email) updates.email = user.email;
+                if (Object.keys(updates).length === 0) return prev;
+                return { ...prev, ...updates };
+            });
+        } else if (typeof handleFormChange === 'function') {
+            if (!formData.wa_number && user.phone) {
+                handleFormChange({ target: { name: 'wa_number', value: user.phone } });
+            }
+            if (!formData.email && user.email) {
+                handleFormChange({ target: { name: 'email', value: user.email } });
+            }
+        }
+    }, [user, setFormData, handleFormChange, formData.wa_number, formData.email]);
+
+    const isWaAutofilled = Boolean(user?.phone && formData.wa_number && String(formData.wa_number) === String(user.phone));
+    const isEmailAutofilled = Boolean(user?.email && formData.email && formData.email.toLowerCase() === user.email.toLowerCase());
 
     // ── Invalidate previous validation when User ID / Zone ID is edited ──
     const prevTargetRef = useRef('');
@@ -76,7 +111,15 @@ const BuyerDataForm = ({
             <h2 className="text-base font-bold text-slate-900 mb-5">Informasi Pembeli</h2>
             <div className="space-y-4 mb-6">
                 <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-2">Nomor WhatsApp (Aktif)</label>
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="block text-xs font-medium text-slate-500">Nomor WhatsApp (Aktif)</label>
+                        {isWaAutofilled && (
+                            <span className="text-[10px] text-purple-600 font-medium bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100 flex items-center gap-1">
+                                <CheckCircle2 size={11} className="text-purple-600" />
+                                Terisi otomatis
+                            </span>
+                        )}
+                    </div>
                     <input
                         name="wa_number"
                         type="number"
@@ -87,7 +130,15 @@ const BuyerDataForm = ({
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-2">Alamat Email Gmail</label>
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="block text-xs font-medium text-slate-500">Alamat Email Gmail</label>
+                        {isEmailAutofilled && (
+                            <span className="text-[10px] text-purple-600 font-medium bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100 flex items-center gap-1">
+                                <CheckCircle2 size={11} className="text-purple-600" />
+                                Terisi otomatis
+                            </span>
+                        )}
+                    </div>
                     <input
                         name="email"
                         type="email"
@@ -138,7 +189,7 @@ const BuyerDataForm = ({
                                         validatedAccount?.valid ? 'text-green-600' : 'text-purple-600'
                                     }`}>
                                         {isValidating && <Loader2 size={12} className="animate-spin text-purple-600" />}
-                                        {isValidating ? 'Mengecek ID...' : validatedAccount?.valid ? '✓ ID Terverifikasi' : 'Wajib Cek ID'}
+                                        {isValidating ? 'Mengecek ID...' : validatedAccount?.valid ? '✓ ID Terverifikasi' : isOkeconnect ? 'Wajib Cek ID (OkeConnect)' : 'Wajib Cek ID'}
                                     </span>
                                 )}
                             </div>
@@ -166,7 +217,9 @@ const BuyerDataForm = ({
                                             ? 'border-green-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/10'
                                             : validationError && isTargetField
                                                 ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/10'
-                                                : 'border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10'
+                                                : isOkeconnect && isTargetField && !validatedAccount?.valid
+                                                    ? 'border-purple-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10'
+                                                    : 'border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10'
                                     }`}
                                 />
                                 {isValidating && isTargetField && (
@@ -199,7 +252,9 @@ const BuyerDataForm = ({
                                 <div className="flex items-center gap-2.5 min-w-0">
                                     <CheckCircle2 size={18} className="text-green-600 shrink-0" />
                                     <div className="min-w-0">
-                                        <p className="text-[11px] font-semibold text-green-700 uppercase tracking-wider">Akun Terverifikasi</p>
+                                        <p className="text-[11px] font-semibold text-green-700 uppercase tracking-wider">
+                                            Akun Terverifikasi {isOkeconnect ? '(OkeConnect)' : ''}
+                                        </p>
                                         <p className="text-sm font-bold text-green-900 truncate">
                                             {getSafeAccountName(validatedAccount)}
                                         </p>
@@ -239,7 +294,7 @@ const BuyerDataForm = ({
                                 className="w-full bg-purple-600 hover:bg-purple-700 active:scale-[0.99] text-white py-3.5 rounded-xl text-sm font-bold transition-all flex justify-center items-center gap-2 shadow-sm"
                             >
                                 <CheckCircle2 size={16} />
-                                Cek ID / Validasi Akun
+                                {isOkeconnect ? 'Cek ID / Validasi Akun (Wajib)' : 'Cek ID / Validasi Akun'}
                             </button>
                         )}
                     </div>

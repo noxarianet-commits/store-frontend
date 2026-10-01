@@ -18,6 +18,8 @@ import OrderModal from '../components/admin/OrderModal';
 import SettingsTab from '../components/admin/SettingsTab';
 import FeaturedTab from '../components/admin/FeaturedTab';
 import OkeconnectTab from '../components/admin/OkeconnectTab';
+import UsersTab from '../components/admin/UsersTab';
+import TransactionsTab from '../components/admin/TransactionsTab';
 
 const AdminDashboard = () => {
     const [isLogin, setIsLogin] = useState(false);
@@ -508,6 +510,8 @@ const AdminDashboard = () => {
                     {activeTab === 'orders' && (
                         <OrdersTab openOrderModal={openOrderModal} deleteOrder={deleteOrder} refreshTrigger={orderRefreshCounter} />
                     )}
+                    {activeTab === 'transactions' && <TransactionsTab />}
+                    {activeTab === 'users' && <UsersTab />}
                     {activeTab === 'settings' && (
                         <SettingsTab
                             settings={settings} setSettings={setSettings} updateSetting={updateSetting}

@@ -117,7 +117,7 @@ const PaymentStep = ({
             </div>
 
             {/* PENDING — tampilkan instruksi bayar */}
-            {(effectiveStatus === 'PENDING' || !effectiveStatus) && paymentResult && (
+            {(effectiveStatus === 'PENDING' || !effectiveStatus) && paymentResult && paymentResult.payment_type !== 'balance' && (
                 <div>
                     <div className="text-center mb-5">
                         <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Total Pembayaran</p>
@@ -328,7 +328,9 @@ const PaymentStep = ({
                             animation: 'shimmerText 3s linear infinite'
                         }}>Pesanan Sedang Diproses</h3>
                         <p className="text-sm text-slate-600 font-semibold mb-6 px-2 max-w-sm mx-auto leading-relaxed">
-                            Pembayaran berhasil dikonfirmasi! Pesanan Anda sedang diproses, mohon tunggu 1-5 menit. Detail pesanan akan segera dikirim ke Email & WhatsApp Anda.
+                            {paymentResult?.payment_type === 'balance' 
+                                ? 'Pembayaran menggunakan Saldo Akun berhasil! Pesanan Anda sedang diproses, mohon tunggu 1-5 menit.' 
+                                : 'Pembayaran berhasil dikonfirmasi! Pesanan Anda sedang diproses, mohon tunggu 1-5 menit. Detail pesanan akan segera dikirim ke Email & WhatsApp Anda.'}
                         </p>
 
                         {/* Info Notice Box */}
