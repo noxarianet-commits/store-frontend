@@ -16,7 +16,7 @@ export default function RegisterForm() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
-    
+
     const { register } = useAuth();
     const navigate = useNavigate();
 
@@ -34,8 +34,11 @@ export default function RegisterForm() {
         e.preventDefault();
         setError('');
 
-        if (formData.password.length < 6) {
-            return setError('Password minimal 6 karakter');
+        // 8 karakter, bukan 6 — ini yang diperiksa backend (authController.js
+        // PASSWORD_MIN_LENGTH). Kalau UI lebih longgar dari server, user akan
+        // lolos validasi form lalu ditolak server tanpa tahu kenapa.
+        if (formData.password.length < 8) {
+            return setError('Password minimal 8 karakter');
         }
 
         if (formData.password !== formData.confirmPassword) {
@@ -50,9 +53,12 @@ export default function RegisterForm() {
                 phone: formData.phone,
                 password: formData.password
             };
+
+            // Belum login di sini: backend hanya mengirim OTP. Akun baru dibuat
+            // setelah user membuktikan kepemilikan email di /auth/verify.
             await register(registerData);
-            notify.success('Berhasil mendaftar');
-            navigate('/dashboard', { replace: true });
+            notify.success('Kode verifikasi dikirim ke email Anda');
+            navigate('/auth/verify', { state: { email: formData.email } });
         } catch (err) {
             setError(err.response?.data?.error || 'Gagal mendaftar. Silakan coba lagi.');
         } finally {

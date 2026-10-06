@@ -18,6 +18,8 @@ import AnimatedBackground from './components/AnimatedBackground';
 import ErrorBoundary from './components/ErrorBoundary';
 import { AuthProvider } from './contexts/AuthContext';
 import AuthPage from './pages/AuthPage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import UserDashboardPage from './pages/UserDashboardPage';
 
 function App() {
@@ -50,6 +52,8 @@ function App() {
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/auth/verify" element={<VerifyEmailPage />} />
+          <Route path="/auth/lupa-password" element={<ForgotPasswordPage />} />
           <Route path="/dashboard" element={<UserDashboardPage />} />
           <Route path="/error" element={<ErrorPage />} />
           <Route path="*" element={<NotFound />} />

@@ -56,7 +56,10 @@ api.interceptors.response.use(
         const url = error.config?.url || '';
         const status = error.response?.status;
         const isLoginAttempt = url.includes('/admin/login');
-        const isUserAuthRoute = url.includes('/auth/') || url.includes('/balance');
+        // Tanpa garis miring di akhir supaya tetap cocok untuk '/auth' polos —
+        // endpoint OTP baru semuanya harus punya error yang tampil di form,
+        // bukan dialihkan ke halaman /error.
+        const isUserAuthRoute = url.includes('/auth') || url.includes('/balance');
         const isAdminSessionError = !isLoginAttempt && !isUserAuthRoute && (
             status === 401 ||
             (status === 403 && (url.includes('/admin') || Boolean(localStorage.getItem('adminToken'))))
@@ -78,7 +81,7 @@ api.interceptors.response.use(
             window.location.pathname.includes('error') ||
             window.location.pathname.includes('/auth') ||
             window.location.pathname.includes('/dashboard') ||
-            url.includes('/auth/') ||
+            url.includes('/auth') ||
             url.includes('/balance') ||
             url.includes('/validate') ||
             url.includes('/payments/status')
@@ -119,8 +122,17 @@ api.toggleVariantHidden = (variantId) => api.patch(`/admin/products/variants/${v
 api.applyGlobalMarkup = (vendor, markup) => api.post('/admin/products/global-markup', { vendor, markup });
 
 // Auth
+//
+// Registrasi dan lupa password keduanya 2 langkah: endpoint pertama mengirim OTP
+// dan TIDAK mengembalikan token, endpoint kedua menukar OTP itu dengan token.
+// Jangan pernah menganggap authRegister() mengembalikan sesi yang sudah login.
 api.authRegister = (data) => api.post('/auth/register', data);
+api.authVerifyRegistration = (data) => api.post('/auth/register/verify', data);
+api.authResendRegistration = (email) => api.post('/auth/register/resend', { email });
 api.authLogin = (data) => api.post('/auth/login', data);
+api.authForgotPassword = (email) => api.post('/auth/forgot-password', { email });
+api.authVerifyResetPassword = (data) => api.post('/auth/forgot-password/verify', data);
+api.authResendResetPassword = (email) => api.post('/auth/forgot-password/resend', { email });
 api.authProfile = () => api.get('/auth/profile');
 api.authUpdateProfile = (data) => api.put('/auth/profile', data);
 api.authChangePassword = (data) => api.put('/auth/password', data);

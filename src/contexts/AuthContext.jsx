@@ -35,8 +35,22 @@ export const AuthProvider = ({ children }) => {
         return userData;
     };
 
+    // Registrasi 2 langkah: backend TIDAK mengembalikan token di sini, hanya
+    // mengirim OTP ke email. Jangan setToken/setUser — belum ada sesi.
+    // Caller wajib mengarahkan user ke /auth/verify lalu memanggil verifyRegistration.
     const register = async (data) => {
         const response = await api.authRegister(data);
+        return {
+            requiresVerification: true,
+            email: response.data.email,
+            maskedEmail: response.data.masked_email,
+            resendAvailableIn: response.data.resend_available_in,
+        };
+    };
+
+    // Langkah 2: tukar OTP dengan sesi yang sebenarnya.
+    const verifyRegistration = async (email, code) => {
+        const response = await api.authVerifyRegistration({ email, code });
         const { token: newToken, user: userData } = response.data;
         localStorage.setItem('userToken', newToken);
         setToken(newToken);
@@ -62,7 +76,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, isLoading, login, register, logout, refreshProfile }}>
+        <AuthContext.Provider value={{ user, token, isLoading, login, register, verifyRegistration, logout, refreshProfile }}>
             {children}
         </AuthContext.Provider>
     );

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import notify from '../../utils/notify';
 
@@ -10,9 +10,13 @@ export default function LoginForm() {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
-    
+
     const { login } = useAuth();
     const navigate = useNavigate();
+    // useLocation(), bukan global `location`: global itu window.location yang
+    // tidak punya properti `.state`, sehingga `from` selalu undefined dan
+    // redirect balik ke halaman asal tidak pernah terjadi.
+    const location = useLocation();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -53,7 +57,16 @@ export default function LoginForm() {
             </div>
 
             <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-700">Password</label>
+                <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-slate-700">Password</label>
+                    <button
+                        type="button"
+                        onClick={() => navigate('/auth/lupa-password')}
+                        className="text-xs font-medium text-purple-600 hover:text-purple-700 transition-colors"
+                    >
+                        Lupa password?
+                    </button>
+                </div>
                 <div className="relative">
                     <input
                         type={showPassword ? 'text' : 'password'}
