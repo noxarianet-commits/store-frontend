@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getOrderAccessToken } from './utils/orderToken';
+import { getTicketAccessToken } from './utils/ticketToken';
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
@@ -29,6 +30,24 @@ function attachOrderAccessToken(config) {
     return config;
 }
 
+// Ticket number bisa ditebak, jadi backend mewajibkan X-Ticket-Token untuk
+// /tickets/:ticketNumber (kecuali admin — admin pakai JWT). Token disimpan
+// localStorage oleh utils/ticketToken.js, terutama untuk tamu tanpa akun.
+function attachTicketAccessToken(config) {
+    const url = config.url || '';
+    if (url.includes('/admin')) return config;
+
+    const match = url.match(/\/tickets\/([^/?]+)/);
+    if (match) {
+        const ticketNumber = decodeURIComponent(match[1]);
+        const token = getTicketAccessToken(ticketNumber);
+        if (token) {
+            config.headers['X-Ticket-Token'] = token;
+        }
+    }
+    return config;
+}
+
 // Add a request interceptor to include the admin or user token
 api.interceptors.request.use(config => {
     const adminToken = localStorage.getItem('adminToken');
@@ -47,7 +66,7 @@ api.interceptors.request.use(config => {
         config.headers['Authorization'] = `Bearer ${adminToken}`;
     }
 
-    return attachOrderAccessToken(config);
+    return attachTicketAccessToken(attachOrderAccessToken(config));
 });
 
 api.interceptors.response.use(
@@ -59,7 +78,10 @@ api.interceptors.response.use(
         // Tanpa garis miring di akhir supaya tetap cocok untuk '/auth' polos —
         // endpoint OTP baru semuanya harus punya error yang tampil di form,
         // bukan dialihkan ke halaman /error.
-        const isUserAuthRoute = url.includes('/auth') || url.includes('/balance');
+        // '/tickets' pelanggan (bukan /admin/tickets) juga di-bail-out: 401 di
+        // sana wajar untuk tamu dan tidak boleh dianggap sesi admin berakhir.
+        const isUserAuthRoute = url.includes('/auth') || url.includes('/balance')
+            || (url.includes('/tickets') && !url.includes('/admin'));
         const isAdminSessionError = !isLoginAttempt && !isUserAuthRoute && (
             status === 401 ||
             (status === 403 && (url.includes('/admin') || Boolean(localStorage.getItem('adminToken'))))
@@ -81,9 +103,11 @@ api.interceptors.response.use(
             window.location.pathname.includes('error') ||
             window.location.pathname.includes('/auth') ||
             window.location.pathname.includes('/dashboard') ||
+            window.location.pathname.includes('/ticket') ||
             url.includes('/auth') ||
             url.includes('/balance') ||
             url.includes('/validate') ||
+            url.includes('/tickets') ||
             url.includes('/payments/status')
         ) {
             return Promise.reject(error);
@@ -145,5 +169,19 @@ api.getTopupStatus = (id) => api.get(`/balance/topup/${id}/status`);
 api.getPendingTopup = () => api.get('/balance/topup/pending');
 api.cancelPendingTopup = (id) => api.post('/balance/topup/cancel', { id });
 api.getBalanceHistory = (params) => api.get('/balance/history', { params });
+
+// Tiket Bantuan CS — pelanggan / tamu
+api.createTicket = (data) => api.post('/tickets', data);
+api.getMyTickets = (params) => api.get('/tickets', { params });
+api.getTicket = (ticketNumber) => api.get(`/tickets/${encodeURIComponent(ticketNumber)}`);
+api.addTicketMessage = (ticketNumber, body) => api.post(`/tickets/${encodeURIComponent(ticketNumber)}/messages`, { body });
+api.reopenTicket = (ticketNumber) => api.patch(`/tickets/${encodeURIComponent(ticketNumber)}/reopen`);
+
+// Tiket Bantuan CS — admin
+api.getAdminTickets = (params) => api.get('/admin/tickets', { params });
+api.getAdminTicketStats = () => api.get('/admin/tickets/stats');
+api.getAdminTicket = (ticketNumber) => api.get(`/admin/tickets/${encodeURIComponent(ticketNumber)}`);
+api.replyAdminTicket = (ticketNumber, body) => api.post(`/admin/tickets/${encodeURIComponent(ticketNumber)}/messages`, { body });
+api.updateAdminTicket = (ticketNumber, data) => api.patch(`/admin/tickets/${encodeURIComponent(ticketNumber)}`, data);
 
 export default api;

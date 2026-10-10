@@ -134,16 +134,25 @@ const FAQPage = () => {
                 {/* CTA */}
                 <div className="mt-10 p-6 rounded-3xl bg-gradient-to-br from-purple-50 to-white border border-purple-100 text-center">
                     <p className="text-sm text-slate-600 mb-4">
-                        Masih punya pertanyaan? Hubungi kami langsung via WhatsApp.
+                        Masih punya pertanyaan? Hubungi kami via WhatsApp, atau buat tiket bantuan
+                        agar kendala Anda tercatat dan diproses tim CS.
                     </p>
-                    <a
-                        href={getWaUrl(settings, 'Halo Admin, saya punya pertanyaan mengenai layanan Noxarianet.')}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm px-6 py-3 rounded-full transition-colors shadow-md shadow-purple-200"
-                    >
-                        Chat via WhatsApp
-                    </a>
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                        <a
+                            href={getWaUrl(settings, 'Halo Admin, saya punya pertanyaan mengenai layanan Noxarianet.')}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm px-6 py-3 rounded-full transition-colors shadow-md shadow-purple-200"
+                        >
+                            Chat via WhatsApp
+                        </a>
+                        <Link
+                            to="/ticket/new"
+                            className="inline-flex items-center gap-2 bg-white hover:bg-purple-50 border border-purple-200 text-purple-700 font-bold text-sm px-6 py-3 rounded-full transition-colors"
+                        >
+                            Buat Tiket Bantuan
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Footer link */}

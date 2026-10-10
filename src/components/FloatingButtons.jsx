@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { ArrowUp, X } from 'lucide-react';
+import { useLocation, Link } from 'react-router-dom';
+import { ArrowUp, LifeBuoy, X } from 'lucide-react';
 import { getWaNumber } from '../utils/waUtils';
 
 const FloatingButtons = ({ settings }) => {
@@ -56,6 +56,18 @@ const FloatingButtons = ({ settings }) => {
         >
           <ArrowUp size={16} strokeWidth={2.5} />
         </button>
+      )}
+
+      {/* Tiket Bantuan CS — tampil di semua halaman kecuali halaman tiket itu sendiri */}
+      {!location.pathname.startsWith('/ticket') && (
+        <Link
+          to="/ticket"
+          className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold pl-3.5 pr-4 py-2.5 rounded-full shadow-lg transition-all duration-200 hover:scale-105 hover:-translate-y-0.5"
+          title="Buka Tiket Bantuan CS"
+        >
+          <LifeBuoy size={15} />
+          Bantuan CS
+        </Link>
       )}
 
       {/* WhatsApp CS */}
