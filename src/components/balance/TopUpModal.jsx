@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { X, Loader2, QrCode, CheckCircle2, RefreshCw } from 'lucide-react';
+import { X, Loader2, QrCode, CheckCircle2, RefreshCw, Clock, Info, AlertCircle } from 'lucide-react';
 import api from '../../api';
 import { formatRp } from '../../utils/currencyUtils';
 import notify from '../../utils/notify';
@@ -183,57 +183,68 @@ export default function TopUpModal({ isOpen, onClose, balanceLimit, currentBalan
     const expiredAt = topupData?.pg_expired_at || topupData?.expired_at;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={handleClose} />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={handleClose} />
             
             <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white rounded-2xl w-full max-w-md relative z-10 overflow-hidden shadow-2xl"
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                className="bg-white rounded-3xl w-full max-w-md relative z-10 overflow-hidden shadow-2xl my-auto max-h-[92vh] flex flex-col"
             >
-                <div className="p-4 sm:p-6 border-b border-slate-100 flex items-center justify-between">
-                    <h3 className="text-xl font-bold text-slate-800">Top Up Saldo</h3>
-                    <button onClick={handleClose} className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
+                {/* Header */}
+                <div className="p-4 sm:p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                            <QrCode className="w-4 h-4" />
+                        </div>
+                        <h3 className="text-lg sm:text-xl font-bold text-slate-800">Top Up Saldo</h3>
+                    </div>
+                    <button 
+                        type="button"
+                        onClick={handleClose} 
+                        className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition-colors"
+                    >
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
-                <div className="p-4 sm:p-6">
+                <div className="p-4 sm:p-6 overflow-y-auto flex-1">
                     {isSuccess ? (
-                        <div className="text-center py-8">
+                        <div className="text-center py-6 sm:py-8">
                             <motion.div
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
-                                className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"
+                                className="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4"
                             >
-                                <CheckCircle2 className="w-10 h-10 text-green-600" />
+                                <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-600" />
                             </motion.div>
-                            <h4 className="text-xl font-bold text-slate-800 mb-2">Top Up Berhasil!</h4>
-                            <p className="text-slate-600">Saldo Anda telah ditambahkan secara otomatis.</p>
+                            <h4 className="text-lg sm:text-xl font-bold text-slate-800 mb-2">Top Up Berhasil!</h4>
+                            <p className="text-xs sm:text-sm text-slate-600">Saldo Anda telah ditambahkan secara otomatis.</p>
                         </div>
                     ) : topupData ? (
                         <div className="text-center space-y-4">
                             <div>
-                                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1 font-semibold">Total Pembayaran</p>
-                                <p className="text-3xl font-extrabold text-purple-600">{formatRp(totalPay)}</p>
+                                <p className="text-[11px] text-slate-400 uppercase tracking-wider mb-1 font-semibold">Total Pembayaran</p>
+                                <p className="text-2xl sm:text-3xl font-extrabold text-purple-600 font-mono tracking-tight">{formatRp(totalPay)}</p>
                                 {refCode && (
-                                    <p className="text-xs text-slate-400 mt-1">Ref ID: <span className="font-mono text-slate-600 font-medium">{refCode}</span></p>
+                                    <p className="text-[11px] text-slate-400 mt-1">Ref ID: <span className="font-mono text-slate-600 font-semibold">{refCode}</span></p>
                                 )}
                             </div>
 
-                            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 inline-block shadow-inner">
+                            <div className="bg-slate-50 p-3 sm:p-4 rounded-2xl border border-slate-100 inline-block shadow-inner max-w-full">
                                 {qrLink ? (
-                                    <img src={qrLink} alt="QRIS" className="w-48 h-48 sm:w-52 sm:h-52 mx-auto rounded-lg object-contain" />
+                                    <img src={qrLink} alt="QRIS" className="w-44 h-44 sm:w-52 sm:h-52 mx-auto rounded-xl object-contain shadow-xs bg-white p-1" />
                                 ) : (
-                                    <div className="w-48 h-48 flex items-center justify-center text-slate-400 text-xs">Memuat QRIS...</div>
+                                    <div className="w-44 h-44 sm:w-52 sm:h-52 flex items-center justify-center text-slate-400 text-xs">Memuat QRIS...</div>
                                 )}
                             </div>
 
                             {expiredAt && (
                                 <div>
-                                    <span className="text-[11px] text-amber-700 bg-amber-50 py-1 px-3 rounded-full border border-amber-200/60 font-medium">
-                                        ⏳ Berlaku hingga: {new Date(expiredAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
+                                    <span className="inline-flex items-center gap-1.5 text-[11px] text-amber-700 bg-amber-50 py-1 px-3 rounded-full border border-amber-200/60 font-semibold">
+                                        <Clock className="w-3.5 h-3.5 text-amber-600" />
+                                        <span>Berlaku hingga: {new Date(expiredAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB</span>
                                     </span>
                                 </div>
                             )}
@@ -243,8 +254,11 @@ export default function TopUpModal({ isOpen, onClose, balanceLimit, currentBalan
                                 <span>Menunggu pembayaran... Saldo akan otomatis bertambah setelah dibayar.</span>
                             </div>
 
-                            <div className="text-[11px] text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100 leading-relaxed text-left">
-                                💡 <strong>Info:</strong> Jika Anda tidak sengaja menutup jendela ini, QRIS tetap dapat dilihat kembali kapan saja melalui menu <strong>Saldo & Top Up</strong> atau tombol <strong>Lihat QRIS</strong> di Riwayat Transaksi.
+                            <div className="text-[11px] text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100 leading-relaxed text-left flex items-start gap-2">
+                                <Info className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+                                <div>
+                                    <strong className="text-slate-700">Info:</strong> Jika Anda tidak sengaja menutup jendela ini, QRIS tetap dapat dilihat kembali kapan saja melalui menu <strong>Saldo & Top Up</strong> atau tombol <strong>Lihat QRIS</strong> di Riwayat Transaksi.
+                                </div>
                             </div>
 
                             <div className="flex flex-col sm:flex-row gap-2 pt-2">
@@ -252,27 +266,28 @@ export default function TopUpModal({ isOpen, onClose, balanceLimit, currentBalan
                                     type="button"
                                     onClick={handleManualCheck}
                                     disabled={isChecking}
-                                    className="flex-1 py-2.5 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                                    className="flex-1 py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 shadow-sm"
                                 >
                                     {isChecking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-                                    Cek Pembayaran
+                                    <span>Cek Pembayaran</span>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={handleCancelTopup}
                                     disabled={isCancelling}
-                                    className="py-2.5 px-4 bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                                    className="py-3 px-4 bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 border border-slate-200/60"
                                 >
                                     {isCancelling && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                                    Batalkan Top-Up
+                                    <span>Batalkan Top-Up</span>
                                 </button>
                             </div>
                         </div>
                     ) : (
-                        <div className="space-y-6">
+                        <div className="space-y-5">
                             {error && (
-                                <div className="p-3 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100">
-                                    {error}
+                                <div className="flex items-start gap-2 p-3 bg-red-50 text-red-600 rounded-xl text-xs sm:text-sm border border-red-100">
+                                    <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                                    <span>{error}</span>
                                 </div>
                             )}
 
@@ -316,12 +331,13 @@ export default function TopUpModal({ isOpen, onClose, balanceLimit, currentBalan
                             </div>
 
                             <button
+                                type="button"
                                 onClick={handleSubmit}
                                 disabled={isLoading || !amount}
-                                className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3.5 rounded-xl font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 active:scale-[0.99] text-white py-3.5 rounded-xl font-bold transition-all shadow-md shadow-purple-600/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
                                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <QrCode className="w-5 h-5" />}
-                                Lanjutkan Pembayaran
+                                <span>Lanjutkan Pembayaran (QRIS)</span>
                             </button>
                         </div>
                     )}
