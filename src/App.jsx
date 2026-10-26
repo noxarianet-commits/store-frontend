@@ -1,6 +1,4 @@
-import { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import api from './api';
 import LandingPage from './pages/LandingPage';
 import ProductPage from './pages/ProductPage';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
@@ -24,20 +22,9 @@ import UserDashboardPage from './pages/UserDashboardPage';
 import TicketListPage from './pages/TicketListPage';
 import TicketCreatePage from './pages/TicketCreatePage';
 import TicketDetailPage from './pages/TicketDetailPage';
+import CSContactPage from './pages/CSContactPage';
 
 function App() {
-  const [settings, setSettings] = useState({});
-
-  useEffect(() => {
-    api.get('/settings')
-      .then(res => {
-        if (res.data) setSettings(res.data);
-      })
-      .catch(err => {
-        console.warn('App settings load error:', err?.message);
-      });
-  }, []);
-
   return (
     <ErrorBoundary>
       <AuthProvider>
@@ -61,10 +48,11 @@ function App() {
           <Route path="/ticket" element={<TicketListPage />} />
           <Route path="/ticket/new" element={<TicketCreatePage />} />
           <Route path="/ticket/:ticketNumber" element={<TicketDetailPage />} />
+          <Route path="/cs" element={<CSContactPage />} />
           <Route path="/error" element={<ErrorPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-        <FloatingButtons settings={settings} />
+        <FloatingButtons />
       </AuthProvider>
     </ErrorBoundary>
   );

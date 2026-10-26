@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { ArrowUp, LifeBuoy, X } from 'lucide-react';
-import { getWaNumber } from '../utils/waUtils';
+import { ArrowUp, X } from 'lucide-react';
 
-const FloatingButtons = ({ settings }) => {
+const FloatingButtons = () => {
   const [showTopBtn, setShowTopBtn] = useState(false);
   const [showBubble, setShowBubble] = useState(false);
   const [bubbleClosed, setBubbleClosed] = useState(localStorage.getItem('waBubbleClosed') === 'true');
@@ -32,9 +31,6 @@ const FloatingButtons = ({ settings }) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const waNumber = getWaNumber(settings);
-  const waMessage = encodeURIComponent('Halo CS noxarianet, saya butuh bantuan.');
-
   const closeBubble = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -43,7 +39,7 @@ const FloatingButtons = ({ settings }) => {
     localStorage.setItem('waBubbleClosed', 'true');
   };
 
-  const isLandingPage = location.pathname === '/';
+  const isCSPage = location.pathname === '/cs';
 
   return (
     <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end gap-4">
@@ -58,20 +54,8 @@ const FloatingButtons = ({ settings }) => {
         </button>
       )}
 
-      {/* Tiket Bantuan CS — tampil di semua halaman kecuali halaman tiket itu sendiri */}
-      {!location.pathname.startsWith('/ticket') && (
-        <Link
-          to="/ticket"
-          className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold pl-3.5 pr-4 py-2.5 rounded-full shadow-lg transition-all duration-200 hover:scale-105 hover:-translate-y-0.5"
-          title="Buka Tiket Bantuan CS"
-        >
-          <LifeBuoy size={15} />
-          Bantuan CS
-        </Link>
-      )}
-
-      {/* WhatsApp CS */}
-      {isLandingPage && (
+      {/* Bantuan CS — avatar mengarah ke halaman pilihan WhatsApp / tiket */}
+      {!isCSPage && (
         <div className="flex items-center gap-2.5 group relative">
           {/* Chat bubble — appears once, stays static */}
           <div
@@ -90,15 +74,13 @@ const FloatingButtons = ({ settings }) => {
           </div>
 
           {/* CS Avatar */}
-          <a
-            href={`https://wa.me/${waNumber}?text=${waMessage}`}
-            target="_blank"
-            rel="noreferrer"
-            className="w-12 h-12 rounded-full overflow-hidden shadow-lg transition-all duration-200 hover:scale-105 hover:-translate-y-0.5 border-2 border-green-500 flex-shrink-0 bg-white"
-            title="Chat dengan Customer Service"
+          <Link
+            to="/cs"
+            className="w-12 h-12 rounded-full overflow-hidden shadow-lg transition-all duration-200 hover:scale-105 hover:-translate-y-0.5 border-2 border-white/80 flex-shrink-0 bg-white"
+            title="Bantuan Customer Service"
           >
             <img src="/logocs.png" alt="CS Support" className="w-full h-full object-cover" />
-          </a>
+          </Link>
         </div>
       )}
     </div>
