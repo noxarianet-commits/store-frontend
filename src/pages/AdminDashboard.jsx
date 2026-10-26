@@ -20,6 +20,7 @@ import FeaturedTab from '../components/admin/FeaturedTab';
 import OkeconnectTab from '../components/admin/OkeconnectTab';
 import UsersTab from '../components/admin/UsersTab';
 import TransactionsTab from '../components/admin/TransactionsTab';
+import TicketsTab from '../components/admin/TicketsTab';
 
 const AdminDashboard = () => {
     const [isLogin, setIsLogin] = useState(false);
@@ -510,6 +511,7 @@ const AdminDashboard = () => {
                     {activeTab === 'orders' && (
                         <OrdersTab openOrderModal={openOrderModal} deleteOrder={deleteOrder} refreshTrigger={orderRefreshCounter} />
                     )}
+                    {activeTab === 'tickets' && <TicketsTab />}
                     {activeTab === 'transactions' && <TransactionsTab />}
                     {activeTab === 'users' && <UsersTab />}
                     {activeTab === 'settings' && (

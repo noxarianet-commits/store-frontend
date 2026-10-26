@@ -21,6 +21,9 @@ import AuthPage from './pages/AuthPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import UserDashboardPage from './pages/UserDashboardPage';
+import TicketListPage from './pages/TicketListPage';
+import TicketCreatePage from './pages/TicketCreatePage';
+import TicketDetailPage from './pages/TicketDetailPage';
 
 function App() {
   const [settings, setSettings] = useState({});
@@ -55,6 +58,9 @@ function App() {
           <Route path="/auth/verify" element={<VerifyEmailPage />} />
           <Route path="/auth/lupa-password" element={<ForgotPasswordPage />} />
           <Route path="/dashboard" element={<UserDashboardPage />} />
+          <Route path="/ticket" element={<TicketListPage />} />
+          <Route path="/ticket/new" element={<TicketCreatePage />} />
+          <Route path="/ticket/:ticketNumber" element={<TicketDetailPage />} />
           <Route path="/error" element={<ErrorPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
