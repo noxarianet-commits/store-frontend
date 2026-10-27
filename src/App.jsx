@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import ProductPage from './pages/ProductPage';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
@@ -25,6 +25,8 @@ import TicketDetailPage from './pages/TicketDetailPage';
 import CSContactPage from './pages/CSContactPage';
 
 function App() {
+  const { pathname } = useLocation();
+
   return (
     <ErrorBoundary>
       <AuthProvider>
@@ -52,7 +54,9 @@ function App() {
           <Route path="/error" element={<ErrorPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-        <FloatingButtons />
+        {/* Floating CS + back-to-top hanya di landing page supaya tidak
+            pernah menutupi tombol checkout di halaman produk. */}
+        {pathname === '/' && <FloatingButtons />}
       </AuthProvider>
     </ErrorBoundary>
   );

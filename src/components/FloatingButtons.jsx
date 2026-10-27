@@ -42,12 +42,12 @@ const FloatingButtons = () => {
   const isCSPage = location.pathname === '/cs';
 
   return (
-    <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end gap-4">
+    <div className="pointer-events-none fixed bottom-6 right-6 z-[100] flex flex-col items-end gap-4">
       {/* Back to Top */}
       {showTopBtn && (
         <button
           onClick={goToTop}
-          className="w-9 h-9 bg-slate-800/80 hover:bg-slate-900 text-white rounded-full flex items-center justify-center shadow-md transition-all duration-200 hover:scale-105 border border-slate-700/50"
+          className="pointer-events-auto w-9 h-9 bg-slate-800/80 hover:bg-slate-900 text-white rounded-full flex items-center justify-center shadow-md transition-all duration-200 hover:scale-105 border border-slate-700/50"
           title="Kembali ke atas"
         >
           <ArrowUp size={16} strokeWidth={2.5} />
@@ -59,10 +59,10 @@ const FloatingButtons = () => {
         <div className="flex items-center gap-2.5 group relative">
           {/* Chat bubble — appears once, stays static */}
           <div
-            className={`pointer-events-none transition-all duration-500 origin-bottom-right ${showBubble && !bubbleClosed
-                ? 'opacity-100 scale-100 translate-y-0'
-                : 'opacity-0 scale-90 translate-y-2 pointer-events-none'
-              } bg-white text-slate-700 text-xs font-medium px-3.5 py-2 rounded-xl rounded-br-sm shadow-lg border border-slate-100 whitespace-nowrap flex items-center gap-2`}
+            className={`${showBubble && !bubbleClosed
+                ? 'pointer-events-auto opacity-100 scale-100 translate-y-0'
+                : 'pointer-events-none opacity-0 scale-90 translate-y-2'
+              } transition-all duration-500 origin-bottom-right bg-white text-slate-700 text-xs font-medium px-3.5 py-2 rounded-xl rounded-br-sm shadow-lg border border-slate-100 whitespace-nowrap flex items-center gap-2`}
           >
             <span>Ada yang bisa dibantu? 👋</span>
             <button
@@ -76,7 +76,7 @@ const FloatingButtons = () => {
           {/* CS Avatar */}
           <Link
             to="/cs"
-            className="w-12 h-12 rounded-full overflow-hidden shadow-lg transition-all duration-200 hover:scale-105 hover:-translate-y-0.5 border-2 border-white/80 flex-shrink-0 bg-white"
+            className="pointer-events-auto w-12 h-12 rounded-full overflow-hidden shadow-lg transition-all duration-200 hover:scale-105 hover:-translate-y-0.5 border-2 border-white/80 flex-shrink-0 bg-white"
             title="Bantuan Customer Service"
           >
             <img src="/logocs.png" alt="CS Support" className="w-full h-full object-cover" />
