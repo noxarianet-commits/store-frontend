@@ -107,6 +107,7 @@ const ProductPage = () => {
     const [testimonialSubmitted, setTestimonialSubmitted] = useState(false);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSlowSubmitting, setIsSlowSubmitting] = useState(false);
     const [copied, setCopied] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -120,6 +121,8 @@ const ProductPage = () => {
     const pollingRef = useRef(null);
     const completedAlertShown = useRef(false);
     const hasRestored = useRef(false);
+    const isSubmittingRef = useRef(false);
+    const checkoutBusyRef = useRef(false);
 
     // ── SessionStorage persistence ─────────────────────────────────────
     const storageKey = `payment_${id}`;
@@ -342,11 +345,11 @@ const ProductPage = () => {
 
         const activeServer = product?.servers?.find(s => s.vendor === vendor) || product?.servers?.[0];
         const currentVendor = selectedVariant?.vendor || activeServer?.vendor || vendor || product?.vendor || 'sekalipay';
-        const isOkeconnect = currentVendor === 'okeconnect';
 
-        // Jika varian tidak mendukung validasi (kecuali vendor okeconnect yang mewajibkan validasi), jangan lakukan validasi
-        if (!isOkeconnect && activeVariant?.validation && activeVariant.validation.available === false) {
-            return;
+        // Varian ini tidak punya validasi akun. Jangan panggil provider dan
+        // jangan blokir checkout — aturan ini sama dengan backend.
+        if (!activeVariant?.validation?.available) {
+            return { ok: true, account: null };
         }
 
         const targetField = (dynamicFields || []).find(f => f.key !== 'zone_id' && f.key !== 'server_id' && f.key !== 'provider_qty');
@@ -357,7 +360,7 @@ const ProductPage = () => {
 
         if (!customerId) {
             if (!isSilent) notifyWarning('Masukkan ID target (User ID / No Tujuan) terlebih dahulu');
-            return;
+            return { ok: false, account: null, error: 'ID target wajib diisi' };
         }
 
         // Check format for e-wallet / phone products
@@ -368,13 +371,13 @@ const ProductPage = () => {
             if (/[a-zA-Z]/.test(customerId)) {
                 if (!isSilent) notifyError('Nomor tujuan e-wallet tidak boleh mengandung huruf! Contoh: 08123456789');
                 setValidationError('Nomor tujuan e-wallet tidak boleh mengandung huruf');
-                return;
+                return { ok: false, account: null, error: 'Nomor tujuan e-wallet tidak boleh mengandung huruf' };
             }
             const normalized = normalizePhoneNumber(customerId);
             if (!normalized || !/^08[0-9]{8,13}$/.test(normalized)) {
                 if (!isSilent) notifyError('Format nomor e-wallet tidak valid. Harus diawali 08 (10-14 digit angka).');
                 setValidationError('Format nomor harus diawali 08 (10-14 digit angka)');
-                return;
+                return { ok: false, account: null, error: 'Format nomor e-wallet tidak valid' };
             }
             customerId = normalized;
             const targetKey = fieldData[primaryTargetKey] !== undefined ? primaryTargetKey : (fieldData['customer_id'] !== undefined ? 'customer_id' : (fieldData['target'] !== undefined ? 'target' : (fieldData['note'] !== undefined ? 'note' : (dynamicFields[0]?.key || 'customer_id'))));
@@ -383,28 +386,27 @@ const ProductPage = () => {
             if (!/^\d+$/.test(customerId)) {
                 if (!isSilent) notifyError('User ID Mobile Legends harus berupa angka (tanpa huruf)');
                 setValidationError('User ID harus berupa angka');
-                return;
+                return { ok: false, account: null, error: 'User ID harus berupa angka' };
             }
             if (zoneId && !/^\d+$/.test(zoneId)) {
                 if (!isSilent) notifyError('Zone ID Mobile Legends harus berupa angka (tanpa huruf)');
                 setValidationError('Zone ID harus berupa angka');
-                return;
+                return { ok: false, account: null, error: 'Zone ID harus berupa angka' };
             }
         } else if (product?.name?.toLowerCase().includes('free fire')) {
             if (!/^\d+$/.test(customerId)) {
                 if (!isSilent) notifyError('User ID Free Fire harus berupa angka (tanpa huruf)');
                 setValidationError('User ID harus berupa angka');
-                return;
+                return { ok: false, account: null, error: 'User ID harus berupa angka' };
             }
         }
 
-        const currentTargetKey = `${customerId}_${zoneId}_${(activeVariant || selectedVariant)?.id || ''}`;
+        const targetSnapshot = { ...(fieldData || {}), [primaryTargetKey]: customerId };
+        const currentTargetKey = getTargetIdentifier(dynamicFields, targetSnapshot, activeVariant || selectedVariant);
 
         setIsValidating(true);
         setValidationError(null);
         try {
-            const activeServer = product?.servers?.find(s => s.vendor === vendor) || product?.servers?.[0];
-            const currentVendor = selectedVariant?.vendor || activeServer?.vendor || vendor || 'sekalipay';
             const res = await api.validateAccount({
                 vendor: currentVendor,
                 variant_id: activeVariant?.id || activeVariant?.vendor_variant_id || activeVariant?.sku,
@@ -414,7 +416,11 @@ const ProductPage = () => {
                 product_name: product?.name,
                 brand: product?.brand,
                 category: product?.category,
-            });
+            }, { timeout: 25000 });
+
+            if (res.data?.valid === false) {
+                throw new Error(res.data?.message || 'ID akun tidak ditemukan');
+            }
 
             const rawAccountName = res.data?.account_name ?? res.data?.display_name ?? res.data?.customer_name ?? res.data?.username ?? res.data?.nickname ?? res.data?.name;
             const safeName = typeof rawAccountName === 'string' && rawAccountName.trim()
@@ -437,21 +443,26 @@ const ProductPage = () => {
             if (!isSilent) {
                 notifySuccess(`Akun ditemukan: ${safeName}`);
             }
+            return { ok: true, account: accountData };
         } catch (err) {
-            const rawErr = err.response?.data?.error || err.response?.data?.message || err.message || 'Gagal mengecek akun atau ID salah';
+            const isTimeout = err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT';
+            const rawErr = isTimeout
+                ? 'Cek ID memakan waktu terlalu lama. Silakan coba lagi.'
+                : (err.response?.data?.error || err.response?.data?.message || err.message || 'Gagal mengecek akun atau ID salah');
             const errMsg = typeof rawErr === 'string' ? rawErr : (rawErr?.message || 'Gagal mengecek akun atau ID salah');
 
             // Jika produk tidak memerlukan validasi (VALIDATION_NOT_AVAILABLE), jangan blokir user
             if (errMsg.includes('VALIDATION_NOT_AVAILABLE') || err.response?.data?.validation_available === false) {
-                setValidatedAccount({
+                const accountData = {
                     valid: true,
                     validation_available: false,
                     account_name: customerId,
                     display_name: customerId,
                     _lastTarget: currentTargetKey,
-                });
+                };
+                setValidatedAccount(accountData);
                 setValidationError(null);
-                return;
+                return { ok: true, account: accountData };
             }
 
             setValidatedAccount(null);
@@ -459,12 +470,11 @@ const ProductPage = () => {
             if (!isSilent) {
                 notifyError(errMsg);
             }
+            return { ok: false, account: null, error: errMsg };
         } finally {
             setIsValidating(false);
         }
     };
-
-
 
     const handleSudahBayar = () => {
         showAlert({
@@ -603,13 +613,55 @@ const ProductPage = () => {
         fetchProduct();
     }, [id, location.pathname]);
 
+    // Reset state yang bergantung pada varian/server. Dipanggil saat user
+    // mengganti server atau paket supaya validasi/ID lama tidak terbawa.
+    const resetVariantDependentState = (nextVariant) => {
+        setValidatedAccount(null);
+        setValidationError(null);
+        setProviderQty('');
+
+        const allowedKeys = new Set();
+        (nextVariant?.required_fields || []).forEach(f => {
+            if (f?.key) allowedKeys.add(f.key);
+        });
+        if (nextVariant?.validation?.available) {
+            (nextVariant.validation.fields || []).forEach(f => {
+                if (f?.key) allowedKeys.add(f.key);
+            });
+        }
+        if (nextVariant?.provider_meta?.open_denom) allowedKeys.add('provider_qty');
+
+        if (allowedKeys.size === 0) return;
+
+        setFieldData(prev => {
+            const next = {};
+            Object.keys(prev).forEach(key => {
+                if (allowedKeys.has(key)) next[key] = prev[key];
+            });
+            return next;
+        });
+    };
+
     // Handle switching server
     const handleSelectServer = (newVendor) => {
+        if (newVendor === vendor) return;
         setVendor(newVendor);
         const targetServer = product?.servers?.find(s => s.vendor === newVendor);
         const variantsList = targetServer?.variants || [];
         const cheapestInStock = variantsList.find(v => v.stock > 0) || variantsList[0] || null;
         setSelectedVariant(cheapestInStock);
+        resetVariantDependentState(cheapestInStock);
+    };
+
+    // Handle switching paket/varian
+    const handleSelectVariant = (nextVariant) => {
+        if (
+            selectedVariant && nextVariant &&
+            selectedVariant.id === nextVariant.id &&
+            selectedVariant.vendor === nextVariant.vendor
+        ) return;
+        setSelectedVariant(nextVariant);
+        resetVariantDependentState(nextVariant);
     };
 
     // Auto-select first variant on vendor switch
@@ -643,69 +695,100 @@ const ProductPage = () => {
     const isOpenDenom = selectedVariant?.provider_meta?.open_denom;
     const computedPrice = Math.ceil(isOpenDenom ? (parseInt(providerQty) || 0) + (selectedVariant?.price || 0) : (selectedVariant?.price || 0));
 
-    // ── Submit: buat payment via PG ──────────────────────────────────────
-    const submitPayment = async () => {
+    // ── Validasi data pembeli sebelum request dibuat ─────────────────────
+    const validateCheckoutData = () => {
         if (!formData.wa_number || !formData.email) {
             notifyWarning('Nomor WA dan Email wajib diisi!');
-            return;
+            return false;
         }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(formData.email)) {
             notifyWarning('Alamat email tidak valid! Harap masukkan email yang benar (contoh: nama@email.com)');
-            return;
+            return false;
         }
-        
+
         // Cek validasi open denom
         if (isOpenDenom) {
             const pQty = parseInt(providerQty) || 0;
-            const minQty = selectedVariant.provider_meta.min_qty;
-            const maxQty = selectedVariant.provider_meta.max_qty;
-            if (pQty <= 0) return notifyWarning('Nominal wajib diisi!');
-            if (minQty && pQty < minQty) return notifyWarning(`Nominal minimal adalah ${formatRp(minQty)}`);
-            if (maxQty && pQty > maxQty) return notifyWarning(`Nominal maksimal adalah ${formatRp(maxQty)}`);
+            const minQty = selectedVariant?.provider_meta?.min_qty;
+            const maxQty = selectedVariant?.provider_meta?.max_qty;
+            if (pQty <= 0) {
+                notifyWarning('Nominal wajib diisi!');
+                return false;
+            }
+            if (minQty && pQty < minQty) {
+                notifyWarning(`Nominal minimal adalah ${formatRp(minQty)}`);
+                return false;
+            }
+            if (maxQty && pQty > maxQty) {
+                notifyWarning(`Nominal maksimal adalah ${formatRp(maxQty)}`);
+                return false;
+            }
         }
 
-        // Cek mandatory fields (use dynamicFields which merges required_fields + validation)
+        // Cek mandatory fields (dynamicFields = required_fields + validation.fields)
         for (const f of dynamicFields) {
-            if (f.required && f.key !== 'provider_qty' && !fieldData[f.key]) {
-                return notifyWarning(`${f.label} wajib diisi!`);
+            if (f.required && f.key !== 'provider_qty' && !String(fieldData[f.key] || '').trim()) {
+                notifyWarning(`${f.label || f.key} wajib diisi!`);
+                return false;
             }
         }
 
-        setIsSubmitting(true);
-        try {
-            let noteTarget = '';
-            if (fieldData.customer_id) {
-                noteTarget = fieldData.customer_id;
-                if (fieldData.zone_id) {
-                    noteTarget += `(${fieldData.zone_id})`;
-                }
-            } else {
-                noteTarget = fieldData.note || fieldData.target || '';
+        return true;
+    };
+
+    // ── Submit: buat payment via PG ──────────────────────────────────────
+    const submitPayment = async (validated = null) => {
+        if (isSubmittingRef.current) return false;
+        if (!validateCheckoutData()) return false;
+
+        const account = validated || validatedAccount;
+
+        // Validasi akun hanya wajib kalau varian memang punya metadata validasi
+        // (sama dengan aturan backend). Validasi harus untuk target saat ini.
+        if (selectedVariant?.validation?.available) {
+            const targetKey = getTargetIdentifier(dynamicFields, fieldData, selectedVariant);
+            if (!account?.valid || account._lastTarget !== targetKey) {
+                notifyWarning('Harap lakukan cek ID / validasi akun terlebih dahulu dan pastikan akun ditemukan!');
+                return false;
             }
+        }
+
+        isSubmittingRef.current = true;
+        setIsSubmitting(true);
+        setIsSlowSubmitting(false);
+        const slowTimer = setTimeout(() => setIsSlowSubmitting(true), 10000);
+        try {
+            // Gunakan field target yang aktif, bukan selalu customer_id.
+            const targetField = dynamicFields.find(f => !['zone_id', 'server_id', 'provider_qty'].includes(f.key));
+            const primaryTargetKey = targetField?.key || 'customer_id';
+            const zoneValue = fieldData.zone_id || fieldData.server_id;
+
+            let noteTarget = String(
+                fieldData[primaryTargetKey] ??
+                fieldData.customer_id ??
+                fieldData.user_id ??
+                fieldData.target ??
+                fieldData.note ??
+                ''
+            ).trim();
+            if (zoneValue) noteTarget = `${noteTarget}(${zoneValue})`;
+
             // Normalize phone number for e-wallet products (08xxx format required by Sekalipay)
             const isEwallet = product?.category?.toLowerCase().includes('e-wallet');
             if (isEwallet) {
                 noteTarget = normalizePhoneNumber(noteTarget);
             }
-            const noteStr = isOpenDenom 
+            const noteStr = isOpenDenom
                 ? JSON.stringify({ target: noteTarget, provider_qty: parseInt(providerQty) || 0 })
-                : (selectedVariant?.order_process === 'smm' 
-                    ? JSON.stringify({ target: fieldData.target || noteTarget, opt_smm: [], comment_smm: '' }) 
+                : (selectedVariant?.order_process === 'smm'
+                    ? JSON.stringify({ target: fieldData.target || noteTarget, opt_smm: [], comment_smm: '' })
                     : noteTarget);
 
             const activeServer = product?.servers?.find(s => s.vendor === vendor) || product?.servers?.[0];
             const targetProductId = selectedVariant?.product_id || activeServer?.product_id || product?.id;
             const currentVendor = selectedVariant?.vendor || activeServer?.vendor || vendor || 'sekalipay';
-
-            // Check if account validation is required (if variant has validation available or vendor is okeconnect)
-            const isValidationNeeded = (currentVendor === 'okeconnect' || Boolean(selectedVariant?.validation?.available)) &&
-                dynamicFields.some(f => f.key === 'customer_id' || f.key === 'note' || f.key === 'target' || f.key === 'user_id' || f.key === 'phone' || f.key === 'no_hp');
-
-            if (isValidationNeeded && !validatedAccount?.valid) {
-                return notifyWarning('Harap lakukan cek ID / validasi akun terlebih dahulu dan pastikan akun ditemukan!');
-            }
 
             const res = await api.post('/payments/create', {
                 vendor: currentVendor,
@@ -715,17 +798,16 @@ const ProductPage = () => {
                 variant_name: selectedVariant?.name,
                 product_name: product.name,
                 amount: computedPrice,
-                customer_name: validatedAccount?.account_name || validatedAccount?.display_name || formData.wa_number,
+                customer_name: account?.account_name || account?.display_name || formData.wa_number,
                 wa_number: formData.wa_number,
                 email: formData.email,
                 note: noteStr,
-                customer_id: fieldData.customer_id,
-                user_id: fieldData.customer_id || fieldData.user_id,
-                zone_id: fieldData.zone_id,
+                customer_id: fieldData[primaryTargetKey] ?? fieldData.customer_id,
+                user_id: fieldData.customer_id || fieldData.user_id || fieldData[primaryTargetKey],
+                zone_id: zoneValue || undefined,
                 provider_qty: isOpenDenom ? parseInt(providerQty) : undefined,
                 payment_type: paymentMethod === 'balance' ? 'balance' : 'gateway'
-            });
-
+            }, { timeout: 90000 });
 
             if (res.data?.success) {
                 saveOrderAccessToken(res.data.data.order_id, res.data.data.access_token);
@@ -733,15 +815,34 @@ const ProductPage = () => {
                 setOrderStatus({ status: paymentMethod === 'balance' ? 'PROCESSING' : 'PENDING', ...res.data.data });
                 setStep(3);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
+                return true;
             }
-        } catch (err) {
-            console.error(err);
-            Swal.fire({
-                icon: 'error', title: 'Gagal Membuat Pembayaran',
-                text: err.response?.data?.error || 'Terjadi kesalahan. Silakan coba lagi.',
+
+            // Backend membalas 2xx tapi bukan success — jangan diamkan.
+            await Swal.fire({
+                icon: 'error',
+                title: 'Pembayaran Tidak Terbentuk',
+                text: res.data?.error || res.data?.message || 'Respons pembayaran tidak dikenali. Silakan coba lagi atau hubungi CS.',
                 background: '#0E0E0E', color: '#fff', confirmButtonColor: '#9333ea'
             });
+            return false;
+        } catch (err) {
+            console.error(err);
+            const isTimeout = err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT';
+            const serverMessage = err.response?.data?.error || err.response?.data?.message;
+            await Swal.fire({
+                icon: 'error',
+                title: isTimeout ? 'Server Tidak Merespons' : 'Gagal Membuat Pembayaran',
+                text: isTimeout
+                    ? 'Permintaan pembayaran memakan waktu terlalu lama. Pesanan mungkin sudah dibuat — cek Riwayat Pesanan atau hubungi CS sebelum mencoba lagi.'
+                    : (serverMessage || 'Tidak dapat memproses pembayaran. Periksa koneksi Anda lalu coba lagi.'),
+                background: '#0E0E0E', color: '#fff', confirmButtonColor: '#9333ea'
+            });
+            return false;
         } finally {
+            clearTimeout(slowTimer);
+            setIsSlowSubmitting(false);
+            isSubmittingRef.current = false;
             setIsSubmitting(false);
         }
     };
@@ -851,7 +952,65 @@ const ProductPage = () => {
                 dynamicFields.push({ key: 'zone_id', label: 'Server ID', required: false });
             }
         }
+
+        // Jika validasi butuh Zone ID tapi API tidak mengirim field-nya,
+        // sediakan input manual supaya user tidak terjebak validasi gagal.
+        if (selectedVariant.validation?.available && selectedVariant.validation.requires_zone_id) {
+            const hasZoneField = dynamicFields.some(f => f.key === 'zone_id' || f.key === 'server_id');
+            if (!hasZoneField) {
+                dynamicFields.push({ key: 'zone_id', label: 'Server ID / Zone ID', required: true });
+            }
+        }
     }
+
+    // ── Aturan validasi akun (selaras dengan backend paymentController) ──
+    // Hanya varian dengan validation.available = true yang wajib cek ID.
+    const isValidationRequired = Boolean(selectedVariant?.validation?.available);
+    const currentTargetKey = getTargetIdentifier(dynamicFields, fieldData, selectedVariant);
+    const isAccountValid = !isValidationRequired ||
+        (validatedAccount?.valid === true && validatedAccount._lastTarget === currentTargetKey);
+    const isShopClosed = settings.shop_status?.isOpen === false;
+    // Stok bisa habis setelah user sampai di step 2 (mis. baru refresh).
+    // Samakan dengan step 1 supaya tombol tidak terlihat aktif tapi gagal.
+    const isVariantSoldOut = !selectedVariant || selectedVariant.stock === 0 || product?.status === 'sold_out';
+    const isCheckoutDisabled = isSubmitting || isValidating || isShopClosed || isVariantSoldOut;
+
+    // ── Satu pintu masuk checkout: validasi otomatis lalu buat pembayaran ──
+    const handleProceedToPayment = async () => {
+        if (checkoutBusyRef.current || isSubmittingRef.current) return;
+
+        if (selectedVariant?.price === 0) {
+            handleCustomConsultation();
+            return;
+        }
+
+        if (!isWaConfirmed) {
+            notifyWarning('Harap centang konfirmasi nomor WhatsApp & alamat Email terlebih dahulu!');
+            return;
+        }
+
+        if (isShopClosed) {
+            notifyWarning('Toko sedang tutup. Silakan coba lagi nanti.');
+            return;
+        }
+
+        if (!validateCheckoutData()) return;
+
+        checkoutBusyRef.current = true;
+        try {
+            let account = validatedAccount;
+
+            if (isValidationRequired && !isAccountValid) {
+                const result = await handleValidateAccount();
+                if (!result?.ok) return;
+                account = result.account;
+            }
+
+            await submitPayment(account);
+        } finally {
+            checkoutBusyRef.current = false;
+        }
+    };
 
     // ── Ekstrak Data Akun untuk Ditampilkan ──
     const displayTexts = [];
@@ -987,7 +1146,7 @@ const ProductPage = () => {
                                         []
                                     } 
                                     selectedVariant={selectedVariant} 
-                                    setSelectedVariant={setSelectedVariant}
+                                    setSelectedVariant={handleSelectVariant} 
                                     showAllVariants={showAllVariants}
                                     setShowAllVariants={setShowAllVariants}
                                 />
@@ -1033,12 +1192,6 @@ const ProductPage = () => {
                         )}
 
                         {step === 2 && (() => {
-                            const activeServer = product?.servers?.find(s => s.vendor === vendor) || product?.servers?.[0];
-                            const currentVendor = selectedVariant?.vendor || activeServer?.vendor || vendor || 'sekalipay';
-                            const isValidationRequired = (currentVendor === 'okeconnect' || selectedVariant?.validation?.available) &&
-                                dynamicFields.some(f => f.key === 'customer_id' || f.key === 'note' || f.key === 'target' || f.key === 'user_id' || f.key === 'phone' || f.key === 'no_hp');
-                            const isAccountValid = !isValidationRequired || (validatedAccount && validatedAccount.valid === true);
-
                             return (
                                 <div>
                                     <BuyerDataForm
@@ -1135,45 +1288,46 @@ const ProductPage = () => {
                                     <div className="flex gap-3 mt-6">
                                         <button
                                             onClick={() => { setStep(1); window.scrollTo({ top: 100, behavior: 'smooth' }); }}
-                                            disabled={isSubmitting}
+                                            disabled={isSubmitting || isValidating}
                                             className="w-1/3 bg-white hover:bg-slate-50 py-3.5 rounded-xl font-semibold text-slate-700 transition-colors border border-slate-200 text-sm disabled:opacity-50"
                                         >Kembali</button>
                                         <button
-                                            onClick={() => {
-                                                if (selectedVariant?.price === 0) {
-                                                    handleCustomConsultation();
-                                                } else {
-                                                    if (isValidationRequired && !isAccountValid) {
-                                                        notifyWarning('Harap verifikasi ID akun terlebih dahulu!');
-                                                        return;
-                                                    }
-                                                    if (!isWaConfirmed) {
-                                                        notifyWarning('Harap centang konfirmasi nomor WhatsApp & alamat Email terlebih dahulu!');
-                                                        return;
-                                                    }
-                                                    submitPayment();
-                                                }
-                                            }}
-                                            disabled={isSubmitting || settings.shop_status?.isOpen === false || (selectedVariant?.price > 0 && (!isWaConfirmed || !isAccountValid)) || isValidating}
+                                            onClick={handleProceedToPayment}
+                                            disabled={isCheckoutDisabled}
                                             className={`w-2/3 py-3.5 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
-                                                (selectedVariant?.price > 0 && (!isWaConfirmed || !isAccountValid)) || settings.shop_status?.isOpen === false || isValidating
-                                                    ? 'bg-purple-600/50 hover:bg-purple-600/50 text-white/80'
+                                                isCheckoutDisabled
+                                                    ? 'bg-purple-600/50 text-white/80'
                                                     : 'bg-purple-600 hover:bg-purple-700 text-white'
                                             }`}
                                         >
                                             {isSubmitting ? (
                                                 <><Loader2 size={16} className="animate-spin" /> Memproses...</>
-                                            ) : settings.shop_status?.isOpen === false ? (
+                                            ) : isVariantSoldOut ? (
+                                                'Stok Habis'
+                                            ) : isShopClosed ? (
                                                 'Toko Tutup'
                                             ) : isValidating ? (
                                                 <><Loader2 size={16} className="animate-spin" /> Memverifikasi ID...</>
-                                            ) : (selectedVariant?.price > 0 && isValidationRequired && !isAccountValid) ? (
-                                                'Menunggu Validasi ID'
                                             ) : (
                                                 selectedVariant?.price === 0 ? 'Kirim ke WhatsApp' : <>Lanjut Bayar <ChevronRight size={16} /></>
                                             )}
                                         </button>
                                     </div>
+                                    {isSubmitting && isSlowSubmitting && (
+                                        <p className="text-xs text-slate-500 mt-3 text-center">
+                                            Masih memproses pembayaran. Jangan tutup halaman ini.
+                                        </p>
+                                    )}
+                                    {!isCheckoutDisabled && !isWaConfirmed && selectedVariant?.price > 0 && (
+                                        <p className="text-xs text-amber-600 mt-3 text-center">
+                                            Centang konfirmasi nomor WhatsApp &amp; email untuk melanjutkan.
+                                        </p>
+                                    )}
+                                    {!isCheckoutDisabled && isWaConfirmed && isValidationRequired && !isAccountValid && (
+                                        <p className="text-xs text-purple-600 mt-3 text-center">
+                                            Klik Lanjut Bayar untuk cek ID otomatis sebelum pembayaran.
+                                        </p>
+                                    )}
                                 </div>
                             );
                         })()}

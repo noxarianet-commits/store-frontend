@@ -59,7 +59,7 @@ const FloatingButtons = () => {
         <div className="flex items-center gap-2.5 group relative">
           {/* Chat bubble — appears once, stays static */}
           <div
-            className={`transition-all duration-500 origin-bottom-right ${showBubble && !bubbleClosed
+            className={`pointer-events-none transition-all duration-500 origin-bottom-right ${showBubble && !bubbleClosed
                 ? 'opacity-100 scale-100 translate-y-0'
                 : 'opacity-0 scale-90 translate-y-2 pointer-events-none'
               } bg-white text-slate-700 text-xs font-medium px-3.5 py-2 rounded-xl rounded-br-sm shadow-lg border border-slate-100 whitespace-nowrap flex items-center gap-2`}
@@ -67,7 +67,7 @@ const FloatingButtons = () => {
             <span>Ada yang bisa dibantu? 👋</span>
             <button
               onClick={closeBubble}
-              className="ml-1 p-0.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+              className="pointer-events-auto ml-1 p-0.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
             >
               <X size={12} />
             </button>

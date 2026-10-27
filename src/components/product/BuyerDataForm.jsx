@@ -24,14 +24,12 @@ const BuyerDataForm = ({
     vendor,
     product,
 }) => {
-    const fieldsList = Array.isArray(dynamicFields) ? dynamicFields : [];
     const activeServer = product?.servers?.find(s => (s.vendor || '').toLowerCase() === (vendor || '').toLowerCase()) || product?.servers?.[0];
     const currentVendor = (selectedVariant?.vendor || activeServer?.vendor || vendor || product?.vendor || '').toLowerCase();
     const isOkeconnect = currentVendor === 'okeconnect';
-    const hasTargetField = fieldsList.some(f =>
-        f.key === 'customer_id' || f.key === 'target' || f.key === 'note' || f.key === 'user_id' || f.key === 'phone' || f.key === 'no_hp'
-    );
-    const isValidationAvailable = Boolean(selectedVariant?.validation?.available) || (isOkeconnect && (hasTargetField || fieldsList.length === 0));
+    // Ikuti metadata varian — backend juga hanya mewajibkan validasi saat
+    // validation.available = true. Jangan paksa semua produk OkeConnect.
+    const isValidationAvailable = Boolean(selectedVariant?.validation?.available);
     const isEwalletProduct = product?.category?.toLowerCase().includes('wallet') ||
         /dana|ovo|gopay|gojek|shopee|linkaja|isaku|maxim/i.test(product?.name || '');
     const isNumericGame = /mobile legend|magic chess|free fire/i.test(product?.name || '');
@@ -217,7 +215,7 @@ const BuyerDataForm = ({
                                             ? 'border-green-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/10'
                                             : validationError && isTargetField
                                                 ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/10'
-                                                : isOkeconnect && isTargetField && !validatedAccount?.valid
+                                                : isValidationAvailable && isTargetField && !validatedAccount?.valid
                                                     ? 'border-purple-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10'
                                                     : 'border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10'
                                     }`}

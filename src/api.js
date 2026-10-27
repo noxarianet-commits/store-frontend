@@ -80,7 +80,9 @@ api.interceptors.response.use(
         // bukan dialihkan ke halaman /error.
         // '/tickets' pelanggan (bukan /admin/tickets) juga di-bail-out: 401 di
         // sana wajar untuk tamu dan tidak boleh dianggap sesi admin berakhir.
+        const isPublicCheckoutRoute = url.includes('/validate') || url.includes('/payments/create');
         const isUserAuthRoute = url.includes('/auth') || url.includes('/balance')
+            || isPublicCheckoutRoute
             || (url.includes('/tickets') && !url.includes('/admin'));
         const isAdminSessionError = !isLoginAttempt && !isUserAuthRoute && (
             status === 401 ||
@@ -107,6 +109,7 @@ api.interceptors.response.use(
             url.includes('/auth') ||
             url.includes('/balance') ||
             url.includes('/validate') ||
+            url.includes('/payments/create') ||
             url.includes('/tickets') ||
             url.includes('/payments/status')
         ) {
@@ -132,7 +135,7 @@ api.interceptors.response.use(
 // Unified Product API methods
 api.getProducts = (params) => api.get('/products', { params });
 api.getProduct = (id) => api.get(`/products/${id}`);
-api.validateAccount = (data) => api.post('/products/validate', data);
+api.validateAccount = (data, config) => api.post('/products/validate', data, config);
 
 // Unified Admin Product API methods
 api.getAdminProducts = (params) => api.get('/admin/products/products', { params });
