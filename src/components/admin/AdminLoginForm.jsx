@@ -13,7 +13,7 @@ const AdminLoginForm = ({ loginData, setLoginData, showLoginPassword, setShowLog
                     <Store className="text-purple-500" size={32} />
                 </div>
                 <h1 className="text-2xl font-bold text-white">Panel Admin</h1>
-                <p className="text-gray-500 text-sm">Sistem Manajemen noxarianet</p>
+                <p className="text-gray-500 text-sm">Sistem Manajemen Noxarianet</p>
             </div>
 
             <form onSubmit={handleLogin} className="space-y-5">

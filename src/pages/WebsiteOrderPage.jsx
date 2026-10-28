@@ -70,8 +70,8 @@ const WebsiteOrderPage = () => {
             <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-purple-100/50 shadow-sm shadow-purple-600/[0.01]">
                 <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
                     <Link to="/" className="flex items-center gap-2.5">
-                        <img src="/logo.png" alt="noxarianet" className="w-9 h-9 rounded-lg object-contain" />
-                        <span className="text-xl font-bold tracking-tight text-slate-900">noxaria<span className="text-purple-600">net</span></span>
+                        <img src="/logo.png" alt="Noxarianet" className="w-9 h-9 rounded-lg object-contain" />
+                        <span className="text-xl font-bold tracking-tight text-slate-900">Noxaria<span className="text-purple-600">net</span></span>
                     </Link>
                 </div>
             </nav>
@@ -213,7 +213,7 @@ const WebsiteOrderPage = () => {
                     </button>
 
                     <p className="text-center text-[11px] text-slate-400">
-                        Pesanan akan dikirim ke WhatsApp Customer Service noxarianet.
+                        Pesanan akan dikirim ke WhatsApp Customer Service Noxarianet.
                     </p>
                 </motion.div>
             </main>

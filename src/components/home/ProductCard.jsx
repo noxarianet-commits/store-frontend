@@ -15,7 +15,7 @@ const ProductIcon = ({ product, fallbackIcon: FallbackIcon, className = '' }) =>
 
     if (isUrl && !imageError) {
         return (
-            <div className={`w-16 h-16 rounded-2xl overflow-hidden transition-all duration-300 mb-4 mt-1 group-hover:scale-110 border border-slate-100 bg-slate-50 flex items-center justify-center ${className}`}>
+            <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden transition-all duration-300 mb-3 sm:mb-4 mt-1 group-hover:scale-105 border border-slate-100 bg-slate-50 flex items-center justify-center flex-shrink-0 ${className}`}>
                 <img
                     src={imageUrl}
                     alt={product.name}
@@ -28,8 +28,8 @@ const ProductIcon = ({ product, fallbackIcon: FallbackIcon, className = '' }) =>
     }
 
     return (
-        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 mb-4 mt-1 ${iconColor} group-hover:scale-110 ${className}`}>
-            <FallbackIcon size={30} />
+        <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center transition-all duration-300 mb-3 sm:mb-4 mt-1 ${iconColor} group-hover:scale-105 flex-shrink-0 ${className}`}>
+            <FallbackIcon size={26} className="sm:w-7 sm:h-7" />
         </div>
     );
 };
@@ -64,7 +64,7 @@ const ProductCard = ({ product, showPrice = false }) => {
     return (
         <Link
             to={productLink}
-            className={`group relative bg-white hover:bg-purple-50/5 border border-purple-100 hover:border-purple-300 rounded-2xl p-5 transition-all duration-300 flex flex-col items-center text-center shadow-[0_2px_8px_rgba(124,58,237,0.02)] hover:shadow-[0_8px_20px_rgba(124,58,237,0.06)] ${isSoldOut ? 'opacity-60' : ''}`}
+            className={`group relative bg-white hover:bg-purple-50/10 border border-purple-100 hover:border-purple-300 rounded-2xl p-3.5 sm:p-5 transition-all duration-300 flex flex-col items-center text-center shadow-[0_2px_8px_rgba(124,58,237,0.03)] hover:shadow-[0_8px_20px_rgba(124,58,237,0.08)] ${isSoldOut ? 'opacity-60' : ''}`}
         >
             {isSoldOut && (
                 <span className="absolute top-3 left-3 text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider border bg-red-50 text-red-600 border-red-100 z-10">

@@ -51,9 +51,9 @@ export default function AuthPage() {
                     {/* Brand Header */}
                     <div className="pt-7 pb-3 px-6 text-center">
                         <Link to="/" className="inline-flex items-center gap-2.5 mb-2 hover:opacity-90 transition-opacity">
-                            <img src="/logo.png" alt="noxarianet" className="w-9 h-9 rounded-xl object-contain shadow-sm shadow-purple-500/20" />
+                            <img src="/logo.png" alt="Noxarianet" className="w-9 h-9 rounded-xl object-contain shadow-sm shadow-purple-500/20" />
                             <span className="text-xl font-bold tracking-tight text-slate-900">
-                                noxaria<span className="text-purple-600">net</span>
+                                Noxaria<span className="text-purple-600">net</span>
                             </span>
                         </Link>
                         <h1 className="text-lg sm:text-xl font-bold text-slate-800 tracking-tight">

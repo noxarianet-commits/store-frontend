@@ -151,8 +151,8 @@ const PaymentSuccessPage = () => {
             <nav className="sticky top-0 z-50 bg-[#0A0A0A]/95 backdrop-blur-xl border-b border-white/5">
                 <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
                     <Link to="/" className="flex items-center gap-2.5">
-                        <img src="/logo.png" alt="noxarianet" className="w-9 h-9 rounded-lg object-contain" />
-                        <span className="text-xl font-bold tracking-tight text-white">noxaria<span className="text-purple-400">net</span></span>
+                        <img src="/logo.png" alt="Noxarianet" className="w-9 h-9 rounded-lg object-contain" />
+                        <span className="text-xl font-bold tracking-tight text-white">Noxaria<span className="text-purple-400">net</span></span>
                     </Link>
                 </div>
             </nav>
@@ -407,7 +407,7 @@ const PaymentSuccessPage = () => {
                             {/* Trust */}
                             <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mt-5">
                                 <Shield size={14} className="text-green-500" />
-                                <span>Transaksi Aman & Bergaransi oleh noxarianet</span>
+                                <span>Transaksi Aman & Bergaransi oleh Noxarianet</span>
                             </div>
 
                             {/* Inline keyframes */}
@@ -562,7 +562,7 @@ const PaymentSuccessPage = () => {
                             {/* Trust */}
                             <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mt-5">
                                 <Shield size={14} className="text-green-500" />
-                                <span>Transaksi Aman & Bergaransi oleh noxarianet</span>
+                                <span>Transaksi Aman & Bergaransi oleh Noxarianet</span>
                             </div>
                         </div>
                     )}

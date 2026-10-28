@@ -36,7 +36,7 @@ const CSContactPage = () => {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                     <a
-                        href={getWaUrl(settings, 'Halo CS noxarianet, saya butuh bantuan.')}
+                        href={getWaUrl(settings, 'Halo CS Noxarianet, saya butuh bantuan.')}
                         target="_blank"
                         rel="noreferrer"
                         className="group bg-white border border-green-200 hover:border-green-400 hover:shadow-lg rounded-3xl p-6 transition-all hover:-translate-y-0.5"

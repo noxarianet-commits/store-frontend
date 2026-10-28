@@ -861,8 +861,8 @@ const ProductPage = () => {
         }
         const isWebProduct = product.name?.toLowerCase().includes('web') || product.category?.toLowerCase().includes('jasa');
         const message = isWebProduct
-            ? `Halo noxarianet! Saya ingin order Jasa Pembuatan Website.\n\n*Informasi Pembeli*\n- Nomor WA: ${formData.wa_number}\n- Email: ${formData.email}\n\n*Detail Pesanan*\n- Paket: ${selectedVariant?.name}\n- Estimasi Budget: ${budget}\n- Konsep/Fitur: ${conceptMsg}\n\nMohon bantuannya untuk detail lebih lanjut.`
-            : `Halo noxarianet! Saya ingin request script bot WA.\n\n*Informasi Pembeli*\n- Nomor WA: ${formData.wa_number}\n- Email: ${formData.email}\n\n*Konsep Script*\n${conceptMsg}\n\nMohon bantuannya untuk estimasi harga dan pengerjaan.`;
+            ? `Halo Noxarianet! Saya ingin order Jasa Pembuatan Website.\n\n*Informasi Pembeli*\n- Nomor WA: ${formData.wa_number}\n- Email: ${formData.email}\n\n*Detail Pesanan*\n- Paket: ${selectedVariant?.name}\n- Estimasi Budget: ${budget}\n- Konsep/Fitur: ${conceptMsg}\n\nMohon bantuannya untuk detail lebih lanjut.`
+            : `Halo Noxarianet! Saya ingin request script bot WA.\n\n*Informasi Pembeli*\n- Nomor WA: ${formData.wa_number}\n- Email: ${formData.email}\n\n*Konsep Script*\n${conceptMsg}\n\nMohon bantuannya untuk estimasi harga dan pengerjaan.`;
         window.open(getWaUrl(settings, message), '_blank');
     };
 
@@ -1048,8 +1048,8 @@ const ProductPage = () => {
             <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-purple-100/50 shadow-sm">
                 <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
                     <Link to="/" className="flex items-center gap-2.5">
-                        <img src="/logo.png" alt="noxarianet" className="w-9 h-9 rounded-lg object-contain" />
-                        <span className="text-xl font-bold tracking-tight text-slate-900">noxaria<span className="text-purple-600">net</span></span>
+                        <img src="/logo.png" alt="Noxarianet" className="w-9 h-9 rounded-lg object-contain" />
+                        <span className="text-xl font-bold tracking-tight text-slate-900">Noxaria<span className="text-purple-600">net</span></span>
                     </Link>
                 </div>
             </nav>
@@ -1171,7 +1171,7 @@ const ProductPage = () => {
                                     <button
                                         onClick={() => {
                                             if (isServiceProduct) {
-                                                const waText = `Halo noxarianet, saya ingin memesan ${product.name} - Varian: ${selectedVariant?.name || '-'}${(selectedVariant?.sell_price || selectedVariant?.price) ? ` dengan harga ${formatRp(selectedVariant.sell_price || selectedVariant.price)}` : ''}.`;
+                                                const waText = `Halo Noxarianet, saya ingin memesan ${product.name} - Varian: ${selectedVariant?.name || '-'}${(selectedVariant?.sell_price || selectedVariant?.price) ? ` dengan harga ${formatRp(selectedVariant.sell_price || selectedVariant.price)}` : ''}.`;
                                                 window.open(getWaUrl(settings, waText), '_blank');
                                             } else {
                                                 setStep(2);

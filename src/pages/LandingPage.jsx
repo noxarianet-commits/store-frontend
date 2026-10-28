@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Megaphone, X, ChevronDown, ChevronUp, ShoppingBag, CheckCircle2 } from 'lucide-react';
+import { Megaphone, X, ChevronDown, ChevronUp, ShoppingBag, CheckCircle2, Clock } from 'lucide-react';
 import api from '../api';
 import HeroSection from '../components/home/HeroSection';
 import CategoryTabs from '../components/home/CategoryTabs';
 import ProductCard from '../components/home/ProductCard';
+import StructuredProductList from '../components/home/StructuredProductList';
 import TestimonialCarousel from '../components/home/TestimonialCarousel';
 import { getWaNumber, getWaUrl, formatWaDisplay, getWaGroupLink } from '../utils/waUtils';
 import { useAuth } from '../contexts/AuthContext';
@@ -166,8 +167,8 @@ const LandingPage = () => {
             <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-purple-100/50 shadow-sm shadow-purple-600/[0.01]">
                 <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
                     <Link to="/" className="flex items-center gap-2.5">
-                        <img src="/logo.png" alt="noxarianet" className="w-9 h-9 rounded-lg object-contain" />
-                        <span className="text-xl font-bold tracking-tight text-slate-900">noxaria<span className="text-purple-600">net</span></span>
+                        <img src="/logo.png" alt="Noxarianet" className="w-9 h-9 rounded-lg object-contain" />
+                        <span className="text-xl font-bold tracking-tight text-slate-900">Noxaria<span className="text-purple-600">net</span></span>
                     </Link>
                     
                     <div>
@@ -219,21 +220,11 @@ const LandingPage = () => {
                             </p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                            {filteredProducts.map((product, index) => (
-                                <motion.div
-                                    key={product.id}
-                                    initial={{ opacity: 0, y: 15 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.02, duration: 0.25 }}
-                                >
-                                    <ProductCard
-                                        product={product}
-                                        showPrice={product.is_service_table}
-                                    />
-                                </motion.div>
-                            ))}
-                        </div>
+                        <StructuredProductList
+                            products={filteredProducts}
+                            activeTab={activeTab}
+                            searchQuery={searchQuery}
+                        />
                     )}
                 </section>
 
@@ -275,8 +266,8 @@ const LandingPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
                         <div>
                             <div className="flex items-center gap-2 mb-4">
-                                <img src="/logo.png" alt="noxarianet" className="w-7 h-7 rounded object-contain" />
-                                <span className="text-lg font-bold text-slate-900">noxaria<span className="text-purple-600">net</span></span>
+                                <img src="/logo.png" alt="Noxarianet" className="w-7 h-7 rounded object-contain" />
+                                <span className="text-lg font-bold text-slate-900">Noxaria<span className="text-purple-600">net</span></span>
                             </div>
                             <p className="text-[10px] font-extrabold text-slate-800 uppercase tracking-widest mb-1.5">Ekosistem Layanan Digital Otomatis</p>
                             <p className="text-xs text-slate-500 leading-relaxed">
@@ -419,29 +410,90 @@ const InfoModal = ({ show, settings, onClose, onDismiss24h, onJoinWA }) => {
         <AnimatePresence>
             {show && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-                    <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} transition={{ type: 'spring', stiffness: 320, damping: 26 }} className="relative w-full max-w-[290px] bg-white rounded-3xl p-5 shadow-2xl">
-                        <button onClick={onClose} className="absolute top-3.5 right-3.5 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all">
-                            <X size={16} />
+                    <motion.div 
+                        initial={{ opacity: 0 }} 
+                        animate={{ opacity: 1 }} 
+                        exit={{ opacity: 0 }} 
+                        className="absolute inset-0 bg-slate-950/60 backdrop-blur-md" 
+                        onClick={onClose} 
+                    />
+                    
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.92, y: 16 }} 
+                        animate={{ opacity: 1, scale: 1, y: 0 }} 
+                        exit={{ opacity: 0, scale: 0.92, y: 16 }} 
+                        transition={{ type: 'spring', stiffness: 360, damping: 28 }} 
+                        className="relative w-full max-w-[360px] bg-white rounded-[28px] p-6 shadow-2xl border border-purple-100/80 overflow-hidden"
+                    >
+                        {/* Ambient Glow Top */}
+                        <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-48 h-32 bg-gradient-to-b from-purple-500/15 to-transparent blur-2xl pointer-events-none rounded-full" />
+
+                        {/* Close Button Top Right */}
+                        <button 
+                            onClick={onClose} 
+                            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100/80 rounded-full transition-all"
+                            aria-label="Tutup"
+                        >
+                            <X size={18} />
                         </button>
-                        <div className="flex flex-col items-center text-center mb-4 mt-1">
-                            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center mb-3 shadow-md shadow-purple-500/20">
-                                <Megaphone className="text-white" size={22} />
+
+                        {/* Modal Header */}
+                        <div className="flex flex-col items-center text-center mt-1 mb-4">
+                            {/* Icon with Double Ring */}
+                            <div className="relative mb-3">
+                                <div className="w-14 h-14 bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-700 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/25 ring-4 ring-purple-50">
+                                    <Megaphone className="text-white" size={24} />
+                                </div>
                             </div>
-                            <h2 className="text-lg font-extrabold text-gray-900">Info Penting! 📢</h2>
-                            <p className="text-xs text-gray-600 mt-2 leading-relaxed px-1">
+
+                            {/* Badge Chip */}
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 border border-purple-100 text-purple-700 text-[11px] font-bold tracking-wide uppercase mb-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
+                                Pemberitahuan Resmi
+                            </span>
+
+                            <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">
+                                Info Penting! 📢
+                            </h2>
+
+                            {/* Info Box */}
+                            <div className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-3.5 mt-3 text-xs text-slate-600 leading-relaxed text-center">
                                 {settings?.info_modal_text || 'Bergabunglah dengan grup WhatsApp kami untuk mendapatkan info promo, update produk, dan penawaran eksklusif terbaru!'}
-                            </p>
+                            </div>
                         </div>
-                        <div className="border-t border-gray-100 mb-4" />
+
+                        {/* Action Buttons */}
                         <div className="flex flex-col gap-2.5 items-center w-full">
-                            <a href={waLink} target="_blank" rel="noreferrer" onClick={onJoinWA} className="w-full py-3 px-4 rounded-xl bg-[#25D366] text-white font-bold hover:bg-[#1da851] active:scale-95 transition-all text-xs flex items-center justify-center gap-2 shadow-md shadow-[#25D366]/20">
+                            <a 
+                                href={waLink} 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                onClick={onJoinWA} 
+                                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all"
+                            >
                                 <WaSvg /> Gabung Grup WhatsApp
                             </a>
-                            <button onClick={onClose} className="w-full py-2.5 px-4 rounded-xl border border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 hover:border-gray-300 active:scale-95 transition-all text-xs">Tutup</button>
-                            <button onClick={onDismiss24h} className="text-[11px] text-gray-400 hover:text-purple-600 transition-colors underline mt-0.5">
-                                Jangan tampilkan lagi selama 24 jam
+
+                            <button 
+                                onClick={onClose} 
+                                className="w-full py-2.5 px-4 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98] transition-all text-xs"
+                            >
+                                Tutup
                             </button>
+
+                            {/* Opsi 24 Jam yang Diperjelas */}
+                            <div className="w-full pt-1.5 border-t border-slate-100">
+                                <button 
+                                    onClick={onDismiss24h} 
+                                    className="w-full py-2.5 px-3 rounded-xl bg-purple-50/70 hover:bg-purple-100/80 border border-purple-200/70 hover:border-purple-300 text-purple-700 font-semibold text-xs transition-all flex items-center justify-center gap-2 group shadow-sm active:scale-[0.98]"
+                                >
+                                    <Clock size={14} className="text-purple-500 group-hover:rotate-45 transition-transform" />
+                                    <span>Jangan Tampilkan Lagi (24 Jam)</span>
+                                </button>
+                                <p className="text-[10px] text-slate-400 text-center mt-1">
+                                    Pemberitahuan tidak akan muncul kembali hingga 24 jam ke depan
+                                </p>
+                            </div>
                         </div>
                     </motion.div>
                 </div>
