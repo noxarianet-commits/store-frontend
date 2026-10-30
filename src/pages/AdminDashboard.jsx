@@ -77,7 +77,7 @@ const AdminDashboard = () => {
     };
 
     const fetchSettings = async () => {
-        try { const res = await api.get('/settings'); setSettings(res.data); }
+        try { const res = await api.getAdminSettings(); setSettings(res.data); }
         catch (e) { console.error('Gagal fetch settings:', e); }
     };
 
@@ -132,7 +132,7 @@ const AdminDashboard = () => {
     const fetchFeaturedProducts = useCallback(async () => {
         setFeaturedLoading(true);
         try {
-            const res = await api.getAdminProducts({ vendor: 'sekalipay' });
+            const res = await api.getAdminFeaturedProducts();
             setFeaturedProducts(res.data || []);
         } catch (e) { console.error('Gagal fetch featured products:', e); }
         setFeaturedLoading(false);

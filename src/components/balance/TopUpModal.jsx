@@ -4,6 +4,7 @@ import { X, Loader2, QrCode, CheckCircle2, RefreshCw, Clock, Info, AlertCircle }
 import api from '../../api';
 import { formatRp } from '../../utils/currencyUtils';
 import notify from '../../utils/notify';
+import { createPoller } from '../../utils/poller';
 
 const PRESET_AMOUNTS = [10000, 25000, 50000, 100000, 250000, 500000, 1000000];
 
@@ -59,36 +60,61 @@ export default function TopUpModal({ isOpen, onClose, balanceLimit, currentBalan
         return () => { isCancelled = true; };
     }, [isOpen, initialTopup]);
 
-    // Polling status pembayaran
+    // Polling status pembayaran. Self-scheduling so a slow request cannot
+    // overlap the next tick, and paused while the tab is hidden.
     useEffect(() => {
-        let interval;
         const refId = topupData?.topup_id || topupData?.reference_id || topupData?.id;
+        if (!isOpen || !refId || isSuccess) return undefined;
 
-        if (isOpen && refId && !isSuccess) {
-            const poll = async () => {
-                try {
-                    const res = await api.getTopupStatus(refId);
-                    const status = res.data?.status;
-                    if (status === 'completed' || status === 'success') {
-                        setIsSuccess(true);
-                        clearInterval(interval);
-                        setTimeout(() => {
-                            onSuccess();
-                            resetState();
-                        }, 2000);
-                    } else if (status === 'failed' || status === 'cancelled' || status === 'expired') {
-                        setError('Top up gagal, dibatalkan, atau kadaluarsa.');
-                        setTopupData(null);
-                        clearInterval(interval);
-                    }
-                } catch {
-                    // Ignore poll errors
+        let poller = null;
+
+        const handleError = (err) => {
+            if (err?.code === 'ERR_CANCELED' || err?.name === 'CanceledError') return;
+            if ([401, 403, 404].includes(err?.response?.status)) {
+                poller?.stop();
+            }
+        };
+
+        poller = createPoller({
+            initialDelayMs: 8000,
+            maxDurationMs: 35 * 60 * 1000,
+            task: async () => {
+                const res = await api.getTopupStatus(refId);
+                const status = res.data?.status;
+
+                if (status === 'completed' || status === 'success') {
+                    setIsSuccess(true);
+                    setTimeout(() => {
+                        onSuccess();
+                        resetState();
+                    }, 2000);
+                    return false;
                 }
-            };
 
-            interval = setInterval(poll, 4000);
-        }
-        return () => clearInterval(interval);
+                if (status === 'failed' || status === 'cancelled' || status === 'expired') {
+                    setError('Top up gagal, dibatalkan, atau kadaluarsa.');
+                    setTopupData(null);
+                    return false;
+                }
+
+                return true;
+            },
+            onError: handleError,
+        });
+
+        const handleVisibility = () => {
+            if (document.hidden) poller.pause();
+            else poller.resume();
+        };
+
+        document.addEventListener('visibilitychange', handleVisibility);
+        poller.start();
+        if (document.hidden) poller.pause();
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibility);
+            poller.stop();
+        };
     }, [isOpen, topupData, isSuccess, onSuccess, resetState]);
 
     const handleManualCheck = async () => {

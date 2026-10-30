@@ -60,7 +60,12 @@ const OrdersTab = ({ openOrderModal, deleteOrder, refreshTrigger }) => {
     }, [activeSearch, statusFilter]);
 
     useEffect(() => {
-        fetchOrders(1, activeSearch, statusFilter);
+        // Defer so the fetch's setState calls happen in a timer callback, not
+        // synchronously inside the effect body.
+        const timer = setTimeout(() => {
+            fetchOrders(1, activeSearch, statusFilter);
+        }, 0);
+        return () => clearTimeout(timer);
     }, [refreshTrigger]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleSearch = (e) => {
@@ -92,8 +97,10 @@ const OrdersTab = ({ openOrderModal, deleteOrder, refreshTrigger }) => {
     };
 
     const handleDelete = async (id) => {
+        // deleteOrder() already refreshes stats and increments refreshTrigger,
+        // which triggers the effect above. Calling fetchOrders again here caused
+        // a duplicate GET /orders for every deletion.
         await deleteOrder(id);
-        fetchOrders(page, activeSearch, statusFilter);
     };
 
     return (

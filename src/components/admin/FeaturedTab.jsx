@@ -133,7 +133,8 @@ const FeaturedTab = ({
                         </div>
                         <div className="divide-y divide-white/5">
                             {prods.map(product => {
-                                const minPrice = Math.min(...(product.variants || []).map(v => v.sell_price || v.price || 0));
+                                const prices = (product.variants || []).map(v => v.sell_price || v.price || 0);
+                                const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
                                 return (
                                     <div
                                         key={product.id}

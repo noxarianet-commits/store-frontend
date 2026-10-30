@@ -13,6 +13,7 @@ import { normalizePhoneNumber } from '../utils/phoneUtils';
 import { formatRp } from '../utils/currencyUtils';
 import { getWaNumber, getWaUrl } from '../utils/waUtils';
 import { saveOrderAccessToken } from '../utils/orderToken';
+import { useOrderStatusPolling } from '../hooks/useOrderStatusPolling';
 
 // New Modular Components
 import ServerSelector from '../components/product/ServerSelector';
@@ -118,7 +119,6 @@ const ProductPage = () => {
     const [paymentResult, setPaymentResult] = useState(null);
     const [orderStatus, setOrderStatus] = useState(null);
     const [showAllVariants, setShowAllVariants] = useState(false);
-    const pollingRef = useRef(null);
     const completedAlertShown = useRef(false);
     const hasRestored = useRef(false);
     const isSubmittingRef = useRef(false);
@@ -126,6 +126,20 @@ const ProductPage = () => {
 
     // ── SessionStorage persistence ─────────────────────────────────────
     const storageKey = `payment_${id}`;
+
+    // Status polling is self-scheduling, pauses in hidden tabs, and stops on
+    // terminal status/404. No setInterval overlap.
+    useOrderStatusPolling({
+        orderId: paymentResult?.order_id,
+        enabled: step === 3 && Boolean(paymentResult?.order_id),
+        onUpdate: setOrderStatus,
+        onError: (err) => {
+            if (err?.response?.status === 404) {
+                // A stale order in sessionStorage must not poll forever.
+                sessionStorage.removeItem(storageKey);
+            }
+        },
+    });
 
     useEffect(() => {
         try {
@@ -279,40 +293,7 @@ const ProductPage = () => {
         }
     }, [orderStatus?.status, product, formData.wa_number, paymentResult]);
 
-    // ── Polling status order setelah payment dibuat ──────────────────────
-    useEffect(() => {
-        const orderId = paymentResult?.order_id;
-        if (step !== 3 || !orderId) return;
-
-        const stopPolling = () => {
-            if (pollingRef.current) {
-                clearInterval(pollingRef.current);
-                pollingRef.current = null;
-            }
-        };
-
-        const pollStatus = async () => {
-            try {
-                const res = await api.get(`/payments/status/${orderId}`);
-                const status = res.data?.data?.status;
-                if (res.data?.data) {
-                    setOrderStatus(res.data.data);
-                }
-
-                if (status === 'COMPLETED' || status === 'FAILED' || status === 'CANCELLED') {
-                    stopPolling();
-                }
-            } catch (err) {
-                // Silent catch: network/rate limit glitch won't crash or break polling
-                console.warn('Polling status warning:', err.message);
-            }
-        };
-
-        stopPolling();
-        pollingRef.current = setInterval(pollStatus, 6000);
-
-        return () => stopPolling();
-    }, [step, paymentResult?.order_id]);
+    // ── Polling status order ditangani oleh useOrderStatusPolling ─────────
 
     // ── Download QR (fetch atau fallback ke new tab jika CORS blocked) ───────────────
     const downloadQR = async (qrUrl) => {
@@ -489,7 +470,7 @@ const ProductPage = () => {
         if (!paymentResult?.order_id) return;
         setIsRefreshing(true);
         try {
-            const res = await api.get(`/payments/status/${paymentResult.order_id}?force=true`);
+            const res = await api.getPaymentStatus(paymentResult.order_id, { params: { force: 'true' } });
             if (res.data?.data) setOrderStatus(res.data.data);
         } catch { /* ignore */ }
         setIsRefreshing(false);

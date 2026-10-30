@@ -137,10 +137,22 @@ api.getProducts = (params) => api.get('/products', { params });
 api.getProduct = (id) => api.get(`/products/${id}`);
 api.validateAccount = (data, config) => api.post('/products/validate', data, config);
 
+// Order status uses the slim projection by default. The backend still accepts
+// the full response for older clients that do not send ?view=slim.
+api.getPaymentStatus = (orderId, config = {}) => {
+    const { params, ...rest } = config;
+    return api.get(`/payments/status/${orderId}`, {
+        ...rest,
+        params: { view: 'slim', ...(params || {}) },
+    });
+};
+
 // Unified Admin Product API methods
 api.getAdminProducts = (params) => api.get('/admin/products/products', { params });
+api.getAdminFeaturedProducts = () => api.get('/admin/products/featured-options');
 api.getAdminSyncStatus = (vendor) => api.get('/admin/products/sync-status', { params: { vendor } });
 api.getAdminBalance = (vendor) => api.get('/admin/products/balance', { params: { vendor } });
+api.getAdminSettings = () => api.get('/admin/settings');
 api.triggerSync = (vendor, type = 'full') => api.post('/admin/products/sync', { vendor, type });
 api.updateAdminMarkup = (productId, data) => api.patch(`/admin/products/products/${productId}/markup`, data);
 api.toggleAdminProduct = (productId) => api.patch(`/admin/products/products/${productId}/toggle`);

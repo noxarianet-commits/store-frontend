@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -8,6 +8,7 @@ import {
 import api from '../api';
 import { getWaUrl } from '../utils/waUtils';
 import { saveOrderAccessToken } from '../utils/orderToken';
+import { useOrderStatusPolling } from '../hooks/useOrderStatusPolling';
 
 // ══════════════════════════════════════════════════════════════════════════
 // PaymentSuccessPage
@@ -28,10 +29,20 @@ const PaymentSuccessPage = () => {
     }, [orderId, searchParams]);
 
     const [orderData, setOrderData] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(Boolean(orderId));
     const [copied, setCopied] = useState('');
     const [settings, setSettings] = useState({});
-    const pollingRef = useRef(null);
+
+    useOrderStatusPolling({
+        orderId,
+        enabled: Boolean(orderId),
+        initialDelayMs: 1500,
+        onUpdate: (data) => {
+            setOrderData(data);
+            setLoading(false);
+        },
+        onError: () => setLoading(false),
+    });
 
     useEffect(() => {
         api.get('/settings').then(res => setSettings(res.data || {})).catch(() => {});
@@ -43,49 +54,7 @@ const PaymentSuccessPage = () => {
         setTimeout(() => setCopied(''), 2000);
     };
 
-    // ── Polling order status (with incremental backoff) ───────────────────
-    useEffect(() => {
-        if (!orderId) {
-            setLoading(false);
-            return;
-        }
-
-        let isSubscribed = true;
-        let delay = 4000; // Start with 4 seconds
-
-        const fetchStatus = async () => {
-            try {
-                const res = await api.get(`/payments/status/${orderId}`);
-                const data = res.data?.data;
-                if (!isSubscribed) return;
-
-                setOrderData(data);
-                setLoading(false);
-
-                // Berhenti polling jika sudah final
-                if (data?.status === 'COMPLETED' || data?.status === 'FAILED' || data?.status === 'CANCELLED') {
-                    return;
-                }
-
-                // Increment delay up to max 15 seconds
-                delay = Math.min(delay + 2000, 15000);
-                pollingRef.current = setTimeout(fetchStatus, delay);
-            } catch {
-                if (isSubscribed) {
-                    setLoading(false);
-                    // Retry with 10s delay on error
-                    pollingRef.current = setTimeout(fetchStatus, 10000);
-                }
-            }
-        };
-
-        fetchStatus();
-
-        return () => {
-            isSubscribed = false;
-            if (pollingRef.current) clearTimeout(pollingRef.current);
-        };
-    }, [orderId]);
+    // ── Polling order status ditangani oleh useOrderStatusPolling ─────────
 
     // ── Status config ────────────────────────────────────────────────────
     const statusConfig = {
@@ -388,7 +357,7 @@ const PaymentSuccessPage = () => {
                             {/* Manual refresh button */}
                             <button
                                 onClick={async () => {
-                                    const res = await api.get(`/payments/status/${orderId}`).catch(() => null);
+                                    const res = await api.getPaymentStatus(orderId).catch(() => null);
                                     if (res) setOrderData(res.data?.data);
                                 }}
                                 className="w-full flex items-center justify-center gap-2 text-xs text-gray-500 hover:text-gray-300 transition-colors py-2 mb-4"
@@ -542,7 +511,7 @@ const PaymentSuccessPage = () => {
                             {(orderData?.status === 'PENDING' || orderData?.status === 'PROCESSING') && (
                                 <button
                                     onClick={async () => {
-                                        const res = await api.get(`/payments/status/${orderId}`).catch(() => null);
+                                        const res = await api.getPaymentStatus(orderId).catch(() => null);
                                         if (res) setOrderData(res.data?.data);
                                     }}
                                     className="w-full flex items-center justify-center gap-2 text-xs text-gray-500 hover:text-gray-300 transition-colors py-2 mb-4"
