@@ -1,4 +1,4 @@
-import React from 'react';
+import { StickyNote } from 'lucide-react';
 import { formatRp } from '../../utils/currencyUtils';
 
 const ORDER_PROCESS_CONFIG = {
@@ -42,7 +42,7 @@ const VariantSelector = ({ variants, selectedVariant, setSelectedVariant, showAl
                                             : 'border-slate-200 bg-white hover:border-purple-300 hover:bg-purple-50/30'
                                 }`}
                             >
-                                <div className="flex flex-col gap-0.5 w-full">
+                                <div className="flex flex-col gap-0.5 w-full pr-4">
                                     <span className={`text-[11px] sm:text-xs font-bold leading-snug ${outOfStock ? 'text-slate-400 line-through' : isSelected ? 'text-purple-700' : 'text-slate-700'}`}>
                                         {variant.name}
                                     </span>
@@ -61,6 +61,11 @@ const VariantSelector = ({ variants, selectedVariant, setSelectedVariant, showAl
                                         )
                                     )}
                                 </div>
+                                {variant.note && (
+                                    <span className="absolute right-1.5 top-1.5 text-amber-500" title="Ada catatan untuk paket ini">
+                                        <StickyNote size={11} />
+                                    </span>
+                                )}
                             </button>
                         );
                     })}

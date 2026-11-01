@@ -1,5 +1,5 @@
 import { Search, Loader2, Package, CheckCircle2, DollarSign, Zap,
-    ChevronDown, Eye, EyeOff } from 'lucide-react';
+    ChevronDown, Eye, EyeOff, StickyNote } from 'lucide-react';
 
 const OkeconnectTab = ({
     okeconnectProducts, okeconnectBalance, okeconnectSync, okeconnectLoading,
@@ -7,7 +7,7 @@ const OkeconnectTab = ({
     handleSync, handleGlobalMarkup, handleMarkupUpdate, handleToggleProduct,
     syncInProgress, globalMarkupValue, setGlobalMarkupValue,
     expandedProduct, setExpandedProduct,
-    handleToggleVariantHidden
+    handleToggleVariantHidden, onEditVariantNote
 }) => {
     const filtered = (okeconnectProducts || []).filter(p =>
         p.name?.toLowerCase().includes((okeconnectSearch || '').toLowerCase()) ||
@@ -196,6 +196,11 @@ const OkeconnectTab = ({
                                                                         <p className={`text-xs font-medium truncate ${variant.is_hidden ? 'text-gray-500 line-through' : 'text-white'}`}>{variant.name}</p>
                                                                     </div>
                                                                     <p className="text-[9px] text-gray-500 font-mono">{variant.id || variant.sku || '—'}</p>
+                                                                    {variant.note && (
+                                                                        <p className="mt-0.5 max-w-[190px] truncate text-[9px] text-amber-400/80" title={variant.note}>
+                                                                            {variant.note.split('\n')[0]}
+                                                                        </p>
+                                                                    )}
                                                                 </div>
                                                                 <p className="col-span-2 text-xs text-gray-400 text-right">Rp {variant.base_price?.toLocaleString('id-ID')}</p>
                                                                 <div className="col-span-2">
@@ -218,7 +223,14 @@ const OkeconnectTab = ({
                                                                         {variant.stock > 0 ? variant.stock : 'Habis'}
                                                                     </span>
                                                                 </div>
-                                                                <div className="col-span-2 flex justify-center">
+                                                                <div className="col-span-2 flex justify-center gap-1">
+                                                                    <button
+                                                                        onClick={() => onEditVariantNote?.(product, variant)}
+                                                                        className={`p-1.5 rounded-lg transition-all text-xs ${variant.note ? 'bg-amber-500/15 text-amber-400 hover:bg-amber-500/25' : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'}`}
+                                                                        title={variant.note ? 'Edit catatan varian' : 'Tambah catatan varian'}
+                                                                    >
+                                                                        <StickyNote size={13} />
+                                                                    </button>
                                                                     <button
                                                                         onClick={() => handleToggleVariantHidden(product.id, variant.id || variant.db_id)}
                                                                         className={`p-1.5 rounded-lg transition-all text-xs ${variant.is_hidden ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'bg-green-500/10 text-green-400 hover:bg-green-500/20'}`}

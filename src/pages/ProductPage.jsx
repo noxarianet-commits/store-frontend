@@ -21,6 +21,7 @@ import VariantSelector from '../components/product/VariantSelector';
 import BuyerDataForm from '../components/product/BuyerDataForm';
 import { getTargetIdentifier, getSafeAccountName } from '../utils/accountValidationUtils';
 import PaymentStep from '../components/product/PaymentStep';
+import ProductNote from '../components/ui/ProductNote';
 import { useAuth } from '../contexts/AuthContext';
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -65,6 +66,25 @@ function CountdownTimer({ expiredAt }) {
         <div className="flex items-center gap-1.5 text-yellow-600 text-xs font-semibold">
             <Clock size={13} />
             <span>Kadaluarsa dalam: <span className="font-mono font-bold">{remaining}</span></span>
+        </div>
+    );
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// SUB-COMPONENT — Variant Note Callout
+// ══════════════════════════════════════════════════════════════════════════
+function VariantNoteCallout({ note, className = '' }) {
+    if (!note) return null;
+
+    return (
+        <div className={`bg-amber-50/70 border border-amber-100 rounded-xl p-3.5 ${className}`}>
+            <div className="flex items-start gap-2.5">
+                <Info size={15} className="text-amber-600 shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                    <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wider mb-1">Catatan Paket</p>
+                    <ProductNote text={note} className="text-xs text-amber-900" />
+                </div>
+            </div>
         </div>
     );
 }
@@ -579,8 +599,11 @@ const ProductPage = () => {
                     const activeVariants = activeServer?.variants || foundProduct.variants || [];
                     const firstInStock = activeVariants.find(v => v.stock > 0);
                     setSelectedVariant(prev => {
-                        if (prev && activeVariants.some(v => (v.id === prev.id || v.sku === prev.sku) && (v.vendor === prev.vendor))) {
-                            return prev;
+                        if (prev) {
+                            const freshMatch = activeVariants.find(v =>
+                                (v.id === prev.id || v.sku === prev.sku) && v.vendor === prev.vendor
+                            );
+                            if (freshMatch) return freshMatch;
                         }
                         return firstInStock || activeVariants[0] || null;
                     });
@@ -653,8 +676,11 @@ const ProductPage = () => {
         if (currentVariants && currentVariants.length > 0) {
             const cheapestInStock = currentVariants.find(v => v.stock > 0) || currentVariants[0];
             setSelectedVariant(prev => {
-                if (prev && currentVariants.some(v => (v.id === prev.id || v.sku === prev.sku) && (v.vendor === prev.vendor))) {
-                    return prev;
+                if (prev) {
+                    const freshMatch = currentVariants.find(v =>
+                        (v.id === prev.id || v.sku === prev.sku) && v.vendor === prev.vendor
+                    );
+                    if (freshMatch) return freshMatch;
                 }
                 return cheapestInStock;
             });
@@ -1131,6 +1157,7 @@ const ProductPage = () => {
                                     showAllVariants={showAllVariants}
                                     setShowAllVariants={setShowAllVariants}
                                 />
+                                <VariantNoteCallout note={selectedVariant?.note} className="mb-6" />
                                 {/* Features */}
                                 {product.features && product.features.length > 0 && (
                                     <div className="border-t border-slate-100 pt-5 mb-6 mt-6">
@@ -1175,6 +1202,8 @@ const ProductPage = () => {
                         {step === 2 && (() => {
                             return (
                                 <div>
+                                    <VariantNoteCallout note={selectedVariant?.note} className="mb-5" />
+
                                     <BuyerDataForm
                                         formData={formData}
                                         handleFormChange={handleFormChange}
@@ -1194,7 +1223,7 @@ const ProductPage = () => {
                                         vendor={vendor}
                                         product={product}
                                     />
-                                    
+
                                     {/* Order Summary */}
                                     {selectedVariant?.price > 0 && (
                                         <div className="bg-purple-50/50 border border-purple-100 rounded-xl p-4 mb-5 text-sm">

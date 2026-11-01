@@ -158,6 +158,7 @@ api.updateAdminMarkup = (productId, data) => api.patch(`/admin/products/products
 api.toggleAdminProduct = (productId) => api.patch(`/admin/products/products/${productId}/toggle`);
 api.toggleAdminFeatured = (productId) => api.patch(`/admin/products/products/${productId}/featured`);
 api.toggleVariantHidden = (variantId) => api.patch(`/admin/products/variants/${variantId}/toggle-hidden`);
+api.updateVariantNote = (productId, variantId, note) => api.patch(`/admin/products/products/${productId}/variant/${variantId}/note`, { note });
 api.applyGlobalMarkup = (vendor, markup) => api.post('/admin/products/global-markup', { vendor, markup });
 
 // Auth

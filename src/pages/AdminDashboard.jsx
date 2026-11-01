@@ -13,6 +13,7 @@ import SekalipayTab from '../components/admin/SekalipayTab';
 import RevenueTab from '../components/admin/RevenueTab';
 import ProductsTab from '../components/admin/ProductsTab';
 import ProductModal from '../components/admin/ProductModal';
+import VariantNoteModal from '../components/admin/VariantNoteModal';
 import OrdersTab from '../components/admin/OrdersTab';
 import OrderModal from '../components/admin/OrderModal';
 import SettingsTab from '../components/admin/SettingsTab';
@@ -58,6 +59,7 @@ const AdminDashboard = () => {
     const [isAddingProduct, setIsAddingProduct] = useState(false);
     const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
     const [editingOrder, setEditingOrder] = useState(null);
+    const [noteTarget, setNoteTarget] = useState(null);
 
     // Password change
     const [passwordData, setPasswordData] = useState({ current_password: '', new_password: '', confirm_password: '' });
@@ -392,6 +394,33 @@ const AdminDashboard = () => {
         if (confirmed) { await api.delete(`/services/${id}`); await fetchServices(); notifySuccess('Produk berhasil dihapus!'); }
     };
 
+    // ---- Variant notes ----
+    const openVariantNoteModal = (product, variant, vendor) => {
+        setNoteTarget({
+            vendor,
+            productId: product.id,
+            variantId: variant.id || variant.db_id,
+            productName: product.name,
+            variantName: variant.name,
+            note: variant.note || '',
+        });
+    };
+
+    const saveVariantNote = async (note) => {
+        if (!noteTarget) return false;
+        try {
+            await api.updateVariantNote(noteTarget.productId, noteTarget.variantId, note);
+            if (noteTarget.vendor === 'okeconnect') await fetchOkeconnect();
+            else await fetchSekalipay();
+            notifySuccess('Catatan varian berhasil disimpan!');
+            setNoteTarget(null);
+            return true;
+        } catch (err) {
+            notifyError(err.response?.data?.error || 'Gagal menyimpan catatan varian');
+            return false;
+        }
+    };
+
     // ---- Order CRUD ----
     const openOrderModal = (order = null) => { setEditingOrder(order); setIsOrderModalOpen(true); };
     const saveOrder = async (form) => {
@@ -478,6 +507,7 @@ const AdminDashboard = () => {
                             globalMarkupValue={globalMarkupValue} setGlobalMarkupValue={setGlobalMarkupValue}
                             expandedProduct={expandedProduct} setExpandedProduct={setExpandedProduct}
                             handleToggleVariantHidden={handleToggleVariantHidden}
+                            onEditVariantNote={(product, variant) => openVariantNoteModal(product, variant, 'sekalipay')}
                         />
                     )}
                     {activeTab === 'okeconnect' && (
@@ -491,6 +521,7 @@ const AdminDashboard = () => {
                             globalMarkupValue={globalMarkupValue} setGlobalMarkupValue={setGlobalMarkupValue}
                             expandedProduct={expandedProduct} setExpandedProduct={setExpandedProduct}
                             handleToggleVariantHidden={handleOkeconnectToggleVariantHidden}
+                            onEditVariantNote={(product, variant) => openVariantNoteModal(product, variant, 'okeconnect')}
                         />
                     )}
                     {activeTab === 'revenue' && <RevenueTab orders={orders} settings={settings} updateSetting={updateSetting} />}
@@ -528,6 +559,16 @@ const AdminDashboard = () => {
             <AnimatePresence>
                 {isModalOpen && <ProductModal isAdding={isAddingProduct} editingProduct={editingProduct} onClose={() => { setIsModalOpen(false); setEditingProduct(null); setIsAddingProduct(false); }} onSave={saveProduct} />}
                 {isOrderModalOpen && <OrderModal editingOrder={editingOrder} onClose={() => { setIsOrderModalOpen(false); setEditingOrder(null); }} onSave={saveOrder} />}
+                {noteTarget && (
+                    <VariantNoteModal
+                        key={`${noteTarget.productId}-${noteTarget.variantId}`}
+                        productName={noteTarget.productName}
+                        variantName={noteTarget.variantName}
+                        initialNote={noteTarget.note}
+                        onClose={() => setNoteTarget(null)}
+                        onSave={saveVariantNote}
+                    />
+                )}
             </AnimatePresence>
         </div>
     );
