@@ -150,13 +150,20 @@ api.getPaymentStatus = (orderId, config = {}) => {
 // Unified Admin Product API methods
 api.getAdminProducts = (params) => api.get('/admin/products/products', { params });
 api.getAdminFeaturedProducts = () => api.get('/admin/products/featured-options');
-api.getAdminSyncStatus = (vendor) => api.get('/admin/products/sync-status', { params: { vendor } });
+api.getAdminSyncStatus = (vendor, productType = 'prepaid') => api.get('/admin/products/sync-status', {
+    params: { vendor, product_type: productType },
+});
 api.getAdminBalance = (vendor) => api.get('/admin/products/balance', { params: { vendor } });
 api.getAdminSettings = () => api.get('/admin/settings');
-api.triggerSync = (vendor, type = 'full') => api.post('/admin/products/sync', { vendor, type });
+api.triggerSync = (vendor, type = 'full', productType = 'prepaid') => api.post('/admin/products/sync', {
+    vendor,
+    type,
+    product_type: productType,
+});
 api.updateAdminMarkup = (productId, data) => api.patch(`/admin/products/products/${productId}/markup`, data);
 api.toggleAdminProduct = (productId) => api.patch(`/admin/products/products/${productId}/toggle`);
 api.toggleAdminFeatured = (productId) => api.patch(`/admin/products/products/${productId}/featured`);
+api.updateAdminChannels = (productId, channels) => api.patch(`/admin/products/products/${productId}/channels`, { channels });
 api.toggleVariantHidden = (variantId) => api.patch(`/admin/products/variants/${variantId}/toggle-hidden`);
 api.updateVariantNote = (productId, variantId, note) => api.patch(`/admin/products/products/${productId}/variant/${variantId}/note`, { note });
 api.applyGlobalMarkup = (vendor, markup) => api.post('/admin/products/global-markup', { vendor, markup });

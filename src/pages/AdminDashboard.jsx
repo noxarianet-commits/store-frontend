@@ -40,8 +40,10 @@ const AdminDashboard = () => {
     const [sekalipayLoading, setSekalipayLoading] = useState(false);
     const [sekalipaySearch, setSekalipaySearch] = useState('');
     const [okeconnectProducts, setOkeconnectProducts] = useState([]);
+    const [okeconnectPostpaidProducts, setOkeconnectPostpaidProducts] = useState([]);
     const [okeconnectBalance, setOkeconnectBalance] = useState(null);
     const [okeconnectSync, setOkeconnectSync] = useState(null);
+    const [okeconnectPostpaidSync, setOkeconnectPostpaidSync] = useState(null);
     const [okeconnectLoading, setOkeconnectLoading] = useState(false);
     const [okeconnectSearch, setOkeconnectSearch] = useState('');
     const [expandedProduct, setExpandedProduct] = useState(null);
@@ -101,14 +103,18 @@ const AdminDashboard = () => {
     const fetchOkeconnect = useCallback(async () => {
         setOkeconnectLoading(true);
         try {
-            const [prodRes, balRes, syncRes] = await Promise.all([
-                api.getAdminProducts({ vendor: 'okeconnect' }).catch(() => ({ data: [] })),
+            const [prepaidRes, postpaidRes, balRes, syncRes, postpaidSyncRes] = await Promise.all([
+                api.getAdminProducts({ vendor: 'okeconnect', product_type: 'prepaid' }).catch(() => ({ data: [] })),
+                api.getAdminProducts({ vendor: 'okeconnect', product_type: 'postpaid' }).catch(() => ({ data: [] })),
                 api.getAdminBalance('okeconnect').catch(() => ({ data: null })),
-                api.getAdminSyncStatus('okeconnect').catch(() => ({ data: null }))
+                api.getAdminSyncStatus('okeconnect', 'prepaid').catch(() => ({ data: null })),
+                api.getAdminSyncStatus('okeconnect', 'postpaid').catch(() => ({ data: null }))
             ]);
-            setOkeconnectProducts(prodRes.data || []);
+            setOkeconnectProducts(prepaidRes.data || []);
+            setOkeconnectPostpaidProducts(postpaidRes.data || []);
             setOkeconnectBalance(balRes.data?.data || balRes.data);
             setOkeconnectSync(syncRes.data?.lastSync || syncRes.data);
+            setOkeconnectPostpaidSync(postpaidSyncRes.data?.lastSync || postpaidSyncRes.data);
         } catch (e) { console.error('Gagal fetch okeconnect:', e); }
         setOkeconnectLoading(false);
     }, []);
@@ -313,16 +319,27 @@ const AdminDashboard = () => {
     };
 
     // ---- OkeConnect handlers ----
-    const handleOkeconnectSync = async (type = 'full') => {
+    const handleOkeconnectSync = async (type = 'full', productType = 'prepaid') => {
         setSyncInProgress(true);
         try {
-            const res = await api.triggerSync('okeconnect', type);
-            notifySuccess(`Sync berhasil: ${res.data.productCount || res.data.productsUpserted || 0} produk disinkronkan`);
+            const res = await api.triggerSync('okeconnect', type, productType);
+            const label = productType === 'postpaid' ? 'tagihan' : 'prepaid';
+            notifySuccess(`Sync ${label} berhasil: ${res.data.productCount || res.data.productsUpserted || 0} produk disinkronkan`);
             await fetchOkeconnect();
         } catch (err) {
             notifyError(err.response?.data?.error || 'Sync OkeConnect gagal');
         }
         setSyncInProgress(false);
+    };
+
+    const handleOkeconnectSetChannels = async (productId, channels) => {
+        try {
+            await api.updateAdminChannels(productId, channels);
+            await fetchOkeconnect();
+            notifySuccess('Channel produk berhasil diperbarui.');
+        } catch (err) {
+            notifyError(err.response?.data?.error || 'Gagal memperbarui channel produk');
+        }
     };
 
     const handleOkeconnectGlobalMarkup = async () => {
@@ -512,11 +529,16 @@ const AdminDashboard = () => {
                     )}
                     {activeTab === 'okeconnect' && (
                         <OkeconnectTab
-                            okeconnectProducts={okeconnectProducts} okeconnectBalance={okeconnectBalance}
-                            okeconnectSync={okeconnectSync} okeconnectLoading={okeconnectLoading}
+                            okeconnectProducts={okeconnectProducts}
+                            okeconnectPostpaidProducts={okeconnectPostpaidProducts}
+                            okeconnectBalance={okeconnectBalance}
+                            okeconnectSync={okeconnectSync}
+                            okeconnectPostpaidSync={okeconnectPostpaidSync}
+                            okeconnectLoading={okeconnectLoading}
                             okeconnectSearch={okeconnectSearch} setOkeconnectSearch={setOkeconnectSearch}
                             handleSync={handleOkeconnectSync} handleGlobalMarkup={handleOkeconnectGlobalMarkup}
                             handleMarkupUpdate={handleOkeconnectMarkupUpdate} handleToggleProduct={handleOkeconnectToggleProduct}
+                            handleSetChannels={handleOkeconnectSetChannels}
                             syncInProgress={syncInProgress}
                             globalMarkupValue={globalMarkupValue} setGlobalMarkupValue={setGlobalMarkupValue}
                             expandedProduct={expandedProduct} setExpandedProduct={setExpandedProduct}
@@ -558,7 +580,7 @@ const AdminDashboard = () => {
             {/* Modals */}
             <AnimatePresence>
                 {isModalOpen && <ProductModal isAdding={isAddingProduct} editingProduct={editingProduct} onClose={() => { setIsModalOpen(false); setEditingProduct(null); setIsAddingProduct(false); }} onSave={saveProduct} />}
-                {isOrderModalOpen && <OrderModal editingOrder={editingOrder} onClose={() => { setIsOrderModalOpen(false); setEditingOrder(null); }} onSave={saveOrder} />}
+                {isOrderModalOpen && <OrderModal key={editingOrder?.id || 'new'} editingOrder={editingOrder} onClose={() => { setIsOrderModalOpen(false); setEditingOrder(null); }} onSave={saveOrder} />}
                 {noteTarget && (
                     <VariantNoteModal
                         key={`${noteTarget.productId}-${noteTarget.variantId}`}
