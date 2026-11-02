@@ -70,7 +70,7 @@ class SPAHandler(http.server.SimpleHTTPRequestHandler):
             self.client_address[0]
         )
 
-        sys.stderr.write(
+        sys.stdout.write(
             "%s - - [%s] %s\n" % (
                 real_ip,
                 self.log_date_time_string(),
