@@ -1,18 +1,44 @@
-
 import http.server
 import socketserver
 import os
 import sys
-from dotenv import load_dotenv
 
-# Load konfigurasi .env dari lokasi server.py
+# Lokasi project
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ENV_FILE = os.path.join(BASE_DIR, ".env")
 
-load_dotenv(ENV_FILE)
+
+# Membaca konfigurasi .env tanpa dependency tambahan
+def load_env(path):
+    if not os.path.isfile(path):
+        return
+
+    with open(path, "r", encoding="utf-8") as file:
+        for line in file:
+            line = line.strip()
+
+            # Abaikan baris kosong dan komentar
+            if not line or line.startswith("#"):
+                continue
+
+            if "=" not in line:
+                continue
+
+            key, value = line.split("=", 1)
+
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+
+            if key:
+                os.environ[key] = value
+
+
+# Load .env
+load_env(ENV_FILE)
+
 
 # Konfigurasi server
-PORT = int(os.getenv("PORT", 3400))
+PORT = int(os.getenv("PORT", "3400"))
 DIRECTORY = os.getenv("DIRECTORY", "./dist")
 
 # Resolve relative path berdasarkan lokasi server.py
@@ -20,6 +46,7 @@ if not os.path.isabs(DIRECTORY):
     DIRECTORY = os.path.join(BASE_DIR, DIRECTORY)
 
 DIRECTORY = os.path.abspath(DIRECTORY)
+
 
 class SPAHandler(http.server.SimpleHTTPRequestHandler):
 
@@ -30,8 +57,7 @@ class SPAHandler(http.server.SimpleHTTPRequestHandler):
         # Tentukan path file yang diminta
         requested_path = self.translate_path(self.path)
 
-        # Jika file tidak ditemukan atau direktori,
-        # arahkan ke index.html (SPA fallback)
+        # SPA fallback ke index.html
         if not os.path.exists(requested_path) or os.path.isdir(requested_path):
             self.path = "/index.html"
 
@@ -59,11 +85,12 @@ if not os.path.isdir(DIRECTORY):
         f"Directory tidak ditemukan: {DIRECTORY}"
     )
 
-# Jalankan server
+# TCP Server
 class ReusableTCPServer(socketserver.TCPServer):
     allow_reuse_address = True
 
 
+# Jalankan server
 with ReusableTCPServer(("127.0.0.1", PORT), SPAHandler) as httpd:
     print("=" * 45)
     print("SPA Server Started")
