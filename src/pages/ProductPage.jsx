@@ -340,6 +340,11 @@ const ProductPage = () => {
     };
 
     // ── Cek ID / Validate Account ───────────────────────────────────────
+    // Saklar global "Wajib Validasi Akun" (settings.mandatory_validation).
+    // Saat dinonaktifkan admin (endpoint validasi provider sedang gangguan),
+    // cek ID dilewati total dan checkout tidak diblokir.
+    const isValidationMandatory = settings.mandatory_validation !== false;
+
     const handleValidateAccount = async (options = {}) => {
         const isSilent = options?.silent === true;
         const activeVariant = selectedVariant || (product?.variants && product.variants.find(v => v.validation?.available));
@@ -347,9 +352,10 @@ const ProductPage = () => {
         const activeServer = product?.servers?.find(s => s.vendor === vendor) || product?.servers?.[0];
         const currentVendor = selectedVariant?.vendor || activeServer?.vendor || vendor || product?.vendor || 'sekalipay';
 
-        // Varian ini tidak punya validasi akun. Jangan panggil provider dan
-        // jangan blokir checkout — aturan ini sama dengan backend.
-        if (!activeVariant?.validation?.available) {
+        // Varian ini tidak punya validasi akun, atau fitur wajib validasi sedang
+        // dinonaktifkan admin. Jangan panggil provider dan jangan blokir
+        // checkout — aturan ini sama dengan backend.
+        if (!activeVariant?.validation?.available || !isValidationMandatory) {
             return { ok: true, account: null };
         }
 
@@ -754,7 +760,7 @@ const ProductPage = () => {
 
         // Validasi akun hanya wajib kalau varian memang punya metadata validasi
         // (sama dengan aturan backend). Validasi harus untuk target saat ini.
-        if (selectedVariant?.validation?.available) {
+        if (isValidationRequired) {
             const targetKey = getTargetIdentifier(dynamicFields, fieldData, selectedVariant);
             if (!account?.valid || account._lastTarget !== targetKey) {
                 notifyWarning('Harap lakukan cek ID / validasi akun terlebih dahulu dan pastikan akun ditemukan!');
@@ -971,8 +977,9 @@ const ProductPage = () => {
     }
 
     // ── Aturan validasi akun (selaras dengan backend paymentController) ──
-    // Hanya varian dengan validation.available = true yang wajib cek ID.
-    const isValidationRequired = Boolean(selectedVariant?.validation?.available);
+    // Hanya varian dengan validation.available = true yang wajib cek ID,
+    // dan hanya selama saklar global mandatory_validation aktif.
+    const isValidationRequired = Boolean(selectedVariant?.validation?.available) && isValidationMandatory;
     const currentTargetKey = getTargetIdentifier(dynamicFields, fieldData, selectedVariant);
     const isAccountValid = !isValidationRequired ||
         (validatedAccount?.valid === true && validatedAccount._lastTarget === currentTargetKey);
@@ -1218,6 +1225,7 @@ const ProductPage = () => {
                                         isValidating={isValidating}
                                         validatedAccount={validatedAccount}
                                         validationError={validationError}
+                                        validationMandatory={isValidationMandatory}
                                         setValidatedAccount={setValidatedAccount}
                                         setValidationError={setValidationError}
                                         vendor={vendor}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Save, Eye, EyeOff, MessageSquare, LogOut, Phone, Users } from 'lucide-react';
+import { Save, Eye, EyeOff, MessageSquare, LogOut, Phone, Users, ShieldCheck } from 'lucide-react';
 import { getWaNumber, formatWaDisplay, getWaGroupLink } from '../../utils/waUtils';
 
 const SettingsTab = ({
@@ -184,6 +184,38 @@ const SettingsTab = ({
                         <Save size={18} /> Simpan Teks Popup
                     </button>
                 </div>
+            </div>
+
+            {/* Wajib Validasi Akun */}
+            <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                            <ShieldCheck size={20} className="text-purple-400" />
+                            Wajib Validasi Akun
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-1">
+                            Saat aktif, pembeli wajib lolos cek ID ke penyedia sebelum checkout untuk produk yang memerlukan validasi.
+                            Nonaktifkan sementara jika endpoint validasi provider sedang gangguan agar transaksi tetap berjalan.
+                        </p>
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                        <button
+                            onClick={() => updateSetting('mandatory_validation', settings.mandatory_validation === false)}
+                            className={`relative w-14 h-7 rounded-full transition-all duration-300 flex items-center px-1 ${settings.mandatory_validation !== false ? 'bg-green-600' : 'bg-gray-700'}`}
+                        >
+                            <div className={`w-5 h-5 bg-white rounded-full transition-all duration-300 transform ${settings.mandatory_validation !== false ? 'translate-x-7' : 'translate-x-0'}`} />
+                        </button>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${settings.mandatory_validation !== false ? 'text-green-400' : 'text-gray-500'}`}>
+                            {settings.mandatory_validation !== false ? 'Aktif' : 'Nonaktif'}
+                        </span>
+                    </div>
+                </div>
+                {settings.mandatory_validation === false && (
+                    <p className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-xl p-3">
+                        Validasi akun sedang dilewati: pesanan produk dengan cek ID akan langsung diproses tanpa verifikasi ke penyedia. Aktifkan kembali setelah endpoint validasi provider pulih.
+                    </p>
+                )}
             </div>
 
             {/* Payment Gateway Provider */}

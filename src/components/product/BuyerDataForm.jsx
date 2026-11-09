@@ -21,6 +21,7 @@ const BuyerDataForm = ({
     validationError,
     setValidatedAccount,
     setValidationError,
+    validationMandatory,
     vendor,
     product,
 }) => {
@@ -30,6 +31,9 @@ const BuyerDataForm = ({
     // Ikuti metadata varian — backend juga hanya mewajibkan validasi saat
     // validation.available = true. Jangan paksa semua produk OkeConnect.
     const isValidationAvailable = Boolean(selectedVariant?.validation?.available);
+    // Saklar global admin (mandatory_validation): saat nonaktif, tombol cek ID
+    // disembunyikan dan checkout tidak diblokir — field ID tetap dirender.
+    const isValidationActive = isValidationAvailable && validationMandatory !== false;
     const isEwalletProduct = product?.category?.toLowerCase().includes('wallet') ||
         /dana|ovo|gopay|gojek|shopee|linkaja|isaku|maxim/i.test(product?.name || '');
     const isNumericGame = /mobile legend|magic chess|free fire/i.test(product?.name || '');
@@ -182,12 +186,17 @@ const BuyerDataForm = ({
                                 <label className="block text-xs font-medium text-slate-500">
                                     {cleanedLabel} {field?.required && '*'}
                                 </label>
-                                {isTargetField && isValidationAvailable && (
+                                {isTargetField && isValidationActive && (
                                     <span className={`text-[11px] font-medium flex items-center gap-1 ${
                                         validatedAccount?.valid ? 'text-green-600' : 'text-purple-600'
                                     }`}>
                                         {isValidating && <Loader2 size={12} className="animate-spin text-purple-600" />}
                                         {isValidating ? 'Mengecek ID...' : validatedAccount?.valid ? '✓ ID Terverifikasi' : isOkeconnect ? 'Wajib Cek ID (OkeConnect)' : 'Wajib Cek ID'}
+                                    </span>
+                                )}
+                                {isTargetField && isValidationAvailable && !isValidationActive && (
+                                    <span className="text-[11px] font-medium flex items-center gap-1 text-amber-600">
+                                        Cek ID nonaktif sementara
                                     </span>
                                 )}
                             </div>
@@ -215,7 +224,7 @@ const BuyerDataForm = ({
                                             ? 'border-green-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/10'
                                             : validationError && isTargetField
                                                 ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/10'
-                                                : isValidationAvailable && isTargetField && !validatedAccount?.valid
+                                                : isValidationActive && isTargetField && !validatedAccount?.valid
                                                     ? 'border-purple-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10'
                                                     : 'border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10'
                                     }`}
@@ -234,7 +243,18 @@ const BuyerDataForm = ({
                 })}
 
                 {/* ── Validation Status & Manual Trigger ── */}
-                {isValidationAvailable && (
+                {isValidationAvailable && !isValidationActive && (
+                    <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5">
+                        <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold text-amber-700 uppercase tracking-wider">Cek ID Dinonaktifkan Sementara</p>
+                            <p className="text-xs text-amber-900 leading-relaxed font-medium mt-0.5">
+                                Pengecekan ID ke penyedia sedang dinonaktifkan sementara oleh admin. Pesanan tetap diproses — mohon pastikan ID yang Anda masukkan sudah benar.
+                            </p>
+                        </div>
+                    </div>
+                )}
+                {isValidationActive && (
                     <div className="pt-2">
                         {isValidating ? (
                             <button
