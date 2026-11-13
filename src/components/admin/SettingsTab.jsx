@@ -1,6 +1,37 @@
 import { useState } from 'react';
-import { Save, Eye, EyeOff, MessageSquare, LogOut, Phone, Users, ShieldCheck } from 'lucide-react';
+import { Save, Eye, EyeOff, MessageSquare, LogOut, Phone, Users, ShieldCheck, Globe, Smartphone } from 'lucide-react';
 import { getWaNumber, formatWaDisplay, getWaGroupLink } from '../../utils/waUtils';
+import { parseBoolSetting, isMandatoryValidationForChannel, CHANNEL_VALIDATION_KEYS } from '../../utils/validationFlags';
+
+const VALIDATION_CHANNEL_OPTIONS = [
+    { id: 'inherit', label: 'Ikuti Master' },
+    { id: 'on', label: 'Aktif' },
+    { id: 'off', label: 'Nonaktif' },
+];
+
+const VALIDATION_CHANNEL_ROWS = [
+    {
+        key: CHANNEL_VALIDATION_KEYS.web,
+        label: 'Website',
+        icon: <Globe size={14} className="text-purple-400" />,
+        desc: 'Toko web (desktop & mobile browser). Cek ID dilewati saat Nonaktif.',
+    },
+    {
+        key: CHANNEL_VALIDATION_KEYS.app,
+        label: 'Aplikasi Android',
+        icon: <Smartphone size={14} className="text-cyan-400" />,
+        desc: 'Aplikasi Android. Cek ID dilewati saat Nonaktif.',
+    },
+];
+
+/**
+ * Mode override per channel: 'inherit' (belum ada override), 'on', 'off'.
+ */
+function channelMode(settings, key) {
+    const value = parseBoolSetting(settings?.[key]);
+    if (value === null) return 'inherit';
+    return value ? 'on' : 'off';
+}
 
 const SettingsTab = ({
     settings, setSettings, updateSetting,
@@ -209,11 +240,58 @@ const SettingsTab = ({
                         <span className={`text-[10px] font-bold uppercase tracking-wider ${settings.mandatory_validation !== false ? 'text-green-400' : 'text-gray-500'}`}>
                             {settings.mandatory_validation !== false ? 'Aktif' : 'Nonaktif'}
                         </span>
+                        <span className="text-[9px] text-gray-600 uppercase tracking-wider">Semua channel</span>
                     </div>
                 </div>
+
+                {/* Override per channel (mis. hanya web yang dinonaktifkan) */}
+                <div className="space-y-3 border-t border-white/10 pt-5">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Per Channel</p>
+                    {VALIDATION_CHANNEL_ROWS.map((row) => {
+                        const mode = channelMode(settings, row.key);
+                        return (
+                            <div key={row.key} className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 bg-white/[0.03] border border-white/5 rounded-xl px-4 py-3">
+                                <div className="min-w-0">
+                                    <p className="text-sm font-bold text-white flex items-center gap-2">
+                                        {row.icon}
+                                        {row.label}
+                                    </p>
+                                    <p className="text-[11px] text-gray-500 mt-0.5">{row.desc}</p>
+                                </div>
+                                <div className="flex items-center gap-1 bg-black/40 border border-white/10 rounded-xl p-1 shrink-0">
+                                    {VALIDATION_CHANNEL_OPTIONS.map((opt) => {
+                                        const active = mode === opt.id;
+                                        return (
+                                            <button
+                                                key={opt.id}
+                                                type="button"
+                                                onClick={() => updateSetting(row.key, opt.id === 'inherit' ? 'inherit' : opt.id === 'on')}
+                                                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
+                                                    active
+                                                        ? opt.id === 'off'
+                                                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                                            : 'bg-purple-600 text-white'
+                                                        : 'text-gray-500 hover:text-white'
+                                                }`}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
                 {settings.mandatory_validation === false && (
-                    <p className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-xl p-3">
-                        Validasi akun sedang dilewati: pesanan produk dengan cek ID akan langsung diproses tanpa verifikasi ke penyedia. Aktifkan kembali setelah endpoint validasi provider pulih.
+                    <p className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mt-4">
+                        Validasi akun sedang dilewati di semua channel: pesanan produk dengan cek ID akan langsung diproses tanpa verifikasi ke penyedia. Aktifkan kembali setelah endpoint validasi provider pulih.
+                    </p>
+                )}
+                {settings.mandatory_validation !== false && !isMandatoryValidationForChannel(settings, 'web') && (
+                    <p className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mt-4">
+                        Validasi akun sedang dilewati di website: pembeli web tidak perlu cek ID sebelum checkout, sementara aplikasi Android tetap mewajibkan cek ID.
                     </p>
                 )}
             </div>

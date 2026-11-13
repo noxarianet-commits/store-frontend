@@ -20,6 +20,7 @@ import ServerSelector from '../components/product/ServerSelector';
 import VariantSelector from '../components/product/VariantSelector';
 import BuyerDataForm from '../components/product/BuyerDataForm';
 import { getTargetIdentifier, getSafeAccountName } from '../utils/accountValidationUtils';
+import { isMandatoryValidationForChannel } from '../utils/validationFlags';
 import PaymentStep from '../components/product/PaymentStep';
 import ProductNote from '../components/ui/ProductNote';
 import { useAuth } from '../contexts/AuthContext';
@@ -340,10 +341,12 @@ const ProductPage = () => {
     };
 
     // ── Cek ID / Validate Account ───────────────────────────────────────
-    // Saklar global "Wajib Validasi Akun" (settings.mandatory_validation).
-    // Saat dinonaktifkan admin (endpoint validasi provider sedang gangguan),
+    // Saklar "Wajib Validasi Akun" dari settings:
+    //   - `mandatory_validation`      = saklar master (semua channel)
+    //   - `mandatory_validation_web`  = override khusus web
+    // Saat dimatikan admin (endpoint validasi provider sedang gangguan),
     // cek ID dilewati total dan checkout tidak diblokir.
-    const isValidationMandatory = settings.mandatory_validation !== false;
+    const isValidationMandatory = isMandatoryValidationForChannel(settings, 'web');
 
     const handleValidateAccount = async (options = {}) => {
         const isSilent = options?.silent === true;
