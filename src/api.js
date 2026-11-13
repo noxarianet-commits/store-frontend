@@ -207,4 +207,9 @@ api.getAdminTicket = (ticketNumber) => api.get(`/admin/tickets/${encodeURICompon
 api.replyAdminTicket = (ticketNumber, body) => api.post(`/admin/tickets/${encodeURIComponent(ticketNumber)}/messages`, { body });
 api.updateAdminTicket = (ticketNumber, data) => api.patch(`/admin/tickets/${encodeURIComponent(ticketNumber)}`, data);
 
+// Push notification — admin
+api.broadcastPush = (data) => api.post('/admin/push/broadcast', data);
+api.getPushHistory = (limit = 20) => api.get('/admin/push/history', { params: { limit } });
+api.getPushStats = () => api.get('/admin/push/stats');
+
 export default api;

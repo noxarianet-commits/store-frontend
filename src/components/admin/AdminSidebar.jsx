@@ -10,6 +10,7 @@ const menuItems = [
     { id: 'products', label: 'Produk', icon: null },
     { id: 'orders', label: 'Pesanan', icon: null },
     { id: 'tickets', label: 'Bantuan CS', icon: null },
+    { id: 'notifikasi', label: 'Notifikasi', icon: null },
     { id: 'transactions', label: 'Transaksi Saldo', icon: null },
     { id: 'users', label: 'Manajemen User', icon: null },
     { id: 'settings', label: 'Pengaturan Toko', icon: null },
