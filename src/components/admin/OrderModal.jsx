@@ -1,41 +1,33 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Save } from 'lucide-react';
 
-const OrderModal = ({ editingOrder, onClose, onSave }) => {
-    const [form, setForm] = useState({
-        id: '', product: '', variant: '', price: 0,
-        wa_number: '', email: '', testimonial: '',
-        status: 'PENDING', payment_method: '',
-        account_details: null
-    });
-    const [accountDetailsStr, setAccountDetailsStr] = useState('');
-    const [manualLicense, setManualLicense] = useState('');
+function buildInitialForm(order) {
+    return {
+        id: order?.id || '',
+        product: order?.product || '',
+        variant: order?.variant || '',
+        price: order?.price || 0,
+        wa_number: order?.wa_number || '',
+        email: order?.email || '',
+        testimonial: order?.testimonial || '',
+        status: order?.status || 'PENDING',
+        payment_method: order?.payment_method || '',
+        account_details: order?.account_details || null,
+    };
+}
 
-    useEffect(() => {
-        if (editingOrder) {
-            setForm({
-                id: editingOrder.id || '',
-                product: editingOrder.product || '',
-                variant: editingOrder.variant || '',
-                price: editingOrder.price || 0,
-                wa_number: editingOrder.wa_number || '',
-                email: editingOrder.email || '',
-                testimonial: editingOrder.testimonial || '',
-                status: editingOrder.status || 'PENDING',
-                payment_method: editingOrder.payment_method || '',
-                account_details: editingOrder.account_details || null
-            });
-            setAccountDetailsStr(
-                editingOrder.account_details
-                    ? (typeof editingOrder.account_details === 'object'
-                        ? JSON.stringify(editingOrder.account_details, null, 2)
-                        : String(editingOrder.account_details))
-                    : ''
-            );
-            setManualLicense('');
-        }
-    }, [editingOrder]);
+function buildInitialAccountDetails(order) {
+    if (!order?.account_details) return '';
+    return typeof order.account_details === 'object'
+        ? JSON.stringify(order.account_details, null, 2)
+        : String(order.account_details);
+}
+
+const OrderModal = ({ editingOrder, onClose, onSave }) => {
+    const [form, setForm] = useState(() => buildInitialForm(editingOrder));
+    const [accountDetailsStr, setAccountDetailsStr] = useState(() => buildInitialAccountDetails(editingOrder));
+    const [manualLicense, setManualLicense] = useState('');
 
     if (!editingOrder) return null;
 
@@ -44,22 +36,23 @@ const OrderModal = ({ editingOrder, onClose, onSave }) => {
         if (accountDetailsStr.trim()) {
             try {
                 parsedDetails = JSON.parse(accountDetailsStr);
-            } catch (err) {
+            } catch {
                 // If not valid JSON, save as raw string
                 parsedDetails = accountDetailsStr;
             }
         }
 
         // Quick add manual license for failed orders (or any order)
-        let updatedForm = { ...form };
+        const updatedForm = { ...form };
         if (manualLicense.trim()) {
             if (!parsedDetails || typeof parsedDetails !== 'object') {
                 parsedDetails = { type: 'auto', licenses: [manualLicense.trim()] };
             } else {
-                if (!Array.isArray(parsedDetails.licenses)) {
-                    parsedDetails.licenses = [];
-                }
-                parsedDetails.licenses.push(manualLicense.trim());
+                const licenses = Array.isArray(parsedDetails.licenses) ? parsedDetails.licenses : [];
+                parsedDetails = {
+                    ...parsedDetails,
+                    licenses: [...licenses, manualLicense.trim()],
+                };
             }
             // Auto set status to COMPLETED when admin adds license manually if it was FAILED or PENDING
             if (updatedForm.status === 'FAILED' || updatedForm.status === 'PENDING') {
@@ -119,6 +112,7 @@ const OrderModal = ({ editingOrder, onClose, onSave }) => {
                             <option value="COMPLETED" className="bg-[#1a1a2e] text-white">Selesai</option>
                             <option value="FAILED" className="bg-[#1a1a2e] text-white">Gagal</option>
                             <option value="CANCELLED" className="bg-[#1a1a2e] text-white">Dibatalkan</option>
+                            <option value="REFUND_PENDING" className="bg-[#1a1a2e] text-white">Refund Diproses</option>
                         </select>
                     </div>
                     <div>

@@ -9,11 +9,22 @@ const STATUS_CONFIG = {
     COMPLETED: { label: 'Selesai', color: 'bg-green-500/15 text-green-400 border-green-500/30', dot: 'bg-green-400' },
     FAILED: { label: 'Gagal', color: 'bg-red-500/15 text-red-400 border-red-500/30', dot: 'bg-red-400' },
     CANCELLED: { label: 'Dibatalkan', color: 'bg-gray-500/15 text-gray-400 border-gray-500/30', dot: 'bg-gray-400' },
+    REFUND_PENDING: { label: 'Refund Diproses', color: 'bg-orange-500/15 text-orange-400 border-orange-500/30', dot: 'bg-orange-400' },
 };
 
 const VENDOR_CONFIG = {
     sekalipay: { label: 'Sekalipay', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
     okeconnect: { label: 'OkeConnect', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+};
+
+const CHANNEL_CONFIG = {
+    web: { label: 'Web', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+    android: { label: 'Android App', color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
+};
+
+const ORDER_TYPE_CONFIG = {
+    prepaid: { label: 'Prepaid', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+    postpaid: { label: 'Tagihan', color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
 };
 
 const PAGE_SIZE = 20;
@@ -27,8 +38,16 @@ const OrdersTab = ({ openOrderModal, deleteOrder, refreshTrigger }) => {
     const [searchId, setSearchId] = useState('');
     const [activeSearch, setActiveSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('ALL');
+    const [channelFilter, setChannelFilter] = useState('ALL');
+    const [orderTypeFilter, setOrderTypeFilter] = useState('ALL');
 
-    const fetchOrders = useCallback(async (targetPage = 1, search = activeSearch, status = statusFilter) => {
+    const fetchOrders = useCallback(async (
+        targetPage = 1,
+        search = activeSearch,
+        status = statusFilter,
+        channel = channelFilter,
+        orderType = orderTypeFilter
+    ) => {
         setLoading(true);
         try {
             const params = {
@@ -37,6 +56,8 @@ const OrdersTab = ({ openOrderModal, deleteOrder, refreshTrigger }) => {
             };
             if (search.trim()) params.search = search.trim();
             if (status !== 'ALL') params.status = status;
+            if (channel !== 'ALL') params.channel = channel;
+            if (orderType !== 'ALL') params.order_type = orderType;
 
             const res = await api.get('/orders', { params });
             
@@ -57,13 +78,13 @@ const OrdersTab = ({ openOrderModal, deleteOrder, refreshTrigger }) => {
         } finally {
             setLoading(false);
         }
-    }, [activeSearch, statusFilter]);
+    }, [activeSearch, statusFilter, channelFilter, orderTypeFilter]);
 
     useEffect(() => {
         // Defer so the fetch's setState calls happen in a timer callback, not
         // synchronously inside the effect body.
         const timer = setTimeout(() => {
-            fetchOrders(1, activeSearch, statusFilter);
+            fetchOrders(1, activeSearch, statusFilter, channelFilter, orderTypeFilter);
         }, 0);
         return () => clearTimeout(timer);
     }, [refreshTrigger]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -73,27 +94,41 @@ const OrdersTab = ({ openOrderModal, deleteOrder, refreshTrigger }) => {
         const trimmed = searchId.trim();
         setActiveSearch(trimmed);
         setPage(1);
-        fetchOrders(1, trimmed, statusFilter);
+        fetchOrders(1, trimmed, statusFilter, channelFilter, orderTypeFilter);
     };
 
     const handleStatusChange = (newStatus) => {
         setStatusFilter(newStatus);
         setPage(1);
-        fetchOrders(1, activeSearch, newStatus);
+        fetchOrders(1, activeSearch, newStatus, channelFilter, orderTypeFilter);
+    };
+
+    const handleChannelChange = (newChannel) => {
+        setChannelFilter(newChannel);
+        setPage(1);
+        fetchOrders(1, activeSearch, statusFilter, newChannel, orderTypeFilter);
+    };
+
+    const handleOrderTypeChange = (newType) => {
+        setOrderTypeFilter(newType);
+        setPage(1);
+        fetchOrders(1, activeSearch, statusFilter, channelFilter, newType);
     };
 
     const handleClearSearch = () => {
         setSearchId('');
         setActiveSearch('');
         setStatusFilter('ALL');
+        setChannelFilter('ALL');
+        setOrderTypeFilter('ALL');
         setPage(1);
-        fetchOrders(1, '', 'ALL');
+        fetchOrders(1, '', 'ALL', 'ALL', 'ALL');
     };
 
     const handlePageChange = (newPage) => {
         if (newPage < 1 || newPage > totalPages) return;
         setPage(newPage);
-        fetchOrders(newPage, activeSearch, statusFilter);
+        fetchOrders(newPage, activeSearch, statusFilter, channelFilter, orderTypeFilter);
     };
 
     const handleDelete = async (id) => {
@@ -102,6 +137,11 @@ const OrdersTab = ({ openOrderModal, deleteOrder, refreshTrigger }) => {
         // a duplicate GET /orders for every deletion.
         await deleteOrder(id);
     };
+
+    const hasActiveFilters = Boolean(activeSearch) ||
+        statusFilter !== 'ALL' ||
+        channelFilter !== 'ALL' ||
+        orderTypeFilter !== 'ALL';
 
     return (
         <div className="space-y-4">
@@ -118,7 +158,7 @@ const OrdersTab = ({ openOrderModal, deleteOrder, refreshTrigger }) => {
                             className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50"
                         />
                     </div>
-                    <div className="flex gap-2 shrink-0">
+                    <div className="flex flex-wrap gap-2 shrink-0">
                         <div className="relative">
                             <select
                                 value={statusFilter}
@@ -131,6 +171,31 @@ const OrdersTab = ({ openOrderModal, deleteOrder, refreshTrigger }) => {
                                 <option value="COMPLETED">Selesai</option>
                                 <option value="FAILED">Gagal</option>
                                 <option value="CANCELLED">Dibatalkan</option>
+                                <option value="REFUND_PENDING">Refund Diproses</option>
+                            </select>
+                            <Filter className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={12} />
+                        </div>
+                        <div className="relative">
+                            <select
+                                value={channelFilter}
+                                onChange={(e) => handleChannelChange(e.target.value)}
+                                className="bg-[#141414] border border-white/10 rounded-xl py-2.5 px-3 text-xs font-bold text-gray-300 focus:outline-none focus:border-purple-500/50 cursor-pointer appearance-none pr-8 h-full"
+                            >
+                                <option value="ALL">Semua Channel</option>
+                                <option value="web">Web</option>
+                                <option value="android">Android App</option>
+                            </select>
+                            <Filter className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={12} />
+                        </div>
+                        <div className="relative">
+                            <select
+                                value={orderTypeFilter}
+                                onChange={(e) => handleOrderTypeChange(e.target.value)}
+                                className="bg-[#141414] border border-white/10 rounded-xl py-2.5 px-3 text-xs font-bold text-gray-300 focus:outline-none focus:border-purple-500/50 cursor-pointer appearance-none pr-8 h-full"
+                            >
+                                <option value="ALL">Semua Tipe</option>
+                                <option value="prepaid">Prepaid</option>
+                                <option value="postpaid">Tagihan</option>
                             </select>
                             <Filter className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={12} />
                         </div>
@@ -140,7 +205,7 @@ const OrdersTab = ({ openOrderModal, deleteOrder, refreshTrigger }) => {
                         >
                             <Search size={14} /> Cari
                         </button>
-                        {(activeSearch || statusFilter !== 'ALL') && (
+                        {hasActiveFilters && (
                             <button
                                 type="button"
                                 onClick={handleClearSearch}
@@ -151,9 +216,13 @@ const OrdersTab = ({ openOrderModal, deleteOrder, refreshTrigger }) => {
                         )}
                     </div>
                 </form>
-                {(activeSearch || statusFilter !== 'ALL') && (
+                {hasActiveFilters && (
                     <p className="text-purple-400 text-xs mt-2.5">
-                        Filter: {activeSearch && `Pencarian "${activeSearch}" `}{statusFilter !== 'ALL' && `[Status: ${STATUS_CONFIG[statusFilter]?.label || statusFilter}]`} • Ditemukan {total} order.
+                        Filter: {activeSearch && `Pencarian "${activeSearch}" `}
+                        {statusFilter !== 'ALL' && `[Status: ${STATUS_CONFIG[statusFilter]?.label || statusFilter}] `}
+                        {channelFilter !== 'ALL' && `[Channel: ${CHANNEL_CONFIG[channelFilter]?.label || channelFilter}] `}
+                        {orderTypeFilter !== 'ALL' && `[Tipe: ${ORDER_TYPE_CONFIG[orderTypeFilter]?.label || orderTypeFilter}] `}
+                        • Ditemukan {total} order.
                     </p>
                 )}
             </div>
@@ -166,8 +235,8 @@ const OrdersTab = ({ openOrderModal, deleteOrder, refreshTrigger }) => {
                 </div>
             ) : orders.length === 0 ? (
                 <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-10 text-center text-gray-500">
-                    {activeSearch || statusFilter !== 'ALL' 
-                        ? 'Tidak ada pesanan yang sesuai dengan filter pencarian.' 
+                    {hasActiveFilters
+                        ? 'Tidak ada pesanan yang sesuai dengan filter pencarian.'
                         : 'Belum ada pesanan masuk.'}
                 </div>
             ) : (
@@ -175,6 +244,8 @@ const OrdersTab = ({ openOrderModal, deleteOrder, refreshTrigger }) => {
                     const statusCfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.PENDING;
                     const vendor = order.vendor || 'sekalipay';
                     const vendorCfg = VENDOR_CONFIG[vendor] || VENDOR_CONFIG.sekalipay;
+                    const channelCfg = CHANNEL_CONFIG[order.channel || 'web'] || CHANNEL_CONFIG.web;
+                    const typeCfg = ORDER_TYPE_CONFIG[order.order_type || 'prepaid'] || ORDER_TYPE_CONFIG.prepaid;
                     return (
                         <div key={order.id} className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-4 sm:p-6 hover:border-white/10 transition-all group">
                             <div className="flex flex-col lg:flex-row justify-between gap-4 lg:gap-6">
@@ -188,6 +259,12 @@ const OrdersTab = ({ openOrderModal, deleteOrder, refreshTrigger }) => {
                                         <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full border ${vendorCfg.color}`}>
                                             <Package size={10} />
                                             {vendorCfg.label}
+                                        </span>
+                                        <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full border ${channelCfg.color}`}>
+                                            {channelCfg.label}
+                                        </span>
+                                        <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full border ${typeCfg.color}`}>
+                                            {typeCfg.label}
                                         </span>
                                         <span className="text-[10px] text-gray-500 flex items-center gap-1 ml-auto sm:ml-0">
                                             <Calendar size={12} /> {new Date(order.timestamp).toLocaleString('id-ID')}
@@ -225,13 +302,39 @@ const OrdersTab = ({ openOrderModal, deleteOrder, refreshTrigger }) => {
                                     {order.account_details && (
                                         <div className="mt-3 p-3.5 bg-purple-500/5 border border-purple-500/10 rounded-2xl space-y-2">
                                             <div className="flex items-center justify-between">
-                                                <p className="text-[10px] text-purple-400 font-bold uppercase tracking-wider">Detail Akun / Lisensi</p>
+                                                <p className="text-[10px] text-purple-400 font-bold uppercase tracking-wider">
+                                                    {order.order_type === 'postpaid' ? 'Detail Tagihan' : 'Detail Akun / Lisensi'}
+                                                </p>
                                                 {order.account_details.type && (
                                                     <span className="text-[8px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-1.5 py-0.5 rounded font-mono uppercase">
                                                         {order.account_details.type}
                                                     </span>
                                                 )}
                                             </div>
+                                            {order.order_type === 'postpaid' && (
+                                                <div className="grid grid-cols-2 gap-2 text-xs mb-2">
+                                                    <div className="bg-white/5 border border-white/5 px-2.5 py-2 rounded-xl">
+                                                        <p className="text-[9px] text-gray-500 uppercase font-bold">Nomor Pelanggan</p>
+                                                        <p className="font-mono text-gray-300 select-all">{order.account_details.customer_number || order.account_details.target || '-'}</p>
+                                                    </div>
+                                                    <div className="bg-white/5 border border-white/5 px-2.5 py-2 rounded-xl">
+                                                        <p className="text-[9px] text-gray-500 uppercase font-bold">Periode</p>
+                                                        <p className="text-gray-300">{order.account_details.bill_period || '-'}</p>
+                                                    </div>
+                                                    <div className="bg-white/5 border border-white/5 px-2.5 py-2 rounded-xl">
+                                                        <p className="text-[9px] text-gray-500 uppercase font-bold">Nominal Tagihan</p>
+                                                        <p className="text-gray-300">Rp {(order.account_details.bill_amount || 0).toLocaleString('id-ID')}</p>
+                                                    </div>
+                                                    <div className="bg-white/5 border border-white/5 px-2.5 py-2 rounded-xl">
+                                                        <p className="text-[9px] text-gray-500 uppercase font-bold">Biaya Layanan</p>
+                                                        <p className="text-gray-300">Rp {(order.account_details.admin_fee || 0).toLocaleString('id-ID')}</p>
+                                                    </div>
+                                                    <div className="bg-cyan-500/5 border border-cyan-500/10 px-2.5 py-2 rounded-xl col-span-2">
+                                                        <p className="text-[9px] text-cyan-400 uppercase font-bold">Total Dibayar</p>
+                                                        <p className="text-cyan-300 font-bold">Rp {(order.account_details.total_amount || order.price || 0).toLocaleString('id-ID')}</p>
+                                                    </div>
+                                                </div>
+                                            )}
                                             {(() => {
                                                 const targetNum = order.account_details.target || order.account_details.sekalipay_note || order.account_details.raw_items?.[0]?.target;
                                                 if (targetNum) {
