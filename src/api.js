@@ -81,6 +81,13 @@ api.interceptors.response.use(
         // '/tickets' pelanggan (bukan /admin/tickets) juga di-bail-out: 401 di
         // sana wajar untuk tamu dan tidak boleh dianggap sesi admin berakhir.
         const isPublicCheckoutRoute = url.includes('/validate') || url.includes('/payments/create');
+        // Katalog/beranda bukan halaman admin. 429 di sini harus tampil sebagai
+        // error inline, bukan me-redirect seluruh SPA ke /error.
+        const isPublicCatalogRoute = url.startsWith('/products')
+            || url.startsWith('/home')
+            || url.startsWith('/settings')
+            || url.startsWith('/testimonials')
+            || url.startsWith('/services');
         const isUserAuthRoute = url.includes('/auth') || url.includes('/balance')
             || isPublicCheckoutRoute
             || (url.includes('/tickets') && !url.includes('/admin'));
@@ -111,7 +118,8 @@ api.interceptors.response.use(
             url.includes('/validate') ||
             url.includes('/payments/create') ||
             url.includes('/tickets') ||
-            url.includes('/payments/status')
+            url.includes('/payments/status') ||
+            (isPublicCatalogRoute && status === 429)
         ) {
             return Promise.reject(error);
         }
