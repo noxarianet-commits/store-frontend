@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Megaphone, X, ChevronDown, ChevronUp, ShoppingBag, CheckCircle2, Clock } from 'lucide-react';
+import { Megaphone, X, ChevronDown, ChevronUp, ShoppingBag, CheckCircle2, Clock, Smartphone } from 'lucide-react';
 import api from '../api';
 import HeroSection from '../components/home/HeroSection';
 import CategoryTabs from '../components/home/CategoryTabs';
-import ProductCard from '../components/home/ProductCard';
 import StructuredProductList from '../components/home/StructuredProductList';
 import TestimonialCarousel from '../components/home/TestimonialCarousel';
 import { getWaNumber, getWaUrl, formatWaDisplay, getWaGroupLink } from '../utils/waUtils';
@@ -171,7 +170,17 @@ const LandingPage = () => {
                         <span className="text-xl font-bold tracking-tight text-slate-900">Noxaria<span className="text-purple-600">net</span></span>
                     </Link>
                     
-                    <div>
+                    <div className="flex items-center gap-3">
+                        <Link
+                            to="/download"
+                            aria-label="Aplikasi Android"
+                            className="sm:hidden inline-flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200 text-slate-600 hover:text-purple-600 hover:border-purple-200 transition-colors"
+                        >
+                            <Smartphone size={16} />
+                        </Link>
+                        <Link to="/download" className="hidden sm:inline text-xs font-bold text-slate-600 hover:text-purple-600 transition-colors">
+                            Aplikasi
+                        </Link>
                         {!authLoading && (
                             user ? (
                                 <UserMenu />
@@ -280,6 +289,7 @@ const LandingPage = () => {
                                 <li><Link to="/garansi" className="hover:text-purple-600 transition">Klaim Garansi</Link></li>
                                 <li><Link to="/tos" className="hover:text-purple-600 transition">Syarat & Ketentuan</Link></li>
                                 <li><Link to="/cara" className="hover:text-purple-600 transition">Cara Order</Link></li>
+                                <li><Link to="/download" className="hover:text-purple-600 transition">Aplikasi Android</Link></li>
                                 <li><Link to="/faq" className="hover:text-purple-600 transition">FAQ</Link></li>
                                 <li>
                                     <a 

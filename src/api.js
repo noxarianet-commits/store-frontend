@@ -72,6 +72,10 @@ api.interceptors.request.use(config => {
 api.interceptors.response.use(
     response => response,
     error => {
+        // Halaman publik tertentu (mis. /download) perlu menampilkan error
+        // sendiri dan tetap bisa diakses saat API sedang bermasalah.
+        if (error.config?.skipGlobalErrorRedirect) return Promise.reject(error);
+
         const url = error.config?.url || '';
         const status = error.response?.status;
         const isLoginAttempt = url.includes('/admin/login');
@@ -163,6 +167,9 @@ api.getAdminSyncStatus = (vendor, productType = 'prepaid') => api.get('/admin/pr
 });
 api.getAdminBalance = (vendor) => api.get('/admin/products/balance', { params: { vendor } });
 api.getAdminSettings = () => api.get('/admin/settings');
+// Config publik aplikasi Android (dipakai halaman /download). Jangan
+// diarahkan ke /error oleh interceptor global.
+api.getMobileConfig = () => api.get('/mobile/config', { skipGlobalErrorRedirect: true });
 api.triggerSync = (vendor, type = 'full', productType = 'prepaid') => api.post('/admin/products/sync', {
     vendor,
     type,

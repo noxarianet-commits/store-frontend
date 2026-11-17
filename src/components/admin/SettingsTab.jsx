@@ -1,7 +1,60 @@
 import { useState } from 'react';
-import { Save, Eye, EyeOff, MessageSquare, LogOut, Phone, Users, ShieldCheck, Globe, Smartphone } from 'lucide-react';
+import { Save, Eye, EyeOff, MessageSquare, LogOut, Phone, Users, ShieldCheck, Globe, Smartphone, Download, AlertTriangle } from 'lucide-react';
 import { getWaNumber, formatWaDisplay, getWaGroupLink } from '../../utils/waUtils';
 import { parseBoolSetting, isMandatoryValidationForChannel, CHANNEL_VALIDATION_KEYS } from '../../utils/validationFlags';
+import { confirmAction, notifyWarning } from '../../utils/notify';
+
+const APP_VERSION_PATTERN = /^\d{1,4}(?:\.\d{1,4}){0,3}$/;
+const MAX_RELEASE_NOTES_LENGTH = 2000;
+
+function readMobileAppConfig(settings) {
+    const raw = settings?.mobile_app_config;
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) return raw;
+    if (typeof raw === 'string') {
+        try {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed;
+        } catch {
+            // Abaikan JSON rusak; form memakai default di bawah.
+        }
+    }
+    return {};
+}
+
+function buildMobileAppConfig(settings) {
+    const stored = readMobileAppConfig(settings);
+    return {
+        ...stored,
+        min_version: stored.min_version === undefined || stored.min_version === null || stored.min_version === ''
+            ? '1.0.0'
+            : String(stored.min_version),
+        latest_version: stored.latest_version === undefined || stored.latest_version === null || stored.latest_version === ''
+            ? '1.0.0'
+            : String(stored.latest_version),
+        download_url: typeof stored.download_url === 'string' ? stored.download_url : '',
+        release_notes: typeof stored.release_notes === 'string' ? stored.release_notes : '',
+        maintenance: stored.maintenance === true,
+    };
+}
+
+function compareVersions(a, b) {
+    const parse = (value) =>
+        String(value)
+            .split('.')
+            .map((part) => parseInt(part.replace(/\D.*$/, ''), 10) || 0);
+
+    const left = parse(a);
+    const right = parse(b);
+    const length = Math.max(left.length, right.length);
+
+    for (let i = 0; i < length; i += 1) {
+        const l = left[i] || 0;
+        const r = right[i] || 0;
+        if (l > r) return 1;
+        if (l < r) return -1;
+    }
+    return 0;
+}
 
 const VALIDATION_CHANNEL_OPTIONS = [
     { id: 'inherit', label: 'Ikuti Master' },
@@ -40,9 +93,84 @@ const SettingsTab = ({
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showSettingsPassword, setShowSettingsPassword] = useState(false);
+    const [savingAppConfig, setSavingAppConfig] = useState(false);
 
     const currentWa = getWaNumber(settings);
     const currentWaGroupLink = getWaGroupLink(settings);
+    const appConfig = buildMobileAppConfig(settings);
+
+    const setAppConfig = (patch) => {
+        setSettings((prev) => ({
+            ...prev,
+            mobile_app_config: {
+                ...buildMobileAppConfig(prev),
+                ...patch,
+            },
+        }));
+    };
+
+    const handleSaveAppConfig = async () => {
+        if (savingAppConfig) return;
+
+        const minVersion = String(appConfig.min_version || '').trim();
+        const latestVersion = String(appConfig.latest_version || '').trim();
+        const downloadUrl = String(appConfig.download_url || '').trim();
+        const releaseNotes = String(appConfig.release_notes || '').trim();
+
+        if (!APP_VERSION_PATTERN.test(minVersion)) {
+            notifyWarning('Versi minimum tidak valid. Gunakan format seperti 1.0.0.');
+            return;
+        }
+        if (!APP_VERSION_PATTERN.test(latestVersion)) {
+            notifyWarning('Versi terbaru tidak valid. Gunakan format seperti 1.0.1.');
+            return;
+        }
+        if (compareVersions(minVersion, latestVersion) > 0) {
+            notifyWarning('Versi minimum tidak boleh lebih tinggi dari versi terbaru.');
+            return;
+        }
+        if (downloadUrl) {
+            try {
+                const parsed = new URL(downloadUrl);
+                if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+                    throw new Error('Protokol tidak didukung');
+                }
+            } catch {
+                notifyWarning('Link unduhan harus berupa URL http:// atau https:// yang valid.');
+                return;
+            }
+        }
+        if (releaseNotes.length > MAX_RELEASE_NOTES_LENGTH) {
+            notifyWarning(`Catatan rilis maksimal ${MAX_RELEASE_NOTES_LENGTH} karakter.`);
+            return;
+        }
+
+        const wasMaintenance = readMobileAppConfig(settings).maintenance === true;
+        if (!wasMaintenance && appConfig.maintenance === true) {
+            const confirmed = await confirmAction({
+                title: 'Aktifkan maintenance aplikasi?',
+                text: 'Semua pengguna aplikasi Android akan melihat layar maintenance sampai mode ini dimatikan. Website tidak terpengaruh.',
+                confirmText: 'Ya, aktifkan',
+                cancelText: 'Batal',
+                danger: true,
+            });
+            if (!confirmed) {
+                setAppConfig({ maintenance: wasMaintenance });
+                return;
+            }
+        }
+
+        setSavingAppConfig(true);
+        await updateSetting('mobile_app_config', {
+            ...appConfig,
+            min_version: minVersion,
+            latest_version: latestVersion,
+            download_url: downloadUrl,
+            release_notes: releaseNotes,
+            maintenance: appConfig.maintenance === true,
+        });
+        setSavingAppConfig(false);
+    };
 
     return (
         <div className="space-y-6">
@@ -172,6 +300,134 @@ const SettingsTab = ({
                     >
                         <Save size={18} /> Simpan Status Toko
                     </button>
+                </div>
+            </div>
+
+            {/* Android App Version & Download */}
+            <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-6">
+                <div className="flex items-start justify-between gap-4 mb-6">
+                    <div>
+                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                            <Smartphone size={20} className="text-cyan-400" />
+                            Aplikasi Android
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-1">
+                            Atur versi minimum, versi terbaru, link APK, dan mode maintenance aplikasi.
+                            Perubahan berlaku setelah tombol simpan ditekan.
+                        </p>
+                    </div>
+                    <a
+                        href="/download"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="shrink-0 inline-flex items-center gap-2 text-[11px] font-bold text-cyan-400 hover:text-cyan-300 border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 rounded-xl transition-all"
+                    >
+                        <Download size={14} /> Halaman Download
+                    </a>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-2">
+                            Versi Minimum yang Masih Didukung
+                        </label>
+                        <input
+                            type="text"
+                            value={appConfig.min_version}
+                            onChange={(e) => setAppConfig({ min_version: e.target.value })}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-sm text-white focus:outline-none focus:border-purple-500/50 font-mono"
+                            placeholder="1.0.0"
+                        />
+                        <p className="text-[11px] text-gray-500 mt-1">
+                            Versi terpasang di bawah angka ini akan terkunci di layar “Versi sudah kadaluarsa”.
+                        </p>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-2">
+                            Versi Terbaru
+                        </label>
+                        <input
+                            type="text"
+                            value={appConfig.latest_version}
+                            onChange={(e) => setAppConfig({ latest_version: e.target.value })}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-sm text-white focus:outline-none focus:border-purple-500/50 font-mono"
+                            placeholder="1.0.1"
+                        />
+                        <p className="text-[11px] text-gray-500 mt-1">
+                            Ditampilkan di halaman download dan dipakai banner “update tersedia”.
+                        </p>
+                    </div>
+                </div>
+
+                <div className="mt-4">
+                    <label className="block text-xs font-medium text-gray-400 mb-2">
+                        Link Unduhan APK (URL Langsung)
+                    </label>
+                    <input
+                        type="url"
+                        value={appConfig.download_url}
+                        onChange={(e) => setAppConfig({ download_url: e.target.value })}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-sm text-white focus:outline-none focus:border-purple-500/50 font-mono"
+                        placeholder="https://cdn.noxarianet.web.id/app/noxarianet-1.0.1.apk"
+                    />
+                    <p className="text-[11px] text-gray-500 mt-1">
+                        Tempel URL file APK langsung (Supabase Storage, GitHub Releases, CDN/VPS). Jangan isi URL
+                        halaman <code className="text-gray-400">/download</code> agar tombol tidak berputar ke halaman yang sama.
+                    </p>
+                </div>
+
+                <div className="mt-4">
+                    <label className="block text-xs font-medium text-gray-400 mb-2">
+                        Catatan Rilis (Opsional)
+                    </label>
+                    <textarea
+                        value={appConfig.release_notes}
+                        onChange={(e) => setAppConfig({ release_notes: e.target.value })}
+                        maxLength={MAX_RELEASE_NOTES_LENGTH}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white h-24 focus:outline-none focus:border-purple-500/50"
+                        placeholder="Contoh: Perbaikan bug checkout dan peningkatan performa aplikasi."
+                    />
+                    <p className="text-[11px] text-gray-500 mt-1">
+                        {String(appConfig.release_notes || '').length}/{MAX_RELEASE_NOTES_LENGTH} karakter.
+                    </p>
+                </div>
+
+                <div className="mt-5 border-t border-white/10 pt-5 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                    <div>
+                        <p className="text-sm font-bold text-white">Mode Maintenance Aplikasi</p>
+                        <p className="text-[11px] text-gray-500 mt-1">
+                            Saat aktif, seluruh pengguna aplikasi Android melihat layar maintenance.
+                            Pesan yang tampil diambil dari Running Text pada Status Toko. Website tidak terpengaruh.
+                        </p>
+                        {appConfig.maintenance === true && (
+                            <p className="text-[11px] text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2 mt-2 flex items-start gap-2">
+                                <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+                                Aplikasi akan masuk mode maintenance setelah pengaturan ini disimpan.
+                            </p>
+                        )}
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setAppConfig({ maintenance: !appConfig.maintenance })}
+                        className={`relative w-14 h-7 rounded-full transition-all flex items-center px-1 shrink-0 ${appConfig.maintenance ? 'bg-amber-500' : 'bg-gray-700'}`}
+                        aria-pressed={appConfig.maintenance === true}
+                        aria-label="Mode maintenance aplikasi"
+                    >
+                        <div className={`w-5 h-5 bg-white rounded-full transition-all transform ${appConfig.maintenance ? 'translate-x-7' : 'translate-x-0'}`} />
+                    </button>
+                </div>
+
+                <div className="mt-5 flex flex-col sm:flex-row sm:items-center gap-3">
+                    <button
+                        onClick={handleSaveAppConfig}
+                        disabled={savingAppConfig}
+                        className="bg-purple-600 hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all"
+                    >
+                        <Save size={18} /> {savingAppConfig ? 'Menyimpan…' : 'Simpan Pengaturan Aplikasi'}
+                    </button>
+                    <p className="text-[11px] text-gray-500">
+                        Naikkan versi minimum hanya setelah link APK benar-benar bisa diunduh.
+                    </p>
                 </div>
             </div>
 

@@ -469,9 +469,11 @@ const AdminDashboard = () => {
             await api.put(`/settings/${key}`, { value });
             await fetchSettings();
             notifySuccess('Pengaturan berhasil disimpan!');
+            return true;
         } catch (err) {
-            notifyError('Gagal menyimpan pengaturan');
+            notifyError(err.response?.data?.error || 'Gagal menyimpan pengaturan');
             console.error('Gagal update setting:', err);
+            return false;
         }
     };
 

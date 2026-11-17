@@ -23,6 +23,7 @@ import TicketListPage from './pages/TicketListPage';
 import TicketCreatePage from './pages/TicketCreatePage';
 import TicketDetailPage from './pages/TicketDetailPage';
 import CSContactPage from './pages/CSContactPage';
+import DownloadPage from './pages/DownloadPage';
 
 function App() {
   const { pathname } = useLocation();
@@ -51,6 +52,7 @@ function App() {
           <Route path="/ticket/new" element={<TicketCreatePage />} />
           <Route path="/ticket/:ticketNumber" element={<TicketDetailPage />} />
           <Route path="/cs" element={<CSContactPage />} />
+          <Route path="/download" element={<DownloadPage />} />
           <Route path="/error" element={<ErrorPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
