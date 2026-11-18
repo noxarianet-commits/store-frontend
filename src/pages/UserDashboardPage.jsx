@@ -379,6 +379,20 @@ const OrdersTab = () => {
                         DIBATALKAN
                     </span>
                 );
+            case 'REFUNDED':
+                return (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                        <Wallet className="w-3.5 h-3.5 text-emerald-600" />
+                        DIKEMBALIKAN
+                    </span>
+                );
+            case 'REFUND_PENDING':
+                return (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-orange-50 text-orange-700 border border-orange-200/80">
+                        <Clock className="w-3.5 h-3.5 text-orange-600 animate-pulse" />
+                        REFUND DIPROSES
+                    </span>
+                );
             case 'FAILED':
             default:
                 return (

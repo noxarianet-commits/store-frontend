@@ -98,6 +98,22 @@ const PaymentSuccessPage = () => {
             icon: <AlertCircle size={32} className="text-gray-400" />,
             ringColor: 'border-white/20',
         },
+        REFUNDED: {
+            label: 'Dana Dikembalikan',
+            sub: 'Pesanan gagal diproses. Nominal yang sudah dibayar telah dikembalikan ke saldo akun Anda.',
+            color: 'text-emerald-400',
+            bg: 'bg-emerald-500/10 border-emerald-500/20',
+            icon: <CheckCircle2 size={32} className="text-emerald-400" />,
+            ringColor: 'border-emerald-500/30',
+        },
+        REFUND_PENDING: {
+            label: 'Refund Sedang Diproses',
+            sub: 'Pesanan gagal diproses dan refund akan dikreditkan ke saldo akun Anda. Proses ini dicoba ulang otomatis.',
+            color: 'text-orange-400',
+            bg: 'bg-orange-500/10 border-orange-500/20',
+            icon: <RefreshCw size={32} className="text-orange-400 animate-spin" />,
+            ringColor: 'border-orange-500/30',
+        },
     };
 
     const status = statusConfig[orderData?.status] || statusConfig['PENDING'];
@@ -504,6 +520,23 @@ const PaymentSuccessPage = () => {
                                     >
                                         Hubungi Admin via WhatsApp
                                     </a>
+                                </div>
+                            )}
+
+                            {/* REFUNDED / REFUND_PENDING — info saldo */}
+                            {(orderData?.status === 'REFUNDED' || orderData?.status === 'REFUND_PENDING') && (
+                                <div className="mb-5">
+                                    {orderData?.error_message && (
+                                        <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-3 mb-4 text-xs text-orange-300">
+                                            Alasan: {orderData.error_message}
+                                        </div>
+                                    )}
+                                    <Link
+                                        to="/dashboard"
+                                        className="block w-full bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/20 py-3 rounded-xl font-semibold text-emerald-400 transition-colors text-sm text-center mb-3"
+                                    >
+                                        Lihat Saldo Saya
+                                    </Link>
                                 </div>
                             )}
 

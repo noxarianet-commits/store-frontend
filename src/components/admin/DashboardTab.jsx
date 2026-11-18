@@ -17,8 +17,8 @@ const DashboardTab = ({ orders = [] }) => {
 
         const completedOrders = orders.filter(o => o?.status === 'COMPLETED');
         const pendingOrders = orders.filter(o => o?.status === 'PENDING');
-        const processingOrders = orders.filter(o => o?.status === 'PROCESSING');
-        const failedOrders = orders.filter(o => o?.status === 'FAILED' || o?.status === 'CANCELLED');
+        const processingOrders = orders.filter(o => o?.status === 'PROCESSING' || o?.status === 'REFUND_PENDING');
+        const failedOrders = orders.filter(o => ['FAILED', 'CANCELLED', 'REFUNDED'].includes(o?.status));
 
         const totalRevenue = orders.reduce((sum, o) => sum + (Number(o?.price) || 0), 0);
         const completedRevenue = completedOrders.reduce((sum, o) => sum + (Number(o?.price) || 0), 0);

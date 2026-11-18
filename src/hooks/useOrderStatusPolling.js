@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import api from '../api';
 import { createPoller } from '../utils/poller';
 
-const TERMINAL_STATUSES = new Set(['COMPLETED', 'FAILED', 'CANCELLED']);
+const TERMINAL_STATUSES = new Set(['COMPLETED', 'FAILED', 'CANCELLED', 'REFUNDED']);
 const TERMINAL_HTTP_STATUSES = new Set([401, 403, 404]);
 
 /**

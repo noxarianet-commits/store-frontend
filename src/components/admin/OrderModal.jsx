@@ -113,6 +113,7 @@ const OrderModal = ({ editingOrder, onClose, onSave }) => {
                             <option value="FAILED" className="bg-[#1a1a2e] text-white">Gagal</option>
                             <option value="CANCELLED" className="bg-[#1a1a2e] text-white">Dibatalkan</option>
                             <option value="REFUND_PENDING" className="bg-[#1a1a2e] text-white">Refund Diproses</option>
+                            <option value="REFUNDED" className="bg-[#1a1a2e] text-white">Dana Dikembalikan</option>
                         </select>
                     </div>
                     <div>

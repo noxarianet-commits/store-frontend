@@ -10,6 +10,7 @@ const STATUS_CONFIG = {
     FAILED: { label: 'Gagal', color: 'bg-red-500/15 text-red-400 border-red-500/30', dot: 'bg-red-400' },
     CANCELLED: { label: 'Dibatalkan', color: 'bg-gray-500/15 text-gray-400 border-gray-500/30', dot: 'bg-gray-400' },
     REFUND_PENDING: { label: 'Refund Diproses', color: 'bg-orange-500/15 text-orange-400 border-orange-500/30', dot: 'bg-orange-400' },
+    REFUNDED: { label: 'Dana Dikembalikan', color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30', dot: 'bg-emerald-400' },
 };
 
 const VENDOR_CONFIG = {
@@ -172,6 +173,7 @@ const OrdersTab = ({ openOrderModal, deleteOrder, refreshTrigger }) => {
                                 <option value="FAILED">Gagal</option>
                                 <option value="CANCELLED">Dibatalkan</option>
                                 <option value="REFUND_PENDING">Refund Diproses</option>
+                                <option value="REFUNDED">Dana Dikembalikan</option>
                             </select>
                             <Filter className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={12} />
                         </div>

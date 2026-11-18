@@ -83,6 +83,8 @@ const PaymentStep = ({
         COMPLETED: { label: 'Selesai!', color: 'text-green-600', bg: 'bg-green-50 border-green-100', icon: <CheckCircle2 size={16} className="text-green-600" /> },
         FAILED: { label: 'Gagal', color: 'text-red-600', bg: 'bg-red-50 border-red-100', icon: <AlertCircle size={16} className="text-red-600" /> },
         CANCELLED: { label: 'Dibatalkan', color: 'text-slate-500', bg: 'bg-slate-50 border-slate-100', icon: <AlertCircle size={16} className="text-slate-500" /> },
+        REFUNDED: { label: 'Dana dikembalikan', color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-100', icon: <CheckCircle2 size={16} className="text-emerald-600" /> },
+        REFUND_PENDING: { label: 'Refund diproses', color: 'text-orange-600', bg: 'bg-orange-50 border-orange-100', icon: <RefreshCw size={16} className="text-orange-600 animate-spin" /> },
     };
     
     const effectiveStatus = orderStatus?.status === 'PROCESSING_LOCK' ? 'PROCESSING' : orderStatus?.status;
@@ -568,6 +570,27 @@ const PaymentStep = ({
                         onClick={() => { setStep(1); window.location.href = '/'; }}
                         className="w-full bg-white border border-red-200 hover:bg-red-50 text-red-700 font-bold py-3.5 rounded-xl transition-colors shadow-sm text-sm"
                     >Kembali ke Beranda</button>
+                </div>
+            )}
+
+            {/* REFUNDED / REFUND_PENDING */}
+            {(effectiveStatus === 'REFUNDED' || effectiveStatus === 'REFUND_PENDING') && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 text-center mb-6">
+                    <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4">
+                        <CheckCircle2 size={32} />
+                    </div>
+                    <h3 className="text-lg font-bold text-emerald-800 mb-1">
+                        {effectiveStatus === 'REFUNDED' ? 'Dana Dikembalikan' : 'Refund Sedang Diproses'}
+                    </h3>
+                    <p className="text-sm text-emerald-700 mb-4">
+                        {effectiveStatus === 'REFUNDED'
+                            ? 'Nominal yang sudah dibayar telah dikembalikan ke saldo akun Anda.'
+                            : 'Refund akan dikreditkan ke saldo akun Anda dan dicoba ulang otomatis.'}
+                    </p>
+                    <button
+                        onClick={() => { setStep(1); window.location.href = '/dashboard'; }}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition-colors shadow-sm text-sm"
+                    >Lihat Saldo Saya</button>
                 </div>
             )}
 
