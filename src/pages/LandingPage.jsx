@@ -164,28 +164,47 @@ const LandingPage = () => {
 
             {/* ═══ HEADER ═══ */}
             <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-purple-100/50 shadow-sm shadow-purple-600/[0.01]">
-                <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-                    <Link to="/" className="flex items-center gap-2.5">
-                        <img src="/logo.png" alt="Noxarianet" className="w-9 h-9 rounded-lg object-contain" />
-                        <span className="text-xl font-bold tracking-tight text-slate-900">Noxaria<span className="text-purple-600">net</span></span>
+                <div className="max-w-6xl mx-auto px-3.5 sm:px-6 py-2.5 sm:py-4 flex justify-between items-center gap-2 sm:gap-4">
+                    <Link to="/" className="flex items-center gap-2 min-w-0 shrink-0">
+                        <img src="/logo.png" alt="Noxarianet" className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg object-contain shrink-0" />
+                        <span className="text-base sm:text-xl font-bold tracking-tight text-slate-900 truncate">
+                            Noxaria<span className="text-purple-600">net</span>
+                        </span>
                     </Link>
                     
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+                        {/* Mobile: Tombol Rapi, Responsif & Tidak Tabrakan */}
                         <Link
                             to="/download"
-                            aria-label="Aplikasi Android"
-                            className="sm:hidden inline-flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200 text-slate-600 hover:text-purple-600 hover:border-purple-200 transition-colors"
+                            aria-label="Download Aplikasi Resmi Noxarianet"
+                            className="sm:hidden inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200/80 px-2 py-1.5 rounded-xl transition-colors shadow-xs shrink-0"
+                            title="Download Aplikasi Resmi Noxarianet"
                         >
-                            <Smartphone size={16} />
+                            <Smartphone size={13} className="text-purple-600 shrink-0" />
+                            <span className="hidden xs:inline">App</span>
+                            <span className="text-[8px] font-extrabold uppercase bg-purple-600 text-white px-1 py-0.5 rounded leading-none">
+                                APK
+                            </span>
                         </Link>
-                        <Link to="/download" className="hidden sm:inline text-xs font-bold text-slate-600 hover:text-purple-600 transition-colors">
-                            Aplikasi
+
+                        {/* Desktop: Tombol Jelas Download Aplikasi Resmi */}
+                        <Link
+                            to="/download"
+                            className="hidden sm:inline-flex items-center gap-2 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100/80 border border-purple-200/80 hover:border-purple-300 px-3.5 py-2 rounded-xl shadow-xs transition-all hover:scale-[1.02] active:scale-[0.98] shrink-0"
+                            title="Download Aplikasi Resmi Noxarianet"
+                        >
+                            <Smartphone size={14} className="text-purple-600" />
+                            <span>Download Aplikasi Resmi</span>
+                            <span className="text-[9px] font-extrabold uppercase tracking-wider bg-purple-600 text-white px-1.5 py-0.5 rounded-md">
+                                APK
+                            </span>
                         </Link>
+
                         {!authLoading && (
                             user ? (
                                 <UserMenu />
                             ) : (
-                                <Link to="/auth" className="text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 px-5 py-2 rounded-xl transition-colors shadow-md shadow-purple-500/20">
+                                <Link to="/auth" className="text-xs sm:text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl transition-colors shadow-md shadow-purple-500/20 shrink-0">
                                     Masuk
                                 </Link>
                             )
@@ -194,7 +213,7 @@ const LandingPage = () => {
                 </div>
             </nav>
 
-            <main className="max-w-6xl mx-auto px-6">
+            <main className="max-w-6xl mx-auto px-4 sm:px-6">
                 <HeroSection
                     settings={settings}
                     searchQuery={searchQuery}
