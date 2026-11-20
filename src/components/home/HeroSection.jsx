@@ -65,7 +65,7 @@ const HeroSection = ({ settings, searchQuery, onSearchChange }) => {
     };
 
     return (
-        <section className="text-center pt-16 pb-10">
+        <section className="text-center pt-10 sm:pt-14 pb-3 sm:pb-4">
             {/* Badge Status */}
             <div className="inline-flex items-center gap-2.5 bg-white/80 hover:bg-white backdrop-blur-md border border-purple-100/80 hover:border-purple-200 rounded-full pl-3 pr-3.5 py-1.5 mb-6 shadow-[0_2px_12px_rgba(124,58,237,0.06)] hover:shadow-[0_4px_16px_rgba(124,58,237,0.1)] transition-all duration-300 group cursor-default">
                 <span className="relative flex h-2.5 w-2.5">
@@ -106,7 +106,7 @@ const HeroSection = ({ settings, searchQuery, onSearchChange }) => {
             </p>
 
             {/* Search Bar */}
-            <div className="max-w-xl mx-auto mb-8">
+            <div className="max-w-xl mx-auto mb-2">
                 <div className="relative">
                     <Search 
                         size={19} 

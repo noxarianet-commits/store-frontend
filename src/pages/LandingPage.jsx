@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Megaphone, X, ChevronDown, ChevronUp, ShoppingBag, CheckCircle2, Clock, Smartphone } from 'lucide-react';
+import { Megaphone, X, ChevronDown, ChevronUp, ShoppingBag, CheckCircle2, Clock, Smartphone, Zap, ShieldCheck, Star, Headphones } from 'lucide-react';
 import api from '../api';
 import HeroSection from '../components/home/HeroSection';
+import FeaturedShowcase from '../components/home/FeaturedShowcase';
 import CategoryTabs from '../components/home/CategoryTabs';
 import StructuredProductList from '../components/home/StructuredProductList';
 import TestimonialCarousel from '../components/home/TestimonialCarousel';
@@ -59,7 +60,6 @@ function filterProducts(products, activeTab, searchQuery) {
 function computeCounts(products) {
     return {
         all: products.length,
-        featured: products.filter(p => p.is_featured).length,
         'aplikasi-premium': products.filter(p => p.category === 'Aplikasi Premium').length,
         game: products.filter(p => p.category === 'Game').length,
         'e-wallet': products.filter(p => p.category === 'E-Wallet').length,
@@ -128,6 +128,12 @@ const LandingPage = () => {
 
     // All products from home data
     const allProducts = homeData?.all_products || [];
+    const featuredProducts = allProducts.filter(p => p.is_featured);
+    const otherProducts = allProducts.filter(p => !p.is_featured);
+    // Showcase Produk Pilihan: selalu tampilkan produk unggulan di awal dan lengkapi hingga 16 item agar selalu bisa di-scroll di semua resolusi layar
+    const displayFeatured = featuredProducts.length >= 14
+        ? featuredProducts
+        : [...featuredProducts, ...otherProducts].slice(0, 16);
     const filteredProducts = filterProducts(allProducts, activeTab, searchQuery);
     const counts = computeCounts(allProducts);
 
@@ -213,18 +219,27 @@ const LandingPage = () => {
                 </div>
             </nav>
 
-            <main className="max-w-6xl mx-auto px-4 sm:px-6">
-                <HeroSection
-                    settings={settings}
-                    searchQuery={searchQuery}
-                    onSearchChange={setSearchQuery}
-                />
+            <main className="w-full">
+                {/* ═══ HERO SECTION CONTAINER ═══ */}
+                <div className="max-w-6xl mx-auto px-4 sm:px-6">
+                    <HeroSection
+                        settings={settings}
+                        searchQuery={searchQuery}
+                        onSearchChange={setSearchQuery}
+                    />
+                </div>
 
-                <CategoryTabs
-                    activeTab={activeTab}
-                    onTabChange={setActiveTab}
-                    counts={counts}
-                />
+                {/* ═══ PRODUK UNGGULAN (FULL SCREEN WIDTH STRIP) ═══ */}
+                {!searchQuery && displayFeatured.length > 0 && (
+                    <FeaturedShowcase products={displayFeatured} />
+                )}
+
+                {/* ═══ MAIN STORE CONTENT BODY ═══ */}
+                <div className="max-w-6xl mx-auto px-4 sm:px-6">
+                    <CategoryTabs
+                        activeTab={activeTab}
+                        onTabChange={setActiveTab}
+                    />
 
                 {/* ═══ PRODUCT GRID ═══ */}
                 <section className="mb-12">
@@ -256,24 +271,84 @@ const LandingPage = () => {
                     )}
                 </section>
 
-                {/* ═══ STATS SECTION ═══ */}
-                <section className="mb-10 max-w-sm mx-auto text-center">
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-purple-600">Statistik Terpercaya</span>
-                    <h3 className="text-sm font-extrabold text-slate-900 mt-1 mb-4">Dipercaya Ribuan Pengguna</h3>
-                    <div className="grid grid-cols-2 gap-3.5">
-                        <div className="bg-white border border-slate-100 rounded-2xl p-3.5 flex flex-col items-center justify-center shadow-[0_2px_10px_-4px_rgba(124,58,237,0.08)]">
-                            <div className="w-9 h-9 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 mb-2">
-                                <ShoppingBag size={18} />
+                {/* ═══ TRUST & PILLARS SECTION ═══ */}
+                <section className="mb-14 sm:mb-16 text-center">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-400/20 mb-2">
+                        <ShieldCheck size={13} className="text-purple-600" />
+                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-purple-600">
+                            Keamanan &amp; Kepercayaan
+                        </span>
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                        Mengapa Memilih Noxarianet?
+                    </h3>
+                    <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mt-1 mb-6">
+                        Komitmen kami menghadirkan layanan digital resmi, aman, dan instan dengan garansi penuh.
+                    </p>
+
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
+                        {/* 1. Proses Kilat */}
+                        <div className="group relative bg-white/70 hover:bg-white backdrop-blur-md border border-purple-100/80 hover:border-purple-300 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col items-center text-center transition-all duration-200 shadow-[0_2px_10px_rgba(124,58,237,0.03)] hover:shadow-[0_10px_24px_rgba(124,58,237,0.08)] hover:-translate-y-0.5">
+                            <div className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-lg sm:rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 mb-2 shadow-xs group-hover:scale-110 transition-transform">
+                                <Zap size={16} className="fill-amber-500/20" />
                             </div>
-                            <span className="text-base font-black text-emerald-600 leading-none">10.000+</span>
-                            <span className="text-[10px] font-semibold text-slate-400 mt-1.5">Total Transaksi</span>
+                            <span className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight mb-0.5">
+                                Hitungan Detik
+                            </span>
+                            <span className="text-[9.5px] sm:text-[10px] font-extrabold uppercase tracking-wider text-amber-600 mb-1">
+                                Proses Otomatis
+                            </span>
+                            <p className="text-[10px] sm:text-[10.5px] text-slate-500 leading-relaxed font-normal">
+                                Transaksi kilat diproses otomatis 24 jam non-stop langsung aktif.
+                            </p>
                         </div>
-                        <div className="bg-white border border-slate-100 rounded-2xl p-3.5 flex flex-col items-center justify-center shadow-[0_2px_10px_-4px_rgba(124,58,237,0.08)]">
-                            <div className="w-9 h-9 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600 mb-2">
-                                <CheckCircle2 size={18} />
+
+                        {/* 2. 100% Bergaransi */}
+                        <div className="group relative bg-white/70 hover:bg-white backdrop-blur-md border border-purple-100/80 hover:border-purple-300 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col items-center text-center transition-all duration-200 shadow-[0_2px_10px_rgba(124,58,237,0.03)] hover:shadow-[0_10px_24px_rgba(124,58,237,0.08)] hover:-translate-y-0.5">
+                            <div className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-lg sm:rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 mb-2 shadow-xs group-hover:scale-110 transition-transform">
+                                <ShieldCheck size={16} className="fill-emerald-500/20" />
                             </div>
-                            <span className="text-base font-black text-purple-600 leading-none">10.000+</span>
-                            <span className="text-[10px] font-semibold text-slate-400 mt-1.5">Pesanan Berhasil</span>
+                            <span className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight mb-0.5">
+                                100% Garansi
+                            </span>
+                            <span className="text-[9.5px] sm:text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 mb-1">
+                                Proteksi Penuh
+                            </span>
+                            <p className="text-[10px] sm:text-[10.5px] text-slate-500 leading-relaxed font-normal">
+                                Jaminan ganti baru atau dana kembali jika ada kendala layanan.
+                            </p>
+                        </div>
+
+                        {/* 3. Rating Kepuasan */}
+                        <div className="group relative bg-white/70 hover:bg-white backdrop-blur-md border border-purple-100/80 hover:border-purple-300 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col items-center text-center transition-all duration-200 shadow-[0_2px_10px_rgba(124,58,237,0.03)] hover:shadow-[0_10px_24px_rgba(124,58,237,0.08)] hover:-translate-y-0.5">
+                            <div className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-lg sm:rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600 mb-2 shadow-xs group-hover:scale-110 transition-transform">
+                                <Star size={16} className="fill-purple-500/20" />
+                            </div>
+                            <span className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight mb-0.5">
+                                4.9 / 5.0
+                            </span>
+                            <span className="text-[9.5px] sm:text-[10px] font-extrabold uppercase tracking-wider text-purple-600 mb-1">
+                                10.000+ Pelanggan
+                            </span>
+                            <p className="text-[10px] sm:text-[10.5px] text-slate-500 leading-relaxed font-normal">
+                                Dipercaya ribuan pengguna aktif dengan testimoni nyata.
+                            </p>
+                        </div>
+
+                        {/* 4. CS Siap Bantu */}
+                        <div className="group relative bg-white/70 hover:bg-white backdrop-blur-md border border-purple-100/80 hover:border-purple-300 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col items-center text-center transition-all duration-200 shadow-[0_2px_10px_rgba(124,58,237,0.03)] hover:shadow-[0_10px_24px_rgba(124,58,237,0.08)] hover:-translate-y-0.5">
+                            <div className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-lg sm:rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 mb-2 shadow-xs group-hover:scale-110 transition-transform">
+                                <Headphones size={16} className="fill-indigo-500/20" />
+                            </div>
+                            <span className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight mb-0.5">
+                                24/7 Siap Bantu
+                            </span>
+                            <span className="text-[9.5px] sm:text-[10px] font-extrabold uppercase tracking-wider text-indigo-600 mb-1">
+                                CS Responsif
+                            </span>
+                            <p className="text-[10px] sm:text-[10.5px] text-slate-500 leading-relaxed font-normal">
+                                Layanan panduan &amp; solusi ramah via WhatsApp resmi Noxarianet.
+                            </p>
                         </div>
                     </div>
                 </section>
@@ -283,9 +358,7 @@ const LandingPage = () => {
                 />
 
                 <FAQSection />
-
-
-
+                </div>
             </main>
 
             {/* ═══ FOOTER ═══ */}

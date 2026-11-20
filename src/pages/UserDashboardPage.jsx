@@ -26,7 +26,8 @@ import {
     Sparkles, 
     ArrowLeft,
     AlertCircle,
-    LifeBuoy
+    LifeBuoy,
+    LogOut
 } from 'lucide-react';
 import AnimatedBackground from '../components/AnimatedBackground';
 import BalanceCard from '../components/balance/BalanceCard';
@@ -40,7 +41,7 @@ import { formatRp } from '../utils/currencyUtils';
 // ══════════════════════════════════════════════════════════════════════════
 // SUBCOMPONENT: ProfileTab
 // ══════════════════════════════════════════════════════════════════════════
-const ProfileTab = ({ user, refreshProfile }) => {
+const ProfileTab = ({ user, refreshProfile, onSwitchTab, onLogout }) => {
     const [formData, setFormData] = useState({
         display_name: user?.display_name || '',
         phone: user?.phone || ''
@@ -304,6 +305,39 @@ const ProfileTab = ({ user, refreshProfile }) => {
                                 <span>Perbarui Password</span>
                             </>
                         )}
+                    </button>
+                </div>
+            </div>
+
+            {/* Card 3: Ringkasan Saldo Akun */}
+            <div className="lg:col-span-2 bg-white/95 backdrop-blur-md p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-100/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                    <div className="w-11 h-11 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100">
+                        <Wallet className="w-5 h-5" />
+                    </div>
+                    <div>
+                        <div className="text-xs font-semibold text-slate-500">Saldo Noxarianet Anda</div>
+                        <div className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">
+                            {formatRp(user?.balance || 0)}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                    <button
+                        type="button"
+                        onClick={() => onSwitchTab && onSwitchTab('saldo')}
+                        className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs transition-all shadow-xs cursor-pointer"
+                    >
+                        Top Up Saldo
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onLogout}
+                        className="px-3.5 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>Keluar</span>
                     </button>
                 </div>
             </div>
@@ -639,14 +673,25 @@ const HelpTab = () => {
 };
 
 export default function UserDashboardPage() {
-    const { user, isLoading, refreshProfile } = useAuth();
+    const { user, isLoading, refreshProfile, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     
-    const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'saldo');
+    // Default to 'profil' (Akun) so clicking account always shows profile/account details
+    const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'profil');
     const [isTopupOpen, setIsTopupOpen] = useState(location.state?.openTopup || false);
     const [pendingTopup, setPendingTopup] = useState(null);
     const [selectedTopup, setSelectedTopup] = useState(null);
+
+    const handleLogout = () => {
+        notify.confirm({ title: 'Keluar Akun', text: 'Apakah Anda yakin ingin keluar dari akun Noxarianet?' }).then((isConfirmed) => {
+            if (isConfirmed) {
+                logout();
+                navigate('/');
+                notify.success('Berhasil keluar');
+            }
+        });
+    };
 
     const fetchPendingTopup = async () => {
         try {
@@ -656,6 +701,16 @@ export default function UserDashboardPage() {
             // Ignore
         }
     };
+
+    // Sync active tab when route state changes (e.g. from UserMenu navigation)
+    useEffect(() => {
+        if (location.state?.activeTab) {
+            setActiveTab(location.state.activeTab);
+        }
+        if (location.state?.openTopup) {
+            setIsTopupOpen(true);
+        }
+    }, [location.state]);
 
     useEffect(() => {
         if (!isLoading && !user) {
@@ -681,11 +736,10 @@ export default function UserDashboardPage() {
     }
 
     const tabs = [
-        { id: 'saldo', label: 'Saldo & Top Up', icon: Wallet },
-        { id: 'transaksi', label: 'Riwayat Transaksi', icon: History },
-        { id: 'pesanan', label: 'Riwayat Pesanan', icon: ShoppingBag },
-        { id: 'bantuan', label: 'Bantuan CS', icon: LifeBuoy },
-        { id: 'profil', label: 'Profil Saya', icon: User },
+        { id: 'saldo', label: 'Saldo & Mutasi', shortLabel: 'Saldo', icon: Wallet },
+        { id: 'pesanan', label: 'Riwayat Pesanan', shortLabel: 'Pesanan', icon: ShoppingBag },
+        { id: 'bantuan', label: 'Bantuan CS', shortLabel: 'Bantuan', icon: LifeBuoy },
+        { id: 'profil', label: 'Profil Saya', shortLabel: 'Akun', icon: User },
     ];
 
     const renderTabContent = () => {
@@ -724,38 +778,44 @@ export default function UserDashboardPage() {
                         <TransactionHistory onViewQr={(trx) => { setSelectedTopup(trx); setIsTopupOpen(true); }} />
                     </div>
                 );
-            case 'transaksi': 
-                return <TransactionHistory onViewQr={(trx) => { setSelectedTopup(trx); setIsTopupOpen(true); }} />;
             case 'pesanan': 
                 return <OrdersTab />;
             case 'bantuan':
                 return <HelpTab />;
             case 'profil': 
-                return <ProfileTab user={user} refreshProfile={refreshProfile} />;
             default: 
-                return null;
+                return <ProfileTab user={user} refreshProfile={refreshProfile} onSwitchTab={setActiveTab} onLogout={handleLogout} />;
         }
     };
 
     return (
-        <div className="min-h-screen bg-[#FAF9FF] relative pb-24">
+        <div className="min-h-screen bg-[#FAF9FF] relative pb-28 lg:pb-16">
             <AnimatedBackground />
             
             <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 relative z-10">
-                {/* Back to Home Button */}
-                <div className="flex justify-start mb-6">
+                {/* Top Bar: Back to Home + Logout */}
+                <div className="flex justify-between items-center mb-6">
                     <button 
                         type="button"
                         onClick={() => navigate('/')} 
-                        className="group inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 hover:bg-white text-slate-600 hover:text-purple-700 text-xs sm:text-sm font-semibold border border-purple-100 shadow-sm backdrop-blur-md transition-all duration-200"
+                        className="group inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 hover:bg-white text-slate-600 hover:text-purple-700 text-xs sm:text-sm font-semibold border border-purple-100 shadow-sm backdrop-blur-md transition-all duration-200 cursor-pointer"
                     >
                         <ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-1 text-purple-600" />
                         <span>Kembali ke Beranda</span>
                     </button>
+
+                    <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold border border-red-100 transition-colors cursor-pointer"
+                    >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Keluar Akun</span>
+                    </button>
                 </div>
 
                 {/* User Welcome Banner Card */}
-                <div className="bg-white/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-6 shadow-xs border border-purple-100/70 flex items-center gap-4 sm:gap-5 transition-all">
+                <div className="bg-white/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-6 shadow-xs border border-purple-100/70 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all">
                     <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-purple-600 via-purple-500 to-indigo-600 text-white flex items-center justify-center font-black text-lg sm:text-xl shadow-md shadow-purple-600/20 ring-4 ring-purple-50 shrink-0">
                         {user.display_name?.charAt(0).toUpperCase()}
                     </div>
@@ -783,13 +843,42 @@ export default function UserDashboardPage() {
                             </span>
                         </div>
                     </div>
+
+                    {/* Quick Tab Switcher on Banner */}
+                    <div className="flex items-center gap-2 self-stretch sm:self-auto justify-between sm:justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('profil')}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                activeTab === 'profil'
+                                    ? 'bg-purple-600 text-white shadow-xs'
+                                    : 'bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200/60'
+                            }`}
+                        >
+                            <User className="w-3.5 h-3.5" />
+                            <span>Profil Saya</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('saldo')}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                activeTab === 'saldo'
+                                    ? 'bg-purple-600 text-white shadow-xs'
+                                    : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/60'
+                            }`}
+                        >
+                            <Wallet className="w-3.5 h-3.5" />
+                            <span>Saldo ({formatRp(user.balance || 0)})</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Dashboard Layout: Sidebar + Content */}
                 <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
-                    {/* Responsive Navigation Tabs (Horizontal scroll on mobile, Vertical pill sidebar on desktop) */}
-                    <div className="lg:w-64 shrink-0">
-                        <div className="flex lg:flex-col gap-2 overflow-x-auto no-scrollbar pb-2 lg:pb-0 bg-white/60 backdrop-blur-md p-1.5 sm:p-2 rounded-2xl sm:rounded-3xl border border-purple-100/60 shadow-xs">
+                    {/* Desktop Sidebar Tabs (Hidden on mobile) */}
+                    <div className="hidden lg:block lg:w-64 shrink-0">
+                        <div className="flex flex-col gap-1.5 bg-white/80 backdrop-blur-xl p-2 rounded-3xl border border-purple-100/70 shadow-xs sticky top-6">
                             {tabs.map(tab => {
                                 const Icon = tab.icon;
                                 const isActive = activeTab === tab.id;
@@ -798,10 +887,10 @@ export default function UserDashboardPage() {
                                         key={tab.id}
                                         type="button"
                                         onClick={() => setActiveTab(tab.id)}
-                                        className={`flex items-center gap-2.5 px-4 py-3 rounded-xl sm:rounded-2xl transition-all text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 lg:shrink lg:w-full ${
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all text-xs font-bold w-full cursor-pointer ${
                                             isActive 
                                                 ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/20' 
-                                                : 'text-slate-600 hover:text-purple-700 hover:bg-white/80'
+                                                : 'text-slate-600 hover:text-purple-700 hover:bg-purple-50/50'
                                         }`}
                                     >
                                         <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
@@ -845,9 +934,47 @@ export default function UserDashboardPage() {
                     setSelectedTopup(null);
                     refreshProfile();
                     fetchPendingTopup();
-                    setActiveTab('transaksi');
+                    setActiveTab('saldo');
                 }}
             />
+
+            {/* ═══ MOBILE BOTTOM APP BAR (Native App Dock Experience) ═══ */}
+            <nav 
+                aria-label="Navigasi Bawah Dashboard"
+                className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-2xl border-t border-purple-100/90 shadow-[0_-8px_30px_rgba(124,58,237,0.1)] px-2 pt-1.5 pb-[max(0.6rem,env(safe-area-inset-bottom))]"
+            >
+                <div className="grid grid-cols-4 items-center max-w-md mx-auto">
+                    {tabs.map(tab => {
+                        const Icon = tab.icon;
+                        const isActive = activeTab === tab.id;
+                        return (
+                            <button
+                                key={tab.id}
+                                type="button"
+                                onClick={() => {
+                                    setActiveTab(tab.id);
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
+                                className={`flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all cursor-pointer select-none active:scale-95 ${
+                                    isActive ? 'text-purple-600' : 'text-slate-400 hover:text-slate-600'
+                                }`}
+                            >
+                                <div className={`relative p-1.5 rounded-xl transition-all ${isActive ? 'bg-purple-100 text-purple-700 scale-110 shadow-xs' : 'hover:bg-slate-50'}`}>
+                                    <Icon className={`w-5 h-5 transition-colors ${isActive ? 'text-purple-700 stroke-[2.3]' : 'text-slate-400 stroke-[1.8]'}`} />
+                                </div>
+                                <span className={`text-[10px] tracking-tight mt-0.5 leading-none transition-all ${
+                                    isActive ? 'font-black text-purple-700 scale-105' : 'font-semibold text-slate-500'
+                                }`}>
+                                    {tab.shortLabel}
+                                </span>
+                                {isActive && (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-purple-600 mt-1 shadow-xs shadow-purple-500/50" />
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
+            </nav>
         </div>
     );
 }
