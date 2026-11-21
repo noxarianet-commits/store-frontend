@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     LayoutDashboard,
     TrendingUp,
+    CalendarDays,
     Wallet,
     Server,
     Star,
@@ -24,6 +25,7 @@ const menuGroups = [
         items: [
             { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
             { id: 'revenue', label: 'Pendapatan', icon: TrendingUp },
+            { id: 'laporan', label: 'Laporan Harian', icon: CalendarDays },
         ]
     },
     {

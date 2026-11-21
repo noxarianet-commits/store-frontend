@@ -22,6 +22,7 @@ import UsersTab from '../components/admin/UsersTab';
 import TransactionsTab from '../components/admin/TransactionsTab';
 import TicketsTab from '../components/admin/TicketsTab';
 import NotificationTab from '../components/admin/NotificationTab';
+import DailyReportTab from '../components/admin/DailyReportTab';
 
 const getCanonicalProductGroup = (name) => {
     if (!name) return '';
@@ -665,6 +666,7 @@ const AdminDashboard = () => {
                         />
                     )}
                     {activeTab === 'revenue' && <RevenueTab orders={orders} settings={settings} updateSetting={updateSetting} />}
+                    {activeTab === 'laporan' && <DailyReportTab />}
 
                     {activeTab === 'featured' && (
                         <FeaturedTab

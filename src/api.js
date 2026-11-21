@@ -234,4 +234,10 @@ api.broadcastPush = (data) => api.post('/admin/push/broadcast', data);
 api.getPushHistory = (limit = 20) => api.get('/admin/push/history', { params: { limit } });
 api.getPushStats = () => api.get('/admin/push/stats');
 
+// Laporan harian — admin. Tanggal memakai format YYYY-MM-DD (UTC).
+// GET akan membuat laporan bila belum ada; POST /generate memaksa hitung ulang.
+api.getDailyReport = (date) => api.get('/admin/reports/daily', { params: { date } });
+api.getDailyReportHistory = (limit = 30) => api.get('/admin/reports/daily/history', { params: { limit } });
+api.generateDailyReport = (date) => api.post('/admin/reports/daily/generate', null, { params: { date } });
+
 export default api;
