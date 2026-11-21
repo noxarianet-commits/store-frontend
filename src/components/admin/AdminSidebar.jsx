@@ -57,7 +57,7 @@ const AdminSidebar = ({ activeTab, setActiveTab, handleLogout, isMobileMenuOpen,
     return (
         <>
             {/* Mobile Navbar */}
-            <div className="md:hidden sticky top-0 z-[60] bg-white/95 backdrop-blur-md border-b border-slate-200/80 p-4 flex justify-between items-center relative shadow-xs">
+            <div className="md:hidden sticky top-0 z-[60] bg-white border-b border-slate-200 p-4 flex justify-between items-center relative shadow-xs">
                 <div className="flex items-center gap-2.5">
                     <img src="/logo.png" className="w-8 h-8 rounded-lg object-contain" alt="Noxarianet" />
                     <div>

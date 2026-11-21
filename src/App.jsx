@@ -27,12 +27,13 @@ import DownloadPage from './pages/DownloadPage';
 
 function App() {
   const { pathname } = useLocation();
+  const isAdminRoute = pathname.startsWith('/admin');
 
   return (
     <ErrorBoundary>
       <AuthProvider>
         <ScrollToTop />
-        <AnimatedBackground />
+        {!isAdminRoute && <AnimatedBackground />}
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/product/:id" element={<ProductPage />} />

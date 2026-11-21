@@ -1,103 +1,148 @@
-import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Home, ChevronLeft, Cpu } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, MessageCircle, Compass, Clock } from 'lucide-react';
+import { getWaUrl } from '../utils/waUtils';
+import api from '../api';
 
 const NotFound = () => {
-  return (
-    <div className="min-h-screen bg-[#0A031A] flex flex-col items-center justify-center px-6 overflow-hidden relative selection:bg-purple-500 selection:text-white">
-      {/* Static Background Glows */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[800px] h-[400px] bg-purple-600/10 blur-[120px] rounded-full pointer-events-none" />
-      
-      {/* Grid Pattern Overlay */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none"></div>
+    const navigate = useNavigate();
+    const [countdown, setCountdown] = useState(5);
+    const [settings, setSettings] = useState(null);
 
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-        className="text-center relative z-10"
-      >
-        {/* TV Glitch 404 Text */}
-        <div className="relative mb-12 mt-8 md:mt-16 inline-block">
-          {/* Main Text */}
-          <motion.h1 
-            className="relative text-[8rem] sm:text-[10rem] md:text-[14rem] lg:text-[16rem] font-black tracking-tighter text-white leading-none z-10 drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]"
-            animate={{
-               x: [0, -3, 3, -1, 0, 2, -3, 0],
-               y: [0, 1, -2, 0, -1, 1, 0, 0],
-               skewX: [0, -2, 2, 0, 0, 0, 0, 0]
-            }}
-            transition={{ duration: 0.4, repeat: Infinity, repeatDelay: 3 }}
-          >
-            404
-          </motion.h1>
+    // Fetch settings untuk mendapatkan nomor WA Admin terbaru
+    useEffect(() => {
+        let isMounted = true;
+        api.get('/settings')
+            .then((res) => {
+                if (isMounted && res.data) setSettings(res.data);
+            })
+            .catch(() => {});
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
-          {/* Red Glitch Offset */}
-          <motion.h1 
-            className="absolute top-0 left-0 text-[8rem] sm:text-[10rem] md:text-[14rem] lg:text-[16rem] font-black tracking-tighter text-red-500 leading-none z-0 mix-blend-screen"
-            animate={{
-               x: [0, 6, -6, 4, 0, -5, 3, 0],
-               opacity: [0, 0.8, 0, 0.5, 0, 1, 0, 0]
-            }}
-            transition={{ duration: 0.3, repeat: Infinity, repeatDelay: 2.5 }}
-          >
-            404
-          </motion.h1>
+    // Hitungan mundur 5 detik untuk redirect otomatis ke beranda
+    useEffect(() => {
+        if (countdown <= 0) {
+            navigate('/');
+            return;
+        }
 
-          {/* Cyan Glitch Offset */}
-          <motion.h1 
-            className="absolute top-0 left-0 text-[8rem] sm:text-[10rem] md:text-[14rem] lg:text-[16rem] font-black tracking-tighter text-cyan-400 leading-none z-0 mix-blend-screen"
-            animate={{
-               x: [0, -6, 6, -4, 0, 5, -3, 0],
-               opacity: [0, 0.8, 0, 0.5, 0, 1, 0, 0]
-            }}
-            transition={{ duration: 0.35, repeat: Infinity, repeatDelay: 2.7 }}
-          >
-            404
-          </motion.h1>
-          
-          {/* Subtle TV Scanline overlay for the text */}
-          <div className="absolute inset-0 pointer-events-none bg-[repeating-linear-gradient(transparent,transparent_2px,rgba(0,0,0,0.3)_3px,rgba(0,0,0,0.3)_3px)] z-20 mask-image:linear-gradient(to_bottom,transparent,black,transparent)"></div>
+        const timer = setInterval(() => {
+            setCountdown((prev) => prev - 1);
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [countdown, navigate]);
+
+    const handleBack = () => {
+        if (window.history.length > 1) {
+            navigate(-1);
+        } else {
+            navigate('/');
+        }
+    };
+
+    const waLink = getWaUrl(
+        settings,
+        'Halo Admin Noxarianet, saya ingin melaporkan bahwa halaman yang saya akses tidak ditemukan (Error 404). Mohon bantuannya.'
+    );
+
+    return (
+        <div className="min-h-screen bg-[#FAF9FF] flex flex-col justify-between items-center px-4 py-6 sm:py-8 relative selection:bg-purple-500 selection:text-white font-sans overflow-x-hidden">
+            {/* Top brand header */}
+            <header className="w-full max-w-4xl flex items-center justify-between py-2">
+                <Link to="/" className="flex items-center gap-2.5 group">
+                    <img src="/logo.png" alt="Noxarianet" className="w-9 h-9 rounded-xl object-contain shadow-xs group-hover:scale-105 transition-transform" />
+                    <div>
+                        <span className="text-lg font-black text-slate-900 tracking-tight">
+                            Noxaria<span className="text-purple-600">net</span>
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-400 block -mt-1 tracking-wider uppercase">
+                            Store
+                        </span>
+                    </div>
+                </Link>
+                <a
+                    href={waLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3.5 py-2 rounded-xl transition-all shadow-xs"
+                >
+                    <MessageCircle size={14} className="text-emerald-600" />
+                    <span>Hubungi Admin</span>
+                </a>
+            </header>
+
+            {/* Main 404 Centerpiece */}
+            <main className="my-auto flex flex-col items-center text-center max-w-lg w-full px-2 py-6">
+                {/* 404 Status Pill */}
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 border border-purple-200/80 mb-3 shadow-xs">
+                    <Compass size={13} className="text-purple-600" />
+                    <span className="text-[10.5px] font-extrabold uppercase tracking-widest text-purple-700">
+                        Error 404 • Halaman Tidak Ditemukan
+                    </span>
+                </div>
+
+                {/* Big Aesthetic 404 Number */}
+                <div className="relative mb-2 select-none">
+                    <span className="text-[6.5rem] sm:text-[9.5rem] md:text-[11rem] font-black tracking-tighter leading-none bg-gradient-to-b from-purple-600 via-indigo-600 to-slate-400 bg-clip-text text-transparent">
+                        404
+                    </span>
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-3xl bg-white/90 border border-purple-100 shadow-xl flex items-center justify-center transform -rotate-6">
+                            <Compass size={40} className="text-purple-600 animate-pulse" />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Heading & Subheading */}
+                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mb-2">
+                    Waduh! Halamannya Tidak Ada
+                </h1>
+                <p className="text-slate-600 text-xs sm:text-sm leading-relaxed max-w-md mx-auto mb-5 font-medium">
+                    Tautan yang Anda tuju mungkin sudah dipindahkan, salah ketik, atau sedang dalam perbaikan.
+                </p>
+
+                {/* Countdown Badge 5 Detik */}
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-purple-50/90 border border-purple-200/80 text-purple-700 text-xs font-semibold mb-7 shadow-xs">
+                    <Clock size={15} className="text-purple-600 animate-spin" />
+                    <span>
+                        Otomatis dialihkan ke beranda dalam{' '}
+                        <strong className="font-mono text-sm text-purple-900 font-extrabold">{countdown}</strong> detik
+                    </span>
+                </div>
+
+                {/* Main Action Buttons: Hubungi Admin & Kembali ke Halaman Sebelumnya */}
+                <div className="flex flex-col sm:flex-row gap-3 w-full justify-center">
+                    <a
+                        href={waLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold rounded-2xl shadow-lg shadow-emerald-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer w-full sm:w-auto"
+                    >
+                        <MessageCircle size={17} />
+                        <span>Hubungi Admin</span>
+                    </a>
+
+                    <button
+                        type="button"
+                        onClick={handleBack}
+                        className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 text-xs sm:text-sm font-bold rounded-2xl shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer w-full sm:w-auto"
+                    >
+                        <ArrowLeft size={17} />
+                        <span>Kembali ke Halaman Sebelumnya</span>
+                    </button>
+                </div>
+            </main>
+
+            {/* Bottom Footer */}
+            <footer className="w-full text-center py-4 border-t border-slate-200/60 text-[11px] text-slate-400">
+                © {new Date().getFullYear()} Noxarianet Store • Layanan Digital Terpercaya & Otomatis
+            </footer>
         </div>
-        
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="px-4"
-        >
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-white mb-4 flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3">
-            <Cpu className="text-purple-400 mb-1 md:mb-0" size={32} />
-            <span className="text-center">Halaman Tidak Ditemukan</span>
-          </h2>
-          
-          <p className="text-gray-400 max-w-lg mx-auto mb-10 text-sm md:text-base lg:text-lg leading-relaxed font-medium">
-            Sepertinya URL yang Anda tuju tidak valid atau mungkin halaman tersebut sedang dalam perbaikan.
-          </p>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center w-full max-w-md mx-auto sm:max-w-none">
-            <Link
-              to="/"
-              className="flex w-full sm:w-auto items-center justify-center gap-3 px-8 py-3.5 md:px-10 md:py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-2xl transition-all hover:-translate-y-1 shadow-[0_10px_30px_-10px_rgba(147,51,234,0.5)]"
-            >
-              <Home size={20} />
-              <span className="uppercase tracking-wider text-sm md:text-base">Kembali ke Beranda</span>
-            </Link>
-            
-            <button
-              onClick={() => window.history.back()}
-              className="flex w-full sm:w-auto items-center justify-center gap-3 px-8 py-3.5 md:px-10 md:py-4 bg-white/5 hover:bg-white/10 text-white font-bold rounded-2xl border border-white/10 transition-all hover:-translate-y-1 backdrop-blur-sm"
-            >
-              <ChevronLeft size={20} />
-              <span className="uppercase tracking-wider text-sm md:text-base">Kembali</span>
-            </button>
-          </div>
-        </motion.div>
-      </motion.div>
-    </div>
-  );
+    );
 };
 
 export default NotFound;
-

@@ -571,7 +571,7 @@ const AdminDashboard = () => {
 
             <main className="flex-1 overflow-auto w-full">
                 {/* Modern light top bar */}
-                <header className="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between shadow-xs">
+                <header className="sticky top-0 z-20 bg-white border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between shadow-xs">
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
                             <span>Admin</span>

@@ -226,7 +226,7 @@ function ActionModal({ type, user, onClose, onSuccess }) {
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
+            <div className="absolute inset-0 bg-slate-900/60" onClick={onClose} />
             <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-sm relative z-10 shadow-2xl overflow-hidden">
                 <div className="p-5 border-b border-slate-100">
                     <h3 className="text-lg font-bold text-slate-900">
