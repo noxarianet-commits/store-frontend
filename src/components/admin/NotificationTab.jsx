@@ -75,13 +75,28 @@ export default function NotificationTab() {
         try {
             const res = await api.broadcastPush({ title, body, ...(url ? { url } : {}) });
             const d = res.data?.data || {};
-            await showAlert({
-                icon: 'success',
-                title: 'Notifikasi Terkirim!',
-                text: `Terkirim: ${d.sent ?? 0} perangkat • Gagal: ${d.failed ?? 0}`,
-                confirmText: 'OK',
-            });
-            setForm({ title: '', body: '', url: '' });
+            const sent = d.sent ?? 0;
+            const failed = d.failed ?? 0;
+
+            if (sent === 0) {
+                // Broadcast tetap dibalas 200 walau semua perangkat gagal —
+                // jangan tampilkan "Terkirim!" kalau tidak ada yang terkirim.
+                await showAlert({
+                    icon: 'error',
+                    title: 'Notifikasi Gagal Terkirim',
+                    text: d.error || `Tidak ada perangkat yang menerima notifikasi (gagal: ${failed}).`,
+                    confirmText: 'OK',
+                });
+            } else {
+                await showAlert({
+                    icon: 'success',
+                    title: 'Notifikasi Terkirim!',
+                    text: `Terkirim: ${sent} perangkat • Gagal: ${failed}`,
+                    confirmText: 'OK',
+                });
+                setForm({ title: '', body: '', url: '' });
+            }
+
             fetchData();
         } catch (err) {
             notifyError(err.response?.data?.error || 'Gagal mengirim notifikasi');
@@ -237,6 +252,14 @@ export default function NotificationTab() {
                                                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${statusCfg.color}`}>
                                                     {statusCfg.label}
                                                 </span>
+                                                {item.status === 'failed' && item.error ? (
+                                                    <p
+                                                        className="text-[10px] text-red-300/70 mt-1 max-w-[180px] truncate mx-auto"
+                                                        title={item.error}
+                                                    >
+                                                        {item.error}
+                                                    </p>
+                                                ) : null}
                                             </td>
                                             <td className="px-4 py-3 text-right">
                                                 <span className="text-green-400 font-semibold">{item.sent_count ?? 0}</span>
