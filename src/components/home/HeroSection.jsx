@@ -64,12 +64,23 @@ const HeroSection = ({ settings, searchQuery, onSearchChange }) => {
         heroDesc: 'Tingkatkan produktivitas dan hiburanmu dengan layanan premium terjangkau.',
     };
 
+    const rawShopStatus = settings?.shop_status;
+    const isShopOpen = rawShopStatus === undefined || rawShopStatus === null
+        ? true
+        : typeof rawShopStatus === 'object'
+            ? rawShopStatus.isOpen !== false
+            : typeof rawShopStatus === 'boolean'
+                ? rawShopStatus
+                : typeof rawShopStatus === 'string'
+                    ? rawShopStatus.trim().toUpperCase() === 'OPEN' || rawShopStatus.trim().toUpperCase() === 'TRUE' || rawShopStatus.trim() === '1'
+                    : true;
+
     return (
-        <section className="text-center pt-16 pb-10">
+        <section className="text-center pt-10 sm:pt-14 pb-3 sm:pb-4">
             {/* Badge Status */}
             <div className="inline-flex items-center gap-2.5 bg-white/80 hover:bg-white backdrop-blur-md border border-purple-100/80 hover:border-purple-200 rounded-full pl-3 pr-3.5 py-1.5 mb-6 shadow-[0_2px_12px_rgba(124,58,237,0.06)] hover:shadow-[0_4px_16px_rgba(124,58,237,0.1)] transition-all duration-300 group cursor-default">
                 <span className="relative flex h-2.5 w-2.5">
-                    {settings.shop_status?.isOpen ? (
+                    {isShopOpen ? (
                         <>
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span>
@@ -79,9 +90,9 @@ const HeroSection = ({ settings, searchQuery, onSearchChange }) => {
                     )}
                 </span>
                 <span className="text-xs font-semibold text-slate-800 tracking-tight">
-                    {settings.shop_status?.isOpen ? 'Layanan Online' : 'Toko Sedang Tutup'}
+                    {isShopOpen ? 'Layanan Online' : 'Toko Sedang Tutup'}
                 </span>
-                {settings.shop_status?.isOpen && (
+                {isShopOpen && (
                     <>
                         <span className="w-1 h-1 rounded-full bg-slate-300"></span>
                         <span className="text-[11px] font-bold text-purple-600 bg-purple-50/80 border border-purple-100 px-2 py-0.5 rounded-full tracking-wide">
@@ -106,7 +117,7 @@ const HeroSection = ({ settings, searchQuery, onSearchChange }) => {
             </p>
 
             {/* Search Bar */}
-            <div className="max-w-xl mx-auto mb-8">
+            <div className="max-w-xl mx-auto mb-2">
                 <div className="relative">
                     <Search 
                         size={19} 

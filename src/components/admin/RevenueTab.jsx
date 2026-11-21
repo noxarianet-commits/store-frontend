@@ -1,4 +1,3 @@
-
 import { DollarSign, Package, Sparkles, AlertCircle, Settings } from 'lucide-react';
 import StatCard from '../ui/StatCard';
 
@@ -8,8 +7,8 @@ const RevenueTab = ({ orders, settings, updateSetting }) => {
     const netProfit = totalRevenue - capital;
 
     return (
-        <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <StatCard
                     title="Omzet (Kotor)"
                     value={`Rp ${totalRevenue.toLocaleString('id-ID')}`}
@@ -18,45 +17,46 @@ const RevenueTab = ({ orders, settings, updateSetting }) => {
                 />
                 <StatCard
                     title="Modal Awal"
-                    value={`Rp ${Number(settings.initial_capital).toLocaleString('id-ID')}`}
+                    value={`Rp ${Number(settings.initial_capital || 0).toLocaleString('id-ID')}`}
                     icon={Package}
-                    color="bg-red-500"
+                    color="bg-rose-500"
                 />
                 <StatCard
                     title="Laba Bersih"
                     value={`Rp ${netProfit.toLocaleString('id-ID')}`}
                     icon={Sparkles}
-                    color={netProfit >= 0 ? "bg-green-500" : "bg-red-500"}
+                    color={netProfit >= 0 ? "bg-emerald-500" : "bg-rose-500"}
                 />
             </div>
 
-            <div className="bg-[#0E0E0E] border border-white/5 rounded-3xl p-8">
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-xs">
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h3 className="text-xl font-bold text-white">Catatan Modal Awal</h3>
-                        <p className="text-xs text-gray-500 mt-1">Masukkan total modal awal untuk menghitung laba bersih</p>
+                        <h3 className="text-lg sm:text-xl font-bold text-slate-900">Catatan Modal Awal</h3>
+                        <p className="text-xs text-slate-500 mt-1">Masukkan total modal awal untuk menghitung estimasi laba bersih</p>
                     </div>
-                    <div className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-gray-400">
-                        <Settings size={20} />
+                    <div className="w-10 h-10 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-600 border border-slate-200">
+                        <Settings size={18} />
                     </div>
                 </div>
 
                 <div className="max-w-md">
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2 tracking-widest">Update Modal Awal (Rp)</label>
+                    <label className="block text-xs font-bold text-slate-600 uppercase mb-2 tracking-wider">Update Modal Awal (Rp)</label>
                     <div className="flex flex-col sm:flex-row gap-3">
                         <input
                             type="number"
                             defaultValue={settings.initial_capital}
                             onBlur={(e) => updateSetting('initial_capital', parseInt(e.target.value) || 0)}
-                            className="w-full sm:flex-1 bg-white/5 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-purple-500/50"
+                            className="w-full sm:flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 text-sm focus:outline-none focus:bg-white focus:border-purple-500 transition-colors"
                             placeholder="Contoh: 1000000"
                         />
-                        <div className="bg-purple-600/10 text-purple-400 px-6 py-4 rounded-xl text-sm font-bold border border-purple-500/20 flex items-center justify-center whitespace-nowrap">
+                        <div className="bg-purple-50 text-purple-700 px-5 py-3 rounded-xl text-xs font-bold border border-purple-200 flex items-center justify-center whitespace-nowrap">
                             Simpan Otomatis
                         </div>
                     </div>
-                    <p className="text-[10px] text-gray-500 mt-3 flex items-center gap-2 italic">
-                        <AlertCircle size={12} /> Laba Bersih = Omzet - Modal Awal
+                    <p className="text-xs text-slate-400 mt-3 flex items-center gap-1.5 italic">
+                        <AlertCircle size={13} className="text-purple-500 shrink-0" />
+                        <span>Rumus: Laba Bersih = Omzet - Modal Awal</span>
                     </p>
                 </div>
             </div>

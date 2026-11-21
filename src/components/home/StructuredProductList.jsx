@@ -94,22 +94,15 @@ function getAppSubCategory(product) {
 /**
  * Section Header Component with cool Lucide Icon and gradient hairline divider.
  */
-const SectionHeader = ({ Icon, title, count, color = 'text-purple-600', bg = 'bg-purple-50 border-purple-100/80' }) => (
-    <div className="flex items-center gap-3 mb-4 mt-1">
-        <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl ${bg} flex items-center justify-center ${color} shadow-sm border flex-shrink-0`}>
-            <Icon size={18} className="sm:w-5 sm:h-5" />
+const SectionHeader = ({ Icon, title, color = 'text-purple-600', bg = 'bg-purple-50 border-purple-100/80' }) => (
+    <div className="flex items-center gap-2.5 mb-3.5 mt-1">
+        <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl ${bg} flex items-center justify-center ${color} shadow-xs border flex-shrink-0`}>
+            <Icon size={17} className="sm:w-[18px] sm:h-[18px]" />
         </div>
-        <div className="flex items-center gap-2">
-            <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
-                {title}
-            </h3>
-            {count !== undefined && (
-                <span className="text-[10px] sm:text-[11px] font-extrabold text-slate-500 bg-slate-100/90 px-2.5 py-0.5 rounded-full">
-                    {count}
-                </span>
-            )}
-        </div>
-        <div className="flex-1 h-[1px] bg-gradient-to-r from-slate-200 via-slate-100 to-transparent ml-2" />
+        <h3 className="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight">
+            {title}
+        </h3>
+        <div className="flex-1 h-[1px] bg-gradient-to-r from-purple-200/80 via-slate-200/50 to-transparent ml-2" />
     </div>
 );
 
@@ -117,18 +110,13 @@ const SectionHeader = ({ Icon, title, count, color = 'text-purple-600', bg = 'bg
  * Sub-Category Header for Aplikasi Premium.
  * Clean, lightweight inline icon without competing boxed squircle for perfect visual hierarchy.
  */
-const SubCategoryHeader = ({ Icon, label, count, color = 'text-purple-600' }) => (
-    <div className="flex items-center gap-2 mb-3 mt-6 first:mt-3 pt-1">
-        <Icon size={16} className={`${color} flex-shrink-0`} />
-        <h4 className="text-xs sm:text-sm font-bold text-slate-800 tracking-tight">
+const SubCategoryHeader = ({ Icon, label, color = 'text-purple-600' }) => (
+    <div className="flex items-center gap-2 mb-2.5 mt-5 first:mt-1 pt-1">
+        <Icon size={15} className={`${color} flex-shrink-0`} />
+        <h4 className="text-xs sm:text-sm font-bold text-slate-700 tracking-tight">
             {label}
         </h4>
-        {count !== undefined && (
-            <span className="text-[10px] font-semibold text-slate-400 bg-slate-100/80 px-2 py-0.5 rounded-full">
-                {count}
-            </span>
-        )}
-        <div className="flex-1 h-[1px] bg-gradient-to-r from-slate-200/90 via-slate-100/60 to-transparent ml-2" />
+        <div className="flex-1 h-[1px] bg-gradient-to-r from-slate-200/80 via-slate-100/40 to-transparent ml-2" />
     </div>
 );
 
@@ -191,16 +179,14 @@ const StructuredProductList = ({ products = [], activeTab = 'all', searchQuery =
                 <SectionHeader 
                     Icon={Sparkles} 
                     title="Aplikasi Premium" 
-                    count={appProducts.length} 
                     color="text-purple-600" 
                     bg="bg-purple-50 border-purple-100" 
                 />
                 {appSubGroups.map(sub => (
-                    <div key={sub.id} className="mb-5 last:mb-0">
+                    <div key={sub.id} className="mb-4 last:mb-0">
                         <SubCategoryHeader 
                             Icon={sub.Icon} 
                             label={sub.label} 
-                            count={sub.items.length} 
                             color={sub.color} 
                         />
                         {renderGrid(sub.items)}
@@ -216,7 +202,6 @@ const StructuredProductList = ({ products = [], activeTab = 'all', searchQuery =
                 <SectionHeader 
                     Icon={Gamepad2} 
                     title="Top Up Game" 
-                    count={gameProducts.length} 
                     color="text-indigo-600" 
                     bg="bg-indigo-50 border-indigo-100" 
                 />
@@ -231,7 +216,6 @@ const StructuredProductList = ({ products = [], activeTab = 'all', searchQuery =
                 <SectionHeader 
                     Icon={Wallet} 
                     title="Top Up E-Wallet" 
-                    count={ewalletProducts.length} 
                     color="text-emerald-600" 
                     bg="bg-emerald-50 border-emerald-100" 
                 />
@@ -246,7 +230,6 @@ const StructuredProductList = ({ products = [], activeTab = 'all', searchQuery =
                 <SectionHeader 
                     Icon={Sparkles} 
                     title="Produk Pilihan" 
-                    count={products.length} 
                     color="text-purple-600" 
                     bg="bg-purple-50 border-purple-100" 
                 />
@@ -255,26 +238,24 @@ const StructuredProductList = ({ products = [], activeTab = 'all', searchQuery =
         );
     }
 
-    // Default 'all' (Semua Produk) — Complete Structured Sections
+    // Default 'all' (Semua Produk) — Seamless Open Structure
     return (
-        <div className="space-y-10">
+        <div className="space-y-7 sm:space-y-9">
             {/* ═══ 1. APLIKASI PREMIUM (Paling Atas dengan Sub-Kategori) ═══ */}
             {appProducts.length > 0 && (
-                <section className="bg-white/80 backdrop-blur-sm border border-slate-200/70 rounded-3xl p-4 sm:p-6 shadow-sm">
+                <section className="mb-7 sm:mb-9 last:mb-0">
                     <SectionHeader 
                         Icon={Sparkles} 
                         title="Aplikasi Premium" 
-                        count={appProducts.length} 
                         color="text-purple-600" 
                         bg="bg-purple-50 border-purple-100" 
                     />
                     
                     {appSubGroups.map(sub => (
-                        <div key={sub.id} className="mb-5 last:mb-0">
+                        <div key={sub.id} className="mb-4 last:mb-0">
                             <SubCategoryHeader 
                                 Icon={sub.Icon} 
                                 label={sub.label} 
-                                count={sub.items.length} 
                                 color={sub.color} 
                             />
                             {renderGrid(sub.items)}
@@ -285,11 +266,10 @@ const StructuredProductList = ({ products = [], activeTab = 'all', searchQuery =
 
             {/* ═══ 2. GAME (1 Kategori Utuh) ═══ */}
             {gameProducts.length > 0 && (
-                <section className="bg-white/80 backdrop-blur-sm border border-slate-200/70 rounded-3xl p-4 sm:p-6 shadow-sm">
+                <section className="mb-7 sm:mb-9 last:mb-0">
                     <SectionHeader 
                         Icon={Gamepad2} 
                         title="Top Up Game" 
-                        count={gameProducts.length} 
                         color="text-indigo-600" 
                         bg="bg-indigo-50 border-indigo-100" 
                     />
@@ -299,11 +279,10 @@ const StructuredProductList = ({ products = [], activeTab = 'all', searchQuery =
 
             {/* ═══ 3. E-WALLET (1 Kategori Utuh) ═══ */}
             {ewalletProducts.length > 0 && (
-                <section className="bg-white/80 backdrop-blur-sm border border-slate-200/70 rounded-3xl p-4 sm:p-6 shadow-sm">
+                <section className="mb-7 sm:mb-9 last:mb-0">
                     <SectionHeader 
                         Icon={Wallet} 
                         title="Top Up E-Wallet" 
-                        count={ewalletProducts.length} 
                         color="text-emerald-600" 
                         bg="bg-emerald-50 border-emerald-100" 
                     />
@@ -313,11 +292,10 @@ const StructuredProductList = ({ products = [], activeTab = 'all', searchQuery =
 
             {/* ═══ 4. LAYANAN JASA & BOT (Jika Ada) ═══ */}
             {serviceProducts.length > 0 && (
-                <section className="bg-white/80 backdrop-blur-sm border border-slate-200/70 rounded-3xl p-4 sm:p-6 shadow-sm">
+                <section className="mb-7 sm:mb-9 last:mb-0">
                     <SectionHeader 
                         Icon={Code2} 
                         title="Layanan Jasa & Bot" 
-                        count={serviceProducts.length} 
                         color="text-blue-600" 
                         bg="bg-blue-50 border-blue-100" 
                     />
@@ -327,11 +305,10 @@ const StructuredProductList = ({ products = [], activeTab = 'all', searchQuery =
 
             {/* ═══ 5. PRODUK LAINNYA (Jika Ada) ═══ */}
             {otherProducts.length > 0 && (
-                <section className="bg-white/80 backdrop-blur-sm border border-slate-200/70 rounded-3xl p-4 sm:p-6 shadow-sm">
+                <section className="mb-7 sm:mb-9 last:mb-0">
                     <SectionHeader 
                         Icon={AppWindow} 
                         title="Koleksi Digital Lainnya" 
-                        count={otherProducts.length} 
                         color="text-slate-600" 
                         bg="bg-slate-100 border-slate-200" 
                     />

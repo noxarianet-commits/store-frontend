@@ -7,9 +7,9 @@ const TITLE_MAX = 80;
 const BODY_MAX = 250;
 
 const STATUS_CONFIG = {
-    sent: { label: 'Terkirim', color: 'bg-green-500/10 text-green-400' },
-    failed: { label: 'Gagal', color: 'bg-red-500/10 text-red-400' },
-    pending: { label: 'Menunggu', color: 'bg-amber-500/10 text-amber-400' },
+    sent: { label: 'Terkirim', color: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
+    failed: { label: 'Gagal', color: 'bg-rose-50 text-rose-700 border border-rose-200' },
+    pending: { label: 'Menunggu', color: 'bg-amber-50 text-amber-700 border border-amber-200' },
 };
 
 const formatWaktu = (iso) => {
@@ -47,7 +47,6 @@ export default function NotificationTab() {
     }, []);
 
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchData();
     }, [fetchData]);
 
@@ -106,30 +105,30 @@ export default function NotificationTab() {
     };
 
     const statCards = [
-        { label: 'Perangkat Aktif', value: stats?.devices_active ?? 0, icon: Smartphone, color: 'text-purple-400 bg-purple-500/10' },
-        { label: 'Total Perangkat', value: stats?.devices_total ?? 0, icon: Bell, color: 'text-blue-400 bg-blue-500/10' },
-        { label: 'Notifikasi Terkirim', value: stats?.notifications_sent ?? 0, icon: CheckCircle2, color: 'text-green-400 bg-green-500/10' },
-        { label: 'Notifikasi Gagal', value: stats?.notifications_failed ?? 0, icon: XCircle, color: 'text-red-400 bg-red-500/10' },
+        { label: 'Perangkat Aktif', value: stats?.devices_active ?? 0, icon: Smartphone, color: 'text-purple-600 bg-purple-50 border-purple-100' },
+        { label: 'Total Perangkat', value: stats?.devices_total ?? 0, icon: Bell, color: 'text-blue-600 bg-blue-50 border-blue-100' },
+        { label: 'Notifikasi Terkirim', value: stats?.notifications_sent ?? 0, icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50 border-emerald-100' },
+        { label: 'Notifikasi Gagal', value: stats?.notifications_failed ?? 0, icon: XCircle, color: 'text-rose-600 bg-rose-50 border-rose-100' },
     ];
 
     return (
         <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-white">Kirim Notifikasi</h2>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Kirim Notifikasi</h2>
 
             {/* Form broadcast */}
-            <form onSubmit={handleSubmit} className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="bg-white border border-slate-200/80 rounded-2xl p-6 space-y-4 shadow-xs">
                 <div>
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                        <Send size={20} className="text-purple-400" />
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <Send size={18} className="text-purple-600" />
                         Kirim Notifikasi (Broadcast)
                     </h3>
-                    <p className="text-xs text-gray-500 mt-1">Kirim notifikasi push ke semua perangkat yang terdaftar.</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Kirim notifikasi push ke semua perangkat pengguna yang terdaftar.</p>
                 </div>
 
                 <div>
-                    <div className="flex items-center justify-between mb-2">
-                        <label className="block text-xs font-medium text-gray-400">Judul</label>
-                        <span className={`text-[10px] font-mono ${form.title.length > TITLE_MAX ? 'text-red-400' : 'text-gray-500'}`}>
+                    <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">Judul</label>
+                        <span className={`text-[10px] font-mono ${form.title.length > TITLE_MAX ? 'text-rose-600' : 'text-slate-400'}`}>
                             {form.title.length}/{TITLE_MAX}
                         </span>
                     </div>
@@ -139,14 +138,14 @@ export default function NotificationTab() {
                         onChange={(e) => setForm({ ...form, title: e.target.value })}
                         maxLength={TITLE_MAX}
                         placeholder="Contoh: Promo Akhir Bulan"
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500/50"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-purple-500 transition-colors"
                     />
                 </div>
 
                 <div>
-                    <div className="flex items-center justify-between mb-2">
-                        <label className="block text-xs font-medium text-gray-400">Pesan</label>
-                        <span className={`text-[10px] font-mono ${form.body.length > BODY_MAX ? 'text-red-400' : 'text-gray-500'}`}>
+                    <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">Pesan</label>
+                        <span className={`text-[10px] font-mono ${form.body.length > BODY_MAX ? 'text-rose-600' : 'text-slate-400'}`}>
                             {form.body.length}/{BODY_MAX}
                         </span>
                     </div>
@@ -156,27 +155,27 @@ export default function NotificationTab() {
                         maxLength={BODY_MAX}
                         rows={4}
                         placeholder="Contoh: Diskon 20% untuk semua produk!"
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white placeholder:text-gray-500 h-24 resize-none focus:outline-none focus:border-purple-500/50"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm text-slate-800 placeholder:text-slate-400 h-24 resize-none focus:outline-none focus:bg-white focus:border-purple-500 transition-colors"
                     />
                 </div>
 
                 <div>
-                    <label className="block text-xs font-medium text-gray-400 mb-2">Tautan (Opsional)</label>
+                    <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Tautan (Opsional)</label>
                     <input
                         type="text"
                         value={form.url}
                         onChange={(e) => setForm({ ...form, url: e.target.value })}
                         placeholder="/katalog — opsional, kosongkan jika tidak perlu"
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500/50"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-purple-500 transition-colors"
                     />
                 </div>
 
                 <button
                     type="submit"
                     disabled={submitting}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                    {submitting ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
                     {submitting ? 'Mengirim...' : 'Kirim Notifikasi'}
                 </button>
             </form>
@@ -186,13 +185,13 @@ export default function NotificationTab() {
                 {statCards.map((card) => {
                     const Icon = card.icon;
                     return (
-                        <div key={card.label} className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-4 flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${card.color}`}>
+                        <div key={card.label} className="bg-white border border-slate-200/80 rounded-2xl p-4 flex items-center gap-3 shadow-xs">
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${card.color}`}>
                                 <Icon size={18} />
                             </div>
                             <div>
-                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{card.label}</p>
-                                <p className="text-xl font-bold text-white">{loading ? '—' : card.value}</p>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{card.label}</p>
+                                <p className="text-xl font-black text-slate-900 font-mono">{loading ? '—' : card.value}</p>
                             </div>
                         </div>
                     );
@@ -200,35 +199,35 @@ export default function NotificationTab() {
             </div>
 
             {/* Riwayat */}
-            <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl overflow-hidden">
-                <div className="flex items-center justify-between p-4 border-b border-white/5">
+            <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs">
+                <div className="flex items-center justify-between p-4 border-b border-slate-100">
                     <div>
-                        <h3 className="text-lg font-bold text-white">Riwayat Broadcast</h3>
-                        <p className="text-xs text-gray-500 mt-0.5">20 notifikasi terakhir yang dikirim.</p>
+                        <h3 className="text-base sm:text-lg font-bold text-slate-900">Riwayat Broadcast</h3>
+                        <p className="text-xs text-slate-500 mt-0.5">20 notifikasi terakhir yang dikirim.</p>
                     </div>
                     <button
                         onClick={fetchData}
                         disabled={loading}
-                        className="bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                        <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
                         Refresh
                     </button>
                 </div>
 
                 {loading ? (
-                    <div className="p-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-purple-500" /></div>
+                    <div className="p-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-purple-600" /></div>
                 ) : history.length === 0 ? (
                     <div className="p-12 text-center">
-                        <Inbox size={40} className="text-gray-600 mx-auto mb-3" />
-                        <p className="text-gray-400 font-medium">Belum ada notifikasi terkirim.</p>
-                        <p className="text-gray-500 text-xs mt-1">Notifikasi yang Anda kirim akan muncul di sini.</p>
+                        <Inbox size={40} className="text-slate-300 mx-auto mb-3" />
+                        <p className="text-slate-600 font-semibold text-sm">Belum ada notifikasi terkirim.</p>
+                        <p className="text-slate-400 text-xs mt-1">Notifikasi yang Anda kirim akan muncul di sini.</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="border-b border-white/5 text-gray-400 text-xs uppercase tracking-wider">
+                                <tr className="bg-slate-50 border-b border-slate-100 text-slate-500 text-[10px] font-bold uppercase tracking-wider">
                                     <th className="text-left px-4 py-3">Waktu</th>
                                     <th className="text-left px-4 py-3">Judul</th>
                                     <th className="text-left px-4 py-3">Pesan</th>
@@ -236,17 +235,17 @@ export default function NotificationTab() {
                                     <th className="text-right px-4 py-3">Terkirim/Gagal</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-white/5">
+                            <tbody className="divide-y divide-slate-100">
                                 {history.map((item) => {
                                     const statusCfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.pending;
                                     return (
-                                        <tr key={item.id} className="hover:bg-white/[0.02] transition-colors">
-                                            <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">{formatWaktu(item.created_at)}</td>
+                                        <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
+                                            <td className="px-4 py-3 text-slate-500 text-xs whitespace-nowrap font-medium">{formatWaktu(item.created_at)}</td>
                                             <td className="px-4 py-3">
-                                                <p className="text-white font-medium truncate max-w-[180px]" title={item.title}>{item.title}</p>
+                                                <p className="text-slate-900 font-semibold truncate max-w-[180px]" title={item.title}>{item.title}</p>
                                             </td>
                                             <td className="px-4 py-3">
-                                                <p className="text-gray-400 text-xs truncate max-w-[240px]" title={item.body}>{item.body}</p>
+                                                <p className="text-slate-500 text-xs truncate max-w-[240px]" title={item.body}>{item.body}</p>
                                             </td>
                                             <td className="px-4 py-3 text-center">
                                                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${statusCfg.color}`}>
@@ -262,9 +261,9 @@ export default function NotificationTab() {
                                                 ) : null}
                                             </td>
                                             <td className="px-4 py-3 text-right">
-                                                <span className="text-green-400 font-semibold">{item.sent_count ?? 0}</span>
-                                                <span className="text-gray-500 mx-1">/</span>
-                                                <span className="text-red-400 font-semibold">{item.failed_count ?? 0}</span>
+                                                <span className="text-emerald-700 font-bold font-mono">{item.sent_count ?? 0}</span>
+                                                <span className="text-slate-300 mx-1">/</span>
+                                                <span className="text-rose-600 font-bold font-mono">{item.failed_count ?? 0}</span>
                                             </td>
                                         </tr>
                                     );

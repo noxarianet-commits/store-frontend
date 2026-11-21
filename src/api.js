@@ -215,6 +215,13 @@ api.getTicket = (ticketNumber) => api.get(`/tickets/${encodeURIComponent(ticketN
 api.addTicketMessage = (ticketNumber, body) => api.post(`/tickets/${encodeURIComponent(ticketNumber)}/messages`, { body });
 api.reopenTicket = (ticketNumber) => api.patch(`/tickets/${encodeURIComponent(ticketNumber)}/reopen`);
 
+// Testimonials — Live feedback & ulasan
+api.getTestimonials = (params = {}) => api.get('/testimonials', {
+    params: { _t: Date.now(), ...params },
+    skipGlobalErrorRedirect: true
+});
+api.createTestimonial = (data) => api.post('/testimonials', data);
+
 // Tiket Bantuan CS — admin
 api.getAdminTickets = (params) => api.get('/admin/tickets', { params });
 api.getAdminTicketStats = () => api.get('/admin/tickets/stats');

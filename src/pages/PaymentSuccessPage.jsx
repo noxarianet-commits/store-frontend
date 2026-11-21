@@ -3,7 +3,7 @@ import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
     CheckCircle2, AlertCircle, Loader2, Copy, Shield,
-    ArrowLeft, Clock, RefreshCw, Wifi, Info
+    ArrowLeft, Clock, RefreshCw, Wifi, Info, Star, Send
 } from 'lucide-react';
 import api from '../api';
 import { getWaUrl } from '../utils/waUtils';
@@ -52,6 +52,43 @@ const PaymentSuccessPage = () => {
         navigator.clipboard.writeText(text);
         setCopied(key);
         setTimeout(() => setCopied(''), 2000);
+    };
+
+    // Review / Testimonial State
+    const [reviewText, setReviewText] = useState('');
+    const [reviewRating, setReviewRating] = useState(5);
+    const [reviewSubmitted, setReviewSubmitted] = useState(false);
+    const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+    const handleSubmitReview = async (e) => {
+        e.preventDefault();
+        if (!reviewText.trim()) return;
+        setIsSubmittingReview(true);
+        try {
+            const payload = {
+                name: orderData?.customer_phone || orderData?.customer_email || 'Customer',
+                text: reviewText.trim(),
+                product: orderData?.product_name || orderData?.product || '',
+                rating: reviewRating,
+                order_id: orderId || null
+            };
+            const res = await api.createTestimonial(payload);
+            const savedData = res.data?.data || payload;
+
+            // Save to local storage for instant sync on landing page
+            try {
+                const existing = JSON.parse(localStorage.getItem('nox_recent_testimonials') || '[]');
+                const updated = [savedData, ...existing.filter(x => x.text !== savedData.text)].slice(0, 5);
+                localStorage.setItem('nox_recent_testimonials', JSON.stringify(updated));
+                window.dispatchEvent(new CustomEvent('testimonial:submitted', { detail: savedData }));
+            } catch { /* ignore */ }
+
+            setReviewSubmitted(true);
+        } catch (err) {
+            console.error('Failed to submit review', err);
+        } finally {
+            setIsSubmittingReview(false);
+        }
     };
 
     // ── Polling order status ditangani oleh useOrderStatusPolling ─────────
@@ -501,6 +538,55 @@ const PaymentSuccessPage = () => {
                                         ))}
                                     </div>
                                     <p className="text-xs text-gray-500 mt-2 text-center">Detail akun juga dikirim ke Email Anda.</p>
+                                </div>
+                            )}
+
+                            {/* COMPLETED — Form Ulasan Pelanggan */}
+                            {orderData?.status === 'COMPLETED' && (
+                                <div className="mb-5 bg-white/5 border border-purple-500/20 rounded-2xl p-4 text-left">
+                                    {reviewSubmitted ? (
+                                        <div className="text-center py-2 text-green-400 flex items-center justify-center gap-2 text-xs font-bold">
+                                            <CheckCircle2 size={16} />
+                                            <span>Terima kasih! Ulasan Anda telah berhasil dikirim dan tampil di beranda.</span>
+                                        </div>
+                                    ) : (
+                                        <form onSubmit={handleSubmitReview} className="space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                                                    <Star size={13} className="text-yellow-400 fill-yellow-400" />
+                                                    Beri Penilaian Transaksi
+                                                </span>
+                                                <div className="flex items-center gap-1">
+                                                    {[1, 2, 3, 4, 5].map((val) => (
+                                                        <button
+                                                            type="button"
+                                                            key={val}
+                                                            onClick={() => setReviewRating(val)}
+                                                            className="text-yellow-400 focus:outline-none cursor-pointer"
+                                                        >
+                                                            <Star size={16} className={val <= reviewRating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-600'} />
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <textarea
+                                                value={reviewText}
+                                                onChange={(e) => setReviewText(e.target.value)}
+                                                placeholder="Bagaimana pelayanan dan kecepatan proses kami? Tulis testimoni..."
+                                                rows={2}
+                                                className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors resize-none"
+                                                required
+                                            />
+                                            <button
+                                                type="submit"
+                                                disabled={isSubmittingReview || !reviewText.trim()}
+                                                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold py-2 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                                            >
+                                                {isSubmittingReview ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+                                                <span>Kirim Testimoni</span>
+                                            </button>
+                                        </form>
+                                    )}
                                 </div>
                             )}
 

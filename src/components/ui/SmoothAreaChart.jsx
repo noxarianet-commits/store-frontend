@@ -5,7 +5,6 @@ const SmoothAreaChart = ({ data = [], period = '7d', onPeriodChange }) => {
     const [animated, setAnimated] = useState(false);
 
     useEffect(() => {
-        // Trigger animation after mount / data change
         setAnimated(false);
         const timer = setTimeout(() => setAnimated(true), 50);
         return () => clearTimeout(timer);
@@ -45,7 +44,6 @@ const SmoothAreaChart = ({ data = [], period = '7d', onPeriodChange }) => {
 
         const areaD = d + ` L ${pts[pts.length - 1].x} ${padding.top + chartH} L ${pts[0].x} ${padding.top + chartH} Z`;
 
-        // Estimate path length for dash animation
         let len = 0;
         for (let i = 1; i < pts.length; i++) {
             const dx = pts[i].x - pts[i - 1].x;
@@ -58,8 +56,8 @@ const SmoothAreaChart = ({ data = [], period = '7d', onPeriodChange }) => {
 
     if (!data || data.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center h-36 sm:h-48 md:h-52 text-gray-600">
-                <p className="text-sm">Belum ada data pendapatan</p>
+            <div className="flex flex-col items-center justify-center h-36 sm:h-48 md:h-52 text-slate-400">
+                <p className="text-xs font-medium">Belum ada data pendapatan pada periode ini</p>
             </div>
         );
     }
@@ -67,16 +65,26 @@ const SmoothAreaChart = ({ data = [], period = '7d', onPeriodChange }) => {
     return (
         <div>
             {/* Period Filter */}
-            <div className="flex justify-end gap-2 mb-3">
+            <div className="flex justify-end gap-1.5 mb-3">
                 <button
+                    type="button"
                     onClick={() => onPeriodChange?.('7d')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${period === '7d' ? 'bg-purple-600 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        period === '7d'
+                            ? 'bg-purple-600 text-white shadow-sm shadow-purple-600/20'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
                 >
                     7 Hari
                 </button>
                 <button
+                    type="button"
                     onClick={() => onPeriodChange?.('30d')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${period === '30d' ? 'bg-purple-600 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        period === '30d'
+                            ? 'bg-purple-600 text-white shadow-sm shadow-purple-600/20'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
                 >
                     1 Bulan
                 </button>
@@ -85,8 +93,8 @@ const SmoothAreaChart = ({ data = [], period = '7d', onPeriodChange }) => {
             <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-36 sm:h-48 md:h-52">
                 <defs>
                     <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.3" />
-                        <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0" />
+                        <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.22" />
+                        <stop offset="100%" stopColor="#7c3aed" stopOpacity="0.0" />
                     </linearGradient>
                 </defs>
 
@@ -95,8 +103,8 @@ const SmoothAreaChart = ({ data = [], period = '7d', onPeriodChange }) => {
                     const y = padding.top + chartH * (1 - ratio);
                     return (
                         <g key={i}>
-                            <line x1={padding.left} y1={y} x2={width - padding.right} y2={y} stroke="rgba(255,255,255,0.05)" />
-                            <text x={padding.left - 8} y={y + 4} textAnchor="end" fill="rgba(255,255,255,0.3)" fontSize="10">
+                            <line x1={padding.left} y1={y} x2={width - padding.right} y2={y} stroke="#f1f5f9" strokeDasharray="3 3" />
+                            <text x={padding.left - 8} y={y + 4} textAnchor="end" fill="#94a3b8" fontSize="10" className="font-mono">
                                 {maxY > 1000000 ? `${(maxY * ratio / 1000000).toFixed(1)}jt` : Math.round(maxY * ratio).toLocaleString('id-ID')}
                             </text>
                         </g>
@@ -117,7 +125,7 @@ const SmoothAreaChart = ({ data = [], period = '7d', onPeriodChange }) => {
                 <path
                     d={path}
                     fill="none"
-                    stroke="#8b5cf6"
+                    stroke="#7c3aed"
                     strokeWidth="2.5"
                     strokeLinecap="round"
                     style={{
@@ -138,7 +146,7 @@ const SmoothAreaChart = ({ data = [], period = '7d', onPeriodChange }) => {
                             transition: `opacity 0.4s ease-in-out ${0.6 + i * 0.05}s`
                         }}
                     >
-                        <circle cx={p.x} cy={p.y} r={hoveredIdx === i ? 6 : 3} fill="#8b5cf6" stroke="#0E0E0E" strokeWidth="2" className="transition-all" />
+                        <circle cx={p.x} cy={p.y} r={hoveredIdx === i ? 6 : 3.5} fill="#7c3aed" stroke="#ffffff" strokeWidth="2" className="transition-all" />
                         <rect x={p.x - chartW / data.length / 2} y={padding.top} width={chartW / data.length} height={chartH} fill="transparent" />
                     </g>
                 ))}
@@ -150,8 +158,9 @@ const SmoothAreaChart = ({ data = [], period = '7d', onPeriodChange }) => {
                         x={p.x}
                         y={height - 5}
                         textAnchor="middle"
-                        fill="rgba(255,255,255,0.4)"
+                        fill="#64748b"
                         fontSize="10"
+                        className="font-medium"
                         style={{
                             opacity: animated ? 1 : 0,
                             transition: `opacity 0.5s ease-in-out ${0.3 + i * 0.05}s`
@@ -163,8 +172,9 @@ const SmoothAreaChart = ({ data = [], period = '7d', onPeriodChange }) => {
             {/* Tooltip */}
             {hoveredIdx !== null && points[hoveredIdx] && (
                 <div className="text-center -mt-2 mb-1">
-                    <span className="bg-purple-600/20 text-purple-300 text-xs font-bold px-2 py-1 rounded">
-                        {points[hoveredIdx].date}: Rp {(points[hoveredIdx].value || 0).toLocaleString('id-ID')}
+                    <span className="inline-flex items-center gap-1.5 bg-purple-50 text-purple-700 border border-purple-200 text-xs font-bold px-3 py-1 rounded-xl shadow-xs">
+                        <span>{points[hoveredIdx].date}:</span>
+                        <span className="font-mono">Rp {(points[hoveredIdx].value || 0).toLocaleString('id-ID')}</span>
                     </span>
                 </div>
             )}

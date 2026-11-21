@@ -64,7 +64,7 @@ const ProductCard = ({ product, showPrice = false }) => {
     return (
         <Link
             to={productLink}
-            className={`group relative bg-white hover:bg-purple-50/10 border border-purple-100 hover:border-purple-300 rounded-2xl p-3.5 sm:p-5 transition-all duration-300 flex flex-col items-center text-center shadow-[0_2px_8px_rgba(124,58,237,0.03)] hover:shadow-[0_8px_20px_rgba(124,58,237,0.08)] ${isSoldOut ? 'opacity-60' : ''}`}
+            className={`group relative bg-white/90 hover:bg-white backdrop-blur-sm border border-purple-100 hover:border-purple-300/80 rounded-2xl p-3 sm:p-4.5 transition-all duration-200 flex flex-col items-center text-center shadow-[0_2px_10px_rgba(124,58,237,0.03)] hover:shadow-[0_10px_25px_-5px_rgba(124,58,237,0.12)] hover:-translate-y-1 active:scale-[0.98] ${isSoldOut ? 'opacity-60' : ''}`}
         >
             {isSoldOut && (
                 <span className="absolute top-3 left-3 text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider border bg-red-50 text-red-600 border-red-100 z-10">

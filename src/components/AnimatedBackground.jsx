@@ -1,68 +1,24 @@
 import React from 'react';
 
+/**
+ * AnimatedBackground — Ultra-lightweight background with soft pastel glows.
+ * Uses hardware-accelerated CSS radial gradients instead of heavy blur filters
+ * to prevent GPU tile corruption and screen tearing on mobile devices.
+ */
 const AnimatedBackground = () => {
   return (
-    <div className="fixed inset-0 w-full h-full pointer-events-none overflow-hidden z-[-10] bg-[#FAF9FF]">
-      <style>{`
-        .bg-grid {
-          background-image: radial-gradient(rgba(124, 58, 237, 0.05) 1.2px, transparent 1.2px);
-          background-size: 24px 24px;
-        }
-        .glow-sphere-1 {
-          animation: floatGlow1 20s ease-in-out infinite alternate;
-          will-change: transform, opacity;
-        }
-        .glow-sphere-2 {
-          animation: floatGlow2 25s ease-in-out infinite alternate;
-          will-change: transform, opacity;
-        }
-        .glow-sphere-3 {
-          animation: floatGlow3 18s ease-in-out infinite alternate;
-          will-change: transform, opacity;
-        }
-
-        @keyframes floatGlow1 {
-          0% {
-            transform: translate(0, 0) scale(1);
-            opacity: 0.55;
-          }
-          100% {
-            transform: translate(8%, -6%) scale(1.15);
-            opacity: 0.8;
-          }
-        }
-
-        @keyframes floatGlow2 {
-          0% {
-            transform: translate(0, 0) scale(1);
-            opacity: 0.6;
-          }
-          100% {
-            transform: translate(-10%, 8%) scale(1.1);
-            opacity: 0.85;
-          }
-        }
-
-        @keyframes floatGlow3 {
-          0% {
-            transform: translate(0, 0) scale(0.9);
-            opacity: 0.45;
-          }
-          100% {
-            transform: translate(6%, 6%) scale(1.05);
-            opacity: 0.7;
-          }
-        }
-      `}</style>
-
-      {/* Grid Pattern */}
-      <div className="absolute inset-0 bg-grid opacity-80" />
-
-      {/* Soft Glows */}
-      <div className="glow-sphere-1 absolute top-[-15%] left-[-15%] w-[60vw] h-[60vw] rounded-full bg-[#EAE2FC] blur-[130px] mix-blend-multiply" />
-      <div className="glow-sphere-2 absolute bottom-[-15%] right-[-15%] w-[70vw] h-[70vw] rounded-full bg-[#E5DBFF] blur-[150px] mix-blend-multiply" />
-      <div className="glow-sphere-3 absolute top-[30%] left-[55%] w-[45vw] h-[45vw] rounded-full bg-[#F5E6FF] blur-[120px] mix-blend-multiply" />
-    </div>
+    <div
+      className="fixed inset-0 w-full h-full pointer-events-none overflow-hidden z-[-10] bg-[#FAF9FF]"
+      style={{
+        backgroundImage: `
+          radial-gradient(rgba(124, 58, 237, 0.05) 1.2px, transparent 1.2px),
+          radial-gradient(circle at 10% 10%, rgba(234, 226, 252, 0.7) 0%, transparent 45%),
+          radial-gradient(circle at 90% 90%, rgba(229, 219, 255, 0.7) 0%, transparent 50%),
+          radial-gradient(circle at 65% 40%, rgba(245, 230, 255, 0.6) 0%, transparent 35%)
+        `,
+        backgroundSize: '24px 24px, 100% 100%, 100% 100%, 100% 100%',
+      }}
+    />
   );
 };
 

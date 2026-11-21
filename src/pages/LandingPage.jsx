@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Megaphone, X, ChevronDown, ChevronUp, ShoppingBag, CheckCircle2, Clock, Smartphone } from 'lucide-react';
+import { Megaphone, X, ChevronDown, ChevronUp, ShoppingBag, CheckCircle2, Clock, Smartphone, Zap, ShieldCheck, Star, Headphones } from 'lucide-react';
 import api from '../api';
 import HeroSection from '../components/home/HeroSection';
+import FeaturedShowcase from '../components/home/FeaturedShowcase';
 import CategoryTabs from '../components/home/CategoryTabs';
 import StructuredProductList from '../components/home/StructuredProductList';
 import TestimonialCarousel from '../components/home/TestimonialCarousel';
@@ -59,7 +60,6 @@ function filterProducts(products, activeTab, searchQuery) {
 function computeCounts(products) {
     return {
         all: products.length,
-        featured: products.filter(p => p.is_featured).length,
         'aplikasi-premium': products.filter(p => p.category === 'Aplikasi Premium').length,
         game: products.filter(p => p.category === 'Game').length,
         'e-wallet': products.filter(p => p.category === 'E-Wallet').length,
@@ -69,6 +69,7 @@ function computeCounts(products) {
 
 const LandingPage = () => {
     const [homeData, setHomeData] = useState(null);
+    const [testimonials, setTestimonials] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState('all');
@@ -103,13 +104,61 @@ const LandingPage = () => {
         }
     };
 
-    // Single API call to fetch all home data
+    // Helper to merge live Supabase testimonials, localStorage submissions, and homeData testimonials
+    const mergeTestimonialLists = (freshList = [], homeList = []) => {
+        let localList = [];
+        try {
+            localList = JSON.parse(localStorage.getItem('nox_recent_testimonials') || '[]');
+        } catch { /* ignore */ }
+
+        const combined = [...localList, ...freshList, ...homeList];
+        const seen = new Set();
+        const unique = [];
+
+        for (const item of combined) {
+            if (!item) continue;
+            const key = item.id ? `id_${item.id}` : `${item.name || ''}_${item.text || ''}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                unique.push(item);
+            }
+        }
+        return unique;
+    };
+
+    const fetchLiveTestimonials = async () => {
+        try {
+            const res = await api.getTestimonials();
+            if (Array.isArray(res.data) && res.data.length > 0) {
+                setTestimonials(prev => mergeTestimonialLists(res.data, prev));
+            }
+        } catch {
+            // Silently keep current testimonials on network failure
+        }
+    };
+
+    // Parallel API call to fetch home data + real-time uncached testimonials
     useEffect(() => {
         const fetchHomeData = async () => {
             setLoading(true);
             try {
-                const res = await api.get('/home');
-                setHomeData(res.data);
+                const [homeRes, testiRes] = await Promise.allSettled([
+                    api.get('/home'),
+                    api.getTestimonials()
+                ]);
+
+                if (homeRes.status === 'fulfilled' && homeRes.value?.data) {
+                    setHomeData(homeRes.value.data);
+                }
+
+                const freshTesti = (testiRes.status === 'fulfilled' && Array.isArray(testiRes.value?.data))
+                    ? testiRes.value.data
+                    : [];
+                const homeTesti = (homeRes.status === 'fulfilled' && Array.isArray(homeRes.value?.data?.testimonials))
+                    ? homeRes.value.data.testimonials
+                    : [];
+
+                setTestimonials(mergeTestimonialLists(freshTesti, homeTesti));
 
                 // Cek apakah user memilih untuk dismiss selama 24 jam
                 const dismissedUntil = localStorage.getItem('info_modal_dismissed_until');
@@ -123,11 +172,44 @@ const LandingPage = () => {
                 setLoading(false);
             }
         };
+
         fetchHomeData();
+
+        // Listen for new testimonials submitted from ProductPage, Checkout, or Modal
+        const handleNewTestimonial = (e) => {
+            if (e.detail) {
+                setTestimonials(prev => mergeTestimonialLists([e.detail], prev));
+            }
+            fetchLiveTestimonials();
+        };
+        window.addEventListener('testimonial:submitted', handleNewTestimonial);
+
+        // Auto refresh testimonials when page regains focus
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                fetchLiveTestimonials();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            window.removeEventListener('testimonial:submitted', handleNewTestimonial);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
     }, []);
 
     // All products from home data
     const allProducts = homeData?.all_products || [];
+
+    // Tampilkan HANYA produk yang diberi tanda bintang (Best Seller) dari dashboard admin
+    const featuredMap = new Map();
+    (homeData?.featured_products || []).forEach(p => {
+        if (p && p.id) featuredMap.set(p.id, p);
+    });
+    allProducts.filter(p => Boolean(p.is_featured)).forEach(p => {
+        if (p && p.id) featuredMap.set(p.id, p);
+    });
+    const displayFeatured = Array.from(featuredMap.values());
     const filteredProducts = filterProducts(allProducts, activeTab, searchQuery);
     const counts = computeCounts(allProducts);
 
@@ -164,28 +246,47 @@ const LandingPage = () => {
 
             {/* ═══ HEADER ═══ */}
             <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-purple-100/50 shadow-sm shadow-purple-600/[0.01]">
-                <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-                    <Link to="/" className="flex items-center gap-2.5">
-                        <img src="/logo.png" alt="Noxarianet" className="w-9 h-9 rounded-lg object-contain" />
-                        <span className="text-xl font-bold tracking-tight text-slate-900">Noxaria<span className="text-purple-600">net</span></span>
+                <div className="max-w-6xl mx-auto px-3.5 sm:px-6 py-2.5 sm:py-4 flex justify-between items-center gap-2 sm:gap-4">
+                    <Link to="/" className="flex items-center gap-2 min-w-0 shrink-0">
+                        <img src="/logo.png" alt="Noxarianet" className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg object-contain shrink-0" />
+                        <span className="text-base sm:text-xl font-bold tracking-tight text-slate-900 truncate">
+                            Noxaria<span className="text-purple-600">net</span>
+                        </span>
                     </Link>
                     
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+                        {/* Mobile: Tombol Rapi, Responsif & Tidak Tabrakan */}
                         <Link
                             to="/download"
-                            aria-label="Aplikasi Android"
-                            className="sm:hidden inline-flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200 text-slate-600 hover:text-purple-600 hover:border-purple-200 transition-colors"
+                            aria-label="Download Aplikasi Resmi Noxarianet"
+                            className="sm:hidden inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200/80 px-2 py-1.5 rounded-xl transition-colors shadow-xs shrink-0"
+                            title="Download Aplikasi Resmi Noxarianet"
                         >
-                            <Smartphone size={16} />
+                            <Smartphone size={13} className="text-purple-600 shrink-0" />
+                            <span className="hidden xs:inline">App</span>
+                            <span className="text-[8px] font-extrabold uppercase bg-purple-600 text-white px-1 py-0.5 rounded leading-none">
+                                APK
+                            </span>
                         </Link>
-                        <Link to="/download" className="hidden sm:inline text-xs font-bold text-slate-600 hover:text-purple-600 transition-colors">
-                            Aplikasi
+
+                        {/* Desktop: Tombol Jelas Download Aplikasi Resmi */}
+                        <Link
+                            to="/download"
+                            className="hidden sm:inline-flex items-center gap-2 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100/80 border border-purple-200/80 hover:border-purple-300 px-3.5 py-2 rounded-xl shadow-xs transition-all hover:scale-[1.02] active:scale-[0.98] shrink-0"
+                            title="Download Aplikasi Resmi Noxarianet"
+                        >
+                            <Smartphone size={14} className="text-purple-600" />
+                            <span>Download Aplikasi Resmi</span>
+                            <span className="text-[9px] font-extrabold uppercase tracking-wider bg-purple-600 text-white px-1.5 py-0.5 rounded-md">
+                                APK
+                            </span>
                         </Link>
+
                         {!authLoading && (
                             user ? (
                                 <UserMenu />
                             ) : (
-                                <Link to="/auth" className="text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 px-5 py-2 rounded-xl transition-colors shadow-md shadow-purple-500/20">
+                                <Link to="/auth" className="text-xs sm:text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl transition-colors shadow-md shadow-purple-500/20 shrink-0">
                                     Masuk
                                 </Link>
                             )
@@ -194,18 +295,27 @@ const LandingPage = () => {
                 </div>
             </nav>
 
-            <main className="max-w-6xl mx-auto px-6">
-                <HeroSection
-                    settings={settings}
-                    searchQuery={searchQuery}
-                    onSearchChange={setSearchQuery}
-                />
+            <main className="w-full">
+                {/* ═══ HERO SECTION CONTAINER ═══ */}
+                <div className="max-w-6xl mx-auto px-4 sm:px-6">
+                    <HeroSection
+                        settings={settings}
+                        searchQuery={searchQuery}
+                        onSearchChange={setSearchQuery}
+                    />
+                </div>
 
-                <CategoryTabs
-                    activeTab={activeTab}
-                    onTabChange={setActiveTab}
-                    counts={counts}
-                />
+                {/* ═══ PRODUK UNGGULAN (FULL SCREEN WIDTH STRIP) ═══ */}
+                {!searchQuery && displayFeatured.length > 0 && (
+                    <FeaturedShowcase products={displayFeatured} />
+                )}
+
+                {/* ═══ MAIN STORE CONTENT BODY ═══ */}
+                <div className="max-w-6xl mx-auto px-4 sm:px-6">
+                    <CategoryTabs
+                        activeTab={activeTab}
+                        onTabChange={setActiveTab}
+                    />
 
                 {/* ═══ PRODUCT GRID ═══ */}
                 <section className="mb-12">
@@ -237,36 +347,97 @@ const LandingPage = () => {
                     )}
                 </section>
 
-                {/* ═══ STATS SECTION ═══ */}
-                <section className="mb-10 max-w-sm mx-auto text-center">
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-purple-600">Statistik Terpercaya</span>
-                    <h3 className="text-sm font-extrabold text-slate-900 mt-1 mb-4">Dipercaya Ribuan Pengguna</h3>
-                    <div className="grid grid-cols-2 gap-3.5">
-                        <div className="bg-white border border-slate-100 rounded-2xl p-3.5 flex flex-col items-center justify-center shadow-[0_2px_10px_-4px_rgba(124,58,237,0.08)]">
-                            <div className="w-9 h-9 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 mb-2">
-                                <ShoppingBag size={18} />
+                {/* ═══ TRUST & PILLARS SECTION ═══ */}
+                <section className="mb-14 sm:mb-16 text-center">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-400/20 mb-2">
+                        <ShieldCheck size={13} className="text-purple-600" />
+                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-purple-600">
+                            Keamanan &amp; Kepercayaan
+                        </span>
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                        Mengapa Memilih Noxarianet?
+                    </h3>
+                    <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mt-1 mb-6">
+                        Komitmen kami menghadirkan layanan digital resmi, aman, dan instan dengan garansi penuh.
+                    </p>
+
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
+                        {/* 1. Proses Kilat */}
+                        <div className="group relative bg-white/70 hover:bg-white backdrop-blur-md border border-purple-100/80 hover:border-purple-300 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col items-center text-center transition-all duration-200 shadow-[0_2px_10px_rgba(124,58,237,0.03)] hover:shadow-[0_10px_24px_rgba(124,58,237,0.08)] hover:-translate-y-0.5">
+                            <div className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-lg sm:rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 mb-2 shadow-xs group-hover:scale-110 transition-transform">
+                                <Zap size={16} className="fill-amber-500/20" />
                             </div>
-                            <span className="text-base font-black text-emerald-600 leading-none">10.000+</span>
-                            <span className="text-[10px] font-semibold text-slate-400 mt-1.5">Total Transaksi</span>
+                            <span className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight mb-0.5">
+                                Hitungan Detik
+                            </span>
+                            <span className="text-[9.5px] sm:text-[10px] font-extrabold uppercase tracking-wider text-amber-600 mb-1">
+                                Proses Otomatis
+                            </span>
+                            <p className="text-[10px] sm:text-[10.5px] text-slate-500 leading-relaxed font-normal">
+                                Transaksi kilat diproses otomatis 24 jam non-stop langsung aktif.
+                            </p>
                         </div>
-                        <div className="bg-white border border-slate-100 rounded-2xl p-3.5 flex flex-col items-center justify-center shadow-[0_2px_10px_-4px_rgba(124,58,237,0.08)]">
-                            <div className="w-9 h-9 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600 mb-2">
-                                <CheckCircle2 size={18} />
+
+                        {/* 2. 100% Bergaransi */}
+                        <div className="group relative bg-white/70 hover:bg-white backdrop-blur-md border border-purple-100/80 hover:border-purple-300 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col items-center text-center transition-all duration-200 shadow-[0_2px_10px_rgba(124,58,237,0.03)] hover:shadow-[0_10px_24px_rgba(124,58,237,0.08)] hover:-translate-y-0.5">
+                            <div className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-lg sm:rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 mb-2 shadow-xs group-hover:scale-110 transition-transform">
+                                <ShieldCheck size={16} className="fill-emerald-500/20" />
                             </div>
-                            <span className="text-base font-black text-purple-600 leading-none">10.000+</span>
-                            <span className="text-[10px] font-semibold text-slate-400 mt-1.5">Pesanan Berhasil</span>
+                            <span className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight mb-0.5">
+                                100% Garansi
+                            </span>
+                            <span className="text-[9.5px] sm:text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 mb-1">
+                                Proteksi Penuh
+                            </span>
+                            <p className="text-[10px] sm:text-[10.5px] text-slate-500 leading-relaxed font-normal">
+                                Jaminan ganti baru atau dana kembali jika ada kendala layanan.
+                            </p>
+                        </div>
+
+                        {/* 3. Rating Kepuasan */}
+                        <div className="group relative bg-white/70 hover:bg-white backdrop-blur-md border border-purple-100/80 hover:border-purple-300 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col items-center text-center transition-all duration-200 shadow-[0_2px_10px_rgba(124,58,237,0.03)] hover:shadow-[0_10px_24px_rgba(124,58,237,0.08)] hover:-translate-y-0.5">
+                            <div className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-lg sm:rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600 mb-2 shadow-xs group-hover:scale-110 transition-transform">
+                                <Star size={16} className="fill-purple-500/20" />
+                            </div>
+                            <span className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight mb-0.5">
+                                4.9 / 5.0
+                            </span>
+                            <span className="text-[9.5px] sm:text-[10px] font-extrabold uppercase tracking-wider text-purple-600 mb-1">
+                                10.000+ Pelanggan
+                            </span>
+                            <p className="text-[10px] sm:text-[10.5px] text-slate-500 leading-relaxed font-normal">
+                                Dipercaya ribuan pengguna aktif dengan testimoni nyata.
+                            </p>
+                        </div>
+
+                        {/* 4. CS Siap Bantu */}
+                        <div className="group relative bg-white/70 hover:bg-white backdrop-blur-md border border-purple-100/80 hover:border-purple-300 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col items-center text-center transition-all duration-200 shadow-[0_2px_10px_rgba(124,58,237,0.03)] hover:shadow-[0_10px_24px_rgba(124,58,237,0.08)] hover:-translate-y-0.5">
+                            <div className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-lg sm:rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 mb-2 shadow-xs group-hover:scale-110 transition-transform">
+                                <Headphones size={16} className="fill-indigo-500/20" />
+                            </div>
+                            <span className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight mb-0.5">
+                                24/7 Siap Bantu
+                            </span>
+                            <span className="text-[9.5px] sm:text-[10px] font-extrabold uppercase tracking-wider text-indigo-600 mb-1">
+                                CS Responsif
+                            </span>
+                            <p className="text-[10px] sm:text-[10.5px] text-slate-500 leading-relaxed font-normal">
+                                Layanan panduan &amp; solusi ramah via WhatsApp resmi Noxarianet.
+                            </p>
                         </div>
                     </div>
                 </section>
 
                 <TestimonialCarousel
-                    testimonials={homeData?.testimonials || []}
+                    testimonials={testimonials.length > 0 ? testimonials : (homeData?.testimonials || [])}
+                    onTestimonialAdded={(newTesti) => {
+                        setTestimonials(prev => mergeTestimonialLists([newTesti], prev));
+                    }}
                 />
 
                 <FAQSection />
-
-
-
+                </div>
             </main>
 
             {/* ═══ FOOTER ═══ */}
