@@ -5,7 +5,7 @@ const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: null },
     { id: 'sekalipay', label: 'Sekalipay', icon: null },
     { id: 'okeconnect', label: 'OkeConnect', icon: null },
-    { id: 'featured', label: 'Produk Unggulan', icon: null },
+    { id: 'featured', label: 'Best Seller', icon: null },
     { id: 'revenue', label: 'Pendapatan', icon: null },
     { id: 'products', label: 'Produk', icon: null },
     { id: 'orders', label: 'Pesanan', icon: null },

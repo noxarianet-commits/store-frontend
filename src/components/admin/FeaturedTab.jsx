@@ -66,11 +66,11 @@ const FeaturedTab = ({
                 </div>
                 <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-5">
                     <div className="flex items-center justify-between mb-3">
-                        <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Produk Unggulan</p>
+                        <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Best Seller</p>
                         <Star size={18} className="text-yellow-500" />
                     </div>
                     <h4 className="text-xl font-bold text-white">{featuredCount}</h4>
-                    <p className="text-[10px] text-gray-500 mt-1">Maks. 12 produk unggulan</p>
+                    <p className="text-[10px] text-gray-500 mt-1">Tampil di strip Best Seller halaman utama</p>
                 </div>
                 <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-5">
                     <div className="flex items-center justify-between mb-3">
@@ -110,8 +110,8 @@ const FeaturedTab = ({
                         className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500/50 transition-colors"
                     >
                         <option value="all">Semua Status</option>
-                        <option value="featured">⭐ Unggulan</option>
-                        <option value="not_featured">Belum Unggulan</option>
+                        <option value="featured">⭐ Best Seller</option>
+                        <option value="not_featured">Bukan Best Seller</option>
                     </select>
                 </div>
             </div>
@@ -128,7 +128,7 @@ const FeaturedTab = ({
                         <div className="px-5 py-3 border-b border-white/5 flex items-center justify-between">
                             <h3 className="text-sm font-bold text-white">{category}</h3>
                             <span className="text-[10px] text-gray-500 font-medium">
-                                {prods.filter(p => p.is_featured).length}/{prods.length} unggulan
+                                {prods.filter(p => p.is_featured).length}/{prods.length} best seller
                             </span>
                         </div>
                         <div className="divide-y divide-white/5">
@@ -183,13 +183,13 @@ const FeaturedTab = ({
                                                     ? 'bg-yellow-500/15 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/25'
                                                     : 'bg-white/5 border-white/10 text-gray-500 hover:bg-white/10 hover:text-white hover:border-white/20'
                                             }`}
-                                            title={product.is_featured ? 'Hapus dari unggulan' : 'Tandai sebagai unggulan'}
+                                            title={product.is_featured ? 'Hapus dari Best Seller' : 'Tandai sebagai Best Seller'}
                                         >
                                             <Star
                                                 size={14}
                                                 className={`transition-all ${product.is_featured ? 'fill-yellow-400 text-yellow-400' : 'group-hover:text-yellow-400'}`}
                                             />
-                                            {product.is_featured ? 'Unggulan' : 'Tandai'}
+                                            {product.is_featured ? 'Best Seller' : 'Tandai'}
                                         </button>
                                     </div>
                                 );

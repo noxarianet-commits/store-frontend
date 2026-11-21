@@ -129,7 +129,7 @@ const LandingPage = () => {
     // All products from home data
     const allProducts = homeData?.all_products || [];
 
-    // Combine any featured products from homeData.featured_products and allProducts
+    // Tampilkan HANYA produk yang diberi tanda bintang (Best Seller) dari dashboard admin
     const featuredMap = new Map();
     (homeData?.featured_products || []).forEach(p => {
         if (p && p.id) featuredMap.set(p.id, p);
@@ -137,45 +137,7 @@ const LandingPage = () => {
     allProducts.filter(p => Boolean(p.is_featured)).forEach(p => {
         if (p && p.id) featuredMap.set(p.id, p);
     });
-    const featuredProducts = Array.from(featuredMap.values());
-
-    // Build balanced showcase: pinned featured items first, then balanced fill from all categories up to 16
-    let displayFeatured = [...featuredProducts];
-    if (displayFeatured.length < 16) {
-        const addedIds = new Set(displayFeatured.map(p => p.id));
-        const remainingNeeded = 16 - displayFeatured.length;
-
-        // Collect other products by category to ensure E-Wallet and Game are represented if slots remain
-        const otherEwallet = allProducts.filter(p => !addedIds.has(p.id) && (p.category === 'E-Wallet' || /dana|gopay|ovo|shopee|linkaja/i.test(p.name)));
-        const otherGame = allProducts.filter(p => !addedIds.has(p.id) && p.category === 'Game');
-        const otherApp = allProducts.filter(p => !addedIds.has(p.id) && p.category === 'Aplikasi Premium');
-        const otherRest = allProducts.filter(p => !addedIds.has(p.id) && p.category !== 'E-Wallet' && p.category !== 'Game' && p.category !== 'Aplikasi Premium');
-
-        const fillItems = [];
-        const maxLen = Math.max(otherEwallet.length, otherGame.length, otherApp.length, otherRest.length);
-        for (let i = 0; i < maxLen && fillItems.length < remainingNeeded; i++) {
-            if (otherEwallet[i] && !addedIds.has(otherEwallet[i].id)) {
-                fillItems.push(otherEwallet[i]);
-                addedIds.add(otherEwallet[i].id);
-            }
-            if (fillItems.length >= remainingNeeded) break;
-            if (otherGame[i] && !addedIds.has(otherGame[i].id)) {
-                fillItems.push(otherGame[i]);
-                addedIds.add(otherGame[i].id);
-            }
-            if (fillItems.length >= remainingNeeded) break;
-            if (otherApp[i] && !addedIds.has(otherApp[i].id)) {
-                fillItems.push(otherApp[i]);
-                addedIds.add(otherApp[i].id);
-            }
-            if (fillItems.length >= remainingNeeded) break;
-            if (otherRest[i] && !addedIds.has(otherRest[i].id)) {
-                fillItems.push(otherRest[i]);
-                addedIds.add(otherRest[i].id);
-            }
-        }
-        displayFeatured = [...displayFeatured, ...fillItems];
-    }
+    const displayFeatured = Array.from(featuredMap.values());
     const filteredProducts = filterProducts(allProducts, activeTab, searchQuery);
     const counts = computeCounts(allProducts);
 
