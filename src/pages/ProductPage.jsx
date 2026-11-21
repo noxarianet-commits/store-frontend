@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowLeft, CheckCircle2, Copy, Star, ChevronRight,
     Shield, AlertTriangle, AlertCircle, Clock, RefreshCw,
-    Loader2, Wifi, Info, Download
+    Loader2, Wifi, Info, Download, ShieldCheck, Sparkles, FileText,
+    ChevronDown, ChevronUp
 } from 'lucide-react';
 import api from '../api';
 import Swal from 'sweetalert2';
@@ -72,19 +73,85 @@ function CountdownTimer({ expiredAt }) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// SUB-COMPONENT — Variant Note Callout
+// SUB-COMPONENT — Variant Note Callout (Rincian & Ketentuan Paket)
 // ══════════════════════════════════════════════════════════════════════════
-function VariantNoteCallout({ note, className = '' }) {
-    if (!note) return null;
+function VariantNoteCallout({ note, variant, className = '' }) {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const activeNote = note || variant?.note;
+    const variantName = variant?.name;
+
+    // Reset status expand saat berganti varian
+    useEffect(() => {
+        setIsExpanded(false);
+    }, [variant?.id, activeNote]);
+
+    // Parse note into clean lines
+    const lines = activeNote
+        ? String(activeNote)
+            .replace(/\r\n/g, '\n')
+            .split('\n')
+            .map(l => l.trim().replace(/^[-*•]\s*/, ''))
+            .filter(Boolean)
+        : [];
+
+    // Jika tidak ada catatan khusus dari admin, sembunyikan agar tidak memakan ruang
+    if (!activeNote || lines.length === 0) return null;
+
+    const shouldCollapse = lines.length > 2;
+    const displayedLines = shouldCollapse && !isExpanded ? lines.slice(0, 2) : lines;
 
     return (
-        <div className={`bg-amber-50/70 border border-amber-100 rounded-xl p-3.5 ${className}`}>
-            <div className="flex items-start gap-2.5">
-                <Info size={15} className="text-amber-600 shrink-0 mt-0.5" />
-                <div className="min-w-0">
-                    <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wider mb-1">Catatan Paket</p>
-                    <ProductNote text={note} className="text-xs text-amber-900" />
+        <div className={`bg-purple-50/40 border border-purple-100 rounded-xl p-3 sm:p-3.5 shadow-2xs transition-all w-full overflow-hidden ${className}`}>
+            {/* Header: Judul & Status Garansi */}
+            <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-purple-100/70">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <div className="w-6 h-6 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
+                        <FileText size={13} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <span className="text-[10px] font-bold text-purple-700 uppercase tracking-wider block leading-none">
+                            Ketentuan Paket
+                        </span>
+                        {variantName && (
+                            <h4 className="text-xs font-bold text-slate-800 truncate mt-0.5">
+                                {variantName}
+                            </h4>
+                        )}
+                    </div>
                 </div>
+
+                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-semibold shrink-0">
+                    <ShieldCheck size={11} className="text-emerald-600" />
+                    <span>Garansi</span>
+                </div>
+            </div>
+
+            {/* Checklist Rincian Catatan (Ringkas & Responsif) */}
+            <div className="pt-2.5 space-y-1.5 w-full">
+                {displayedLines.map((line, idx) => (
+                    <div key={idx} className="flex items-start gap-2 text-xs text-slate-700 leading-snug w-full min-w-0">
+                        <CheckCircle2 size={13} className="text-emerald-500 shrink-0 mt-0.5" />
+                        <span className="font-medium break-words flex-1 min-w-0">{line}</span>
+                    </div>
+                ))}
+
+                {/* Tombol Selengkapnya / Ringkas */}
+                {shouldCollapse && (
+                    <button
+                        type="button"
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-600 hover:text-purple-700 pt-1 transition-colors cursor-pointer focus:outline-none"
+                    >
+                        <span>{isExpanded ? 'Lihat Lebih Sedikit' : `Selengkapnya (+${lines.length - 2} poin)`}</span>
+                        {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                    </button>
+                )}
+            </div>
+
+            {/* Reassurance Footer */}
+            <div className="mt-2.5 pt-2 border-t border-purple-100/70 flex items-center gap-1.5 text-[10.5px] text-slate-500 w-full min-w-0">
+                <Sparkles size={11} className="text-purple-500 shrink-0" />
+                <span className="truncate">Detail pesanan dikirim otomatis via Email setelah transaksi berhasil.</span>
             </div>
         </div>
     );
@@ -119,7 +186,7 @@ const ProductPage = () => {
     const [validatedAccount, setValidatedAccount] = useState(null);
     const [validationError, setValidationError] = useState(null);
     const [isValidating, setIsValidating] = useState(false);
-    const [isWaConfirmed, setIsWaConfirmed] = useState(false);
+    const [isWaConfirmed, setIsWaConfirmed] = useState(true);
 
     // Testimonial
     const [testimonialMsg, setTestimonialMsg] = useState('');
@@ -1031,11 +1098,6 @@ const ProductPage = () => {
             return;
         }
 
-        if (!isWaConfirmed) {
-            notifyWarning('Harap centang konfirmasi nomor WhatsApp & alamat Email terlebih dahulu!');
-            return;
-        }
-
         if (isShopClosed) {
             notifyWarning('Toko sedang tutup. Silakan coba lagi nanti.');
             return;
@@ -1101,16 +1163,16 @@ const ProductPage = () => {
                 </div>
             </nav>
 
-            <main className="max-w-2xl mx-auto px-4 py-10">
+            <main className="max-w-2xl mx-auto px-3.5 sm:px-4 py-5 sm:py-8">
                 {/* Product Header */}
-                <div className="mb-8">
+                <div className="mb-4 sm:mb-6">
                     <span className="text-xs font-semibold text-purple-600 uppercase tracking-wider">{product.category}</span>
-                    <h1 className="text-2xl font-extrabold text-slate-900 mt-1">{product.name}</h1>
+                    <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-0.5">{product.name}</h1>
                 </div>
 
                 {/* Toko Tutup Banner */}
                 {settings.shop_status?.isOpen === false && (
-                    <div className="mb-6 bg-amber-50 border border-amber-100 rounded-2xl p-4">
+                    <div className="mb-5 bg-amber-50 border border-amber-100 rounded-2xl p-4">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center shrink-0">
                                 <AlertTriangle className="text-amber-600" size={22} />
@@ -1127,7 +1189,7 @@ const ProductPage = () => {
 
                 {/* Sold Out Banner */}
                 {product.status === 'sold_out' && (
-                    <div className="mb-6 bg-red-50 border border-red-100 rounded-2xl p-4">
+                    <div className="mb-5 bg-red-50 border border-red-100 rounded-2xl p-4">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center shrink-0">
                                 <AlertCircle className="text-red-600" size={22} />
@@ -1141,7 +1203,7 @@ const ProductPage = () => {
                 )}
 
                 {/* Step Progress */}
-                <div className="flex items-center gap-2 mb-8">
+                <div className="flex items-center gap-2 mb-4 sm:mb-6">
                     {steps.map((s, i) => (
                         <Fragment key={i}>
                             <div className={`flex items-center gap-2 ${step > i + 1 ? 'text-purple-600' : step === i + 1 ? 'text-slate-800' : 'text-slate-400'}`}>
@@ -1176,7 +1238,7 @@ const ProductPage = () => {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -16 }}
                         transition={{ duration: 0.25 }}
-                        className="bg-white border border-purple-100 rounded-2xl p-6 shadow-sm"
+                        className="bg-white border border-purple-100 rounded-2xl p-4 sm:p-6 shadow-sm"
                     >
                         {step === 1 && (
                             <div>
@@ -1185,7 +1247,14 @@ const ProductPage = () => {
                                     activeVendor={vendor}
                                     onSelectServer={handleSelectServer}
                                 />
-                                <h2 className="text-base font-bold text-slate-900 mb-5">Pilih Paket</h2>
+                                <div className="flex items-center justify-between mb-3">
+                                    <h2 className="text-sm sm:text-base font-bold text-slate-900">Pilih Paket</h2>
+                                    {selectedVariant && (
+                                        <span className="text-[11px] sm:text-xs font-bold text-purple-700 bg-purple-50 px-2.5 py-0.5 rounded-full border border-purple-200/80 truncate max-w-[180px]">
+                                            {selectedVariant.name}
+                                        </span>
+                                    )}
+                                </div>
                                 <VariantSelector 
                                     variants={
                                         (product?.servers?.find(s => s.vendor === vendor)?.variants) ||
@@ -1197,11 +1266,11 @@ const ProductPage = () => {
                                     showAllVariants={showAllVariants}
                                     setShowAllVariants={setShowAllVariants}
                                 />
-                                <VariantNoteCallout note={selectedVariant?.note} className="mb-6" />
+                                <VariantNoteCallout variant={selectedVariant} className="mb-4 sm:mb-5" />
                                 {/* Features */}
                                 {product.features && product.features.length > 0 && (
-                                    <div className="border-t border-slate-100 pt-5 mb-6 mt-6">
-                                        <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Fitur Termasuk</p>
+                                    <div className="border-t border-slate-100 pt-4 mb-5 mt-5">
+                                        <p className="text-xs text-slate-500 uppercase tracking-wider mb-2.5">Fitur Termasuk</p>
                                         <div className="grid grid-cols-2 gap-2">
                                             {product.features.map((f, i) => (
                                                 <div key={i} className="flex items-center gap-2 text-sm text-slate-600">
@@ -1211,7 +1280,7 @@ const ProductPage = () => {
                                         </div>
                                     </div>
                                 )}
-                                <div className="flex gap-3 mt-6">
+                                <div className="flex gap-3 mt-5">
                                     <button
                                         onClick={() => { window.scrollTo(0, 0); navigate('/'); }}
                                         className="w-1/3 bg-white hover:bg-slate-50 py-3.5 rounded-xl font-semibold text-slate-700 transition-colors border border-slate-200 text-sm"
@@ -1233,7 +1302,7 @@ const ProductPage = () => {
                                                 : 'bg-purple-600 hover:bg-purple-700 text-white'
                                         }`}
                                     >
-                                        {(product.status === 'sold_out' || !selectedVariant || (selectedVariant.stock === 0)) ? 'Stok Habis' : settings.shop_status?.isOpen === false ? 'Toko Tutup' : isServiceProduct ? <>Hubungi WhatsApp <ChevronRight size={16} /></> : <>Lanjutkan <ChevronRight size={16} /></>}
+                                        {(product.status === 'sold_out' || !selectedVariant || (selectedVariant.stock === 0)) ? 'Stok Habis' : settings.shop_status?.isOpen === false ? 'Toko Tutup' : isServiceProduct ? <>Hubungi WhatsApp <ChevronRight size={16} /></> : <>Lanjutkan {(selectedVariant?.sell_price || selectedVariant?.price) > 0 ? `• ${formatRp(selectedVariant.sell_price || selectedVariant.price)}` : ''} <ChevronRight size={16} /></>}
                                     </button>
                                 </div>
                             </div>
@@ -1242,7 +1311,7 @@ const ProductPage = () => {
                         {step === 2 && (() => {
                             return (
                                 <div>
-                                    <VariantNoteCallout note={selectedVariant?.note} className="mb-5" />
+                                    <VariantNoteCallout variant={selectedVariant} className="mb-5" />
 
                                     <BuyerDataForm
                                         formData={formData}
@@ -1308,35 +1377,17 @@ const ProductPage = () => {
                                         </div>
                                     )}
 
-                                    {/* Peringatan Konfirmasi WA */}
+                                    {/* Informasi Pengiriman Otomatis */}
                                     {selectedVariant?.price > 0 && (
-                                        <div className="bg-amber-50/70 border border-amber-200/60 rounded-xl p-4 mb-5">
-                                            <div className="flex items-start gap-3">
-                                                <div className="p-2 bg-amber-100/80 rounded-lg shrink-0 text-amber-700">
-                                                    <AlertTriangle size={18} className="animate-pulse" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <h4 className="text-amber-900 font-bold text-xs uppercase tracking-wider mb-1">Peringatan Konfirmasi</h4>
-                                                    <p className="text-amber-800 text-xs leading-relaxed">
-                                                        Harap pastikan nomor WhatsApp dan alamat Email Anda <strong>benar dan aktif</strong> karena produk dan bukti transaksi akan dikirim via WhatsApp & Email. Jika terdapat kesalahan pengisian data, hal tersebut <strong>bukan tanggung jawab kami</strong>.
-                                                    </p>
-                                                    <label className="flex items-center gap-2.5 mt-3.5 cursor-pointer group">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={isWaConfirmed}
-                                                            onChange={(e) => setIsWaConfirmed(e.target.checked)}
-                                                            className="w-4 h-4 text-purple-600 border-slate-300 rounded focus:ring-purple-500 focus:ring-2 cursor-pointer transition-all"
-                                                        />
-                                                        <span className="text-xs text-amber-900 font-semibold select-none group-hover:text-amber-950 transition-colors">
-                                                            Saya mengkonfirmasi nomor WhatsApp & alamat Email saya benar & aktif
-                                                        </span>
-                                                    </label>
-                                                </div>
-                                            </div>
+                                        <div className="bg-purple-50/60 border border-purple-100 rounded-xl p-3 sm:p-3.5 mb-5 flex items-center gap-2.5 text-xs text-slate-600">
+                                            <ShieldCheck size={16} className="text-purple-600 shrink-0" />
+                                            <p className="leading-relaxed">
+                                                Bukti pembayaran dan rincian pesanan otomatis dikirimkan ke <strong>Email</strong> Anda.
+                                            </p>
                                         </div>
                                     )}
 
-                                    <div className="flex gap-3 mt-6">
+                                    <div className="flex gap-3 mt-5">
                                         <button
                                             onClick={() => { setStep(1); window.scrollTo({ top: 100, behavior: 'smooth' }); }}
                                             disabled={isSubmitting || isValidating}
@@ -1360,7 +1411,7 @@ const ProductPage = () => {
                                             ) : isValidating ? (
                                                 <><Loader2 size={16} className="animate-spin" /> Memverifikasi ID...</>
                                             ) : (
-                                                selectedVariant?.price === 0 ? 'Kirim ke WhatsApp' : <>Lanjut Bayar <ChevronRight size={16} /></>
+                                                selectedVariant?.price === 0 ? 'Kirim ke WhatsApp' : <>Lanjut Bayar {computedPrice > 0 ? `• ${formatRp(computedPrice)}` : ''} <ChevronRight size={16} /></>
                                             )}
                                         </button>
                                     </div>
@@ -1369,14 +1420,9 @@ const ProductPage = () => {
                                             Masih memproses pembayaran. Jangan tutup halaman ini.
                                         </p>
                                     )}
-                                    {!isCheckoutDisabled && !isWaConfirmed && selectedVariant?.price > 0 && (
-                                        <p className="text-xs text-amber-600 mt-3 text-center">
-                                            Centang konfirmasi nomor WhatsApp &amp; email untuk melanjutkan.
-                                        </p>
-                                    )}
-                                    {!isCheckoutDisabled && isWaConfirmed && isValidationRequired && !isAccountValid && (
+                                    {!isCheckoutDisabled && isValidationRequired && !isAccountValid && (
                                         <p className="text-xs text-purple-600 mt-3 text-center">
-                                            Klik Lanjut Bayar untuk cek ID otomatis sebelum pembayaran.
+                                            Klik Lanjut Bayar untuk verifikasi ID akun sebelum pembayaran.
                                         </p>
                                     )}
                                 </div>
