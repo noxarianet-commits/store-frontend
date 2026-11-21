@@ -7,7 +7,6 @@ import { isTokenExpired } from '../utils/authUtils';
 
 import AdminSidebar from '../components/admin/AdminSidebar';
 import AdminLoginForm from '../components/admin/AdminLoginForm';
-import WelcomeMarquee from '../components/admin/WelcomeMarquee';
 import DashboardTab from '../components/admin/DashboardTab';
 import SekalipayTab from '../components/admin/SekalipayTab';
 import RevenueTab from '../components/admin/RevenueTab';
@@ -544,10 +543,10 @@ const AdminDashboard = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[#0A031A]">
-                <div className="flex flex-col items-center gap-4">
-                    <Loader2 size={40} className="animate-spin text-purple-500" />
-                    <p className="text-gray-500 text-sm">Memuat data...</p>
+            <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+                <div className="flex flex-col items-center gap-4 bg-white p-8 rounded-3xl border border-slate-200/80 shadow-lg">
+                    <Loader2 size={40} className="animate-spin text-purple-600" />
+                    <p className="text-slate-600 text-sm font-semibold">Memuat data dashboard...</p>
                 </div>
             </div>
         );
@@ -555,25 +554,81 @@ const AdminDashboard = () => {
 
     if (error) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[#0A031A] px-4">
-                <div className="text-center bg-[#0E0E0E] border border-red-500/20 rounded-3xl p-8 max-w-md">
-                    <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
-                    <h2 className="text-xl font-bold text-white mb-2">Gagal Memuat Data</h2>
-                    <p className="text-gray-400 text-sm mb-6">{error}</p>
-                    <button onClick={fetchData} className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-bold transition-all">Coba Lagi</button>
+            <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] px-4">
+                <div className="text-center bg-white border border-rose-200 rounded-3xl p-8 max-w-md shadow-lg">
+                    <AlertCircle size={48} className="text-rose-500 mx-auto mb-4" />
+                    <h2 className="text-xl font-bold text-slate-900 mb-2">Gagal Memuat Data</h2>
+                    <p className="text-slate-600 text-sm mb-6">{error}</p>
+                    <button onClick={fetchData} className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-md">Coba Lagi</button>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-[#0A031A] flex flex-col md:flex-row">
+        <div className="min-h-screen bg-[#F8FAFC] text-slate-800 flex flex-col md:flex-row font-sans selection:bg-purple-500 selection:text-white">
             <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} handleLogout={handleLogout} isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
 
             <main className="flex-1 overflow-auto w-full">
-                <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
-                    <WelcomeMarquee />
+                {/* Modern light top bar */}
+                <header className="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between shadow-xs">
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+                            <span>Admin</span>
+                            <span className="text-slate-300">/</span>
+                            <span className="text-purple-600 font-bold capitalize">{activeTab}</span>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        {/* Live balances badge pills */}
+                        <div className="hidden sm:flex items-center gap-2">
+                            {sekalipayBalance !== null && (
+                                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 border border-purple-100 text-purple-700 text-xs font-semibold">
+                                    <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                                    <span>Sekalipay:</span>
+                                    <span className="font-bold">{sekalipayBalance.balance ? `Rp ${Number(sekalipayBalance.balance).toLocaleString('id-ID')}` : 'Rp 0'}</span>
+                                </div>
+                            )}
+                            {okeconnectBalance !== null && (
+                                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-50 border border-sky-100 text-sky-700 text-xs font-semibold">
+                                    <span className="w-2 h-2 rounded-full bg-sky-500"></span>
+                                    <span>OkeConnect:</span>
+                                    <span className="font-bold">{okeconnectBalance.balance ? `Rp ${Number(okeconnectBalance.balance).toLocaleString('id-ID')}` : 'Rp 0'}</span>
+                                </div>
+                            )}
+                        </div>
+                        {/* Status Toko Pill */}
+                        {(() => {
+                            const raw = settings?.shop_status;
+                            const isShopOpen = raw === undefined || raw === null
+                                ? true
+                                : typeof raw === 'object'
+                                    ? raw.isOpen !== false
+                                    : typeof raw === 'boolean'
+                                        ? raw
+                                        : typeof raw === 'string'
+                                            ? raw.trim().toUpperCase() === 'OPEN' || raw.trim().toUpperCase() === 'TRUE' || raw.trim() === '1'
+                                            : true;
 
+                            return (
+                                <div className={`px-3 py-1.5 rounded-full text-xs font-bold border flex items-center gap-1.5 transition-colors ${
+                                    isShopOpen
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                        : 'bg-rose-50 text-rose-700 border-rose-200'
+                                }`}>
+                                    <span className={`w-2 h-2 rounded-full ${
+                                        isShopOpen
+                                            ? 'bg-emerald-500 animate-pulse'
+                                            : 'bg-rose-500'
+                                    }`}></span>
+                                    <span>{isShopOpen ? 'Toko Buka' : 'Toko Tutup'}</span>
+                                </div>
+                            );
+                        })()}
+                    </div>
+                </header>
+
+                <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
                     {/* Tab Content */}
                     {activeTab === 'dashboard' && <DashboardTab orders={orders} />}
                     {activeTab === 'sekalipay' && (

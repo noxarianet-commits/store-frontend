@@ -1,39 +1,31 @@
+import { Sparkles, ShieldCheck } from 'lucide-react';
 
 const WelcomeMarquee = () => (
-    <div className="mb-3 sm:mb-6 rounded-xl sm:rounded-2xl overflow-hidden border border-purple-500/20 bg-gradient-to-r from-[#1a0a35] via-[#120825] to-[#1a0a35] relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-600/5 via-transparent to-purple-600/5 pointer-events-none" />
+    <div className="mb-4 sm:mb-6 rounded-2xl overflow-hidden border border-purple-100 bg-gradient-to-r from-purple-50/90 via-white to-purple-50/70 p-4 sm:p-5 shadow-xs relative select-none">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-md shadow-purple-600/20 shrink-0">
+                    <Sparkles size={20} />
+                </div>
+                <div>
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight">
+                            Selamat Datang, <span className="text-purple-600">Andika Khairul .A</span>
+                        </h2>
+                        <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <ShieldCheck size={11} className="text-emerald-600" />
+                            <span>Admin Resmi</span>
+                        </span>
+                    </div>
+                    <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
+                        Sistem Manajemen Operasional Noxarianet &bull; Integrasi Sekalipay &amp; OkeConnect
+                    </p>
+                </div>
+            </div>
 
-        {/* Mobile: teks statis, wrap normal */}
-        <div className="sm:hidden py-3 px-4 text-center">
-            <p className="text-sm font-bold text-white">
-                Selamat Datang, <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-violet-300">ANDIKA KHAIRUL .A</span>
-            </p>
-            <p className="text-[10px] text-gray-400 mt-0.5">Bekerjasama dengan PT BELANJA INDONESIA & SEKALIPAY</p>
-        </div>
-
-        {/* Desktop: marquee animation */}
-        <div className="hidden sm:block py-5 overflow-hidden whitespace-nowrap">
-            <div className="inline-block animate-marquee-slow">
-                <span className="text-2xl md:text-3xl font-extrabold tracking-wide">
-                    <span className="text-purple-400 mx-2 sm:mx-4">✦</span>
-                    <span className="text-white mx-4">Selamat Datang,</span>
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-violet-300">ANDIKA KHAIRUL .A</span>
-                    <span className="text-gray-500 mx-6">—</span>
-                    <span className="text-gray-400 text-lg font-semibold">Bekerjasama dengan</span>
-                    <span className="text-white mx-3 font-bold">PT BELANJA INDONESIA</span>
-                    <span className="text-purple-400 mx-2">&</span>
-                    <span className="text-white font-bold">SEKALIPAY</span>
-                    <span className="text-purple-400 mx-4">✦</span>
-                    <span className="text-gray-600 mx-8">|</span>
-                    <span className="text-purple-400">✦</span>
-                    <span className="text-white mx-4">Selamat Datang,</span>
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-violet-300">ANDIKA KHAIRUL .A</span>
-                    <span className="text-gray-500 mx-6">—</span>
-                    <span className="text-gray-400 text-lg font-semibold">Bekerjasama dengan</span>
-                    <span className="text-white mx-3 font-bold">PT BELANJA INDONESIA</span>
-                    <span className="text-purple-400 mx-2">&</span>
-                    <span className="text-white font-bold">SEKALIPAY</span>
-                    <span className="text-purple-400 mx-4">✦</span>
+            <div className="flex items-center gap-2 self-start sm:self-center">
+                <span className="text-[11px] font-semibold text-slate-500 bg-white/90 border border-slate-200/80 px-3 py-1.5 rounded-xl shadow-2xs">
+                    Ekosistem Digital Otomatis
                 </span>
             </div>
         </div>

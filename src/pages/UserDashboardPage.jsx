@@ -27,8 +27,10 @@ import {
     ArrowLeft,
     AlertCircle,
     LifeBuoy,
-    LogOut
+    LogOut,
+    Star
 } from 'lucide-react';
+import Swal from 'sweetalert2';
 import AnimatedBackground from '../components/AnimatedBackground';
 import BalanceCard from '../components/balance/BalanceCard';
 import TopUpModal from '../components/balance/TopUpModal';
@@ -349,6 +351,7 @@ const ProfileTab = ({ user, refreshProfile, onSwitchTab, onLogout }) => {
 // SUBCOMPONENT: OrdersTab
 // ══════════════════════════════════════════════════════════════════════════
 const OrdersTab = () => {
+    const { user } = useAuth();
     const [orders, setOrders] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [page, setPage] = useState(1);
@@ -380,6 +383,97 @@ const OrdersTab = () => {
         setCopiedId(id);
         notify.success('ID pesanan disalin ke clipboard');
         setTimeout(() => setCopiedId(null), 2000);
+    };
+
+    const handleReviewOrder = (ord) => {
+        let currentRating = 5;
+        Swal.fire({
+            title: 'Beri Ulasan Pesanan',
+            html: `
+                <div class="text-left font-sans">
+                    <p class="text-xs text-slate-500 mb-3">Pesanan: <strong>${ord.product || 'Produk'}</strong> ${ord.variant ? `(${ord.variant})` : ''}</p>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Penilaian</label>
+                    <div class="flex justify-center gap-2 mb-4" id="swal-rating-container">
+                        <button type="button" data-val="1" class="swal-star-btn text-yellow-400 text-3xl focus:outline-none transition-transform hover:scale-110">★</button>
+                        <button type="button" data-val="2" class="swal-star-btn text-yellow-400 text-3xl focus:outline-none transition-transform hover:scale-110">★</button>
+                        <button type="button" data-val="3" class="swal-star-btn text-yellow-400 text-3xl focus:outline-none transition-transform hover:scale-110">★</button>
+                        <button type="button" data-val="4" class="swal-star-btn text-yellow-400 text-3xl focus:outline-none transition-transform hover:scale-110">★</button>
+                        <button type="button" data-val="5" class="swal-star-btn text-yellow-400 text-3xl focus:outline-none transition-transform hover:scale-110">★</button>
+                    </div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Pesan Ulasan</label>
+                    <textarea 
+                        id="swal-testi-msg" 
+                        placeholder="Ceritakan pengalaman Anda bertransaksi di Noxarianet..." 
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 h-24 resize-none"
+                    ></textarea>
+                </div>
+            `,
+            background: '#ffffff',
+            color: '#1e293b',
+            confirmButtonColor: '#7c3aed',
+            confirmButtonText: 'Kirim Ulasan',
+            showCancelButton: true,
+            cancelButtonText: 'Batal',
+            cancelButtonColor: '#94a3b8',
+            didOpen: () => {
+                const stars = document.querySelectorAll('.swal-star-btn');
+                const updateStars = (val) => {
+                    currentRating = val;
+                    stars.forEach((star, index) => {
+                        if (index < val) {
+                            star.innerHTML = '★';
+                            star.classList.add('text-yellow-400');
+                            star.classList.remove('text-slate-300');
+                        } else {
+                            star.innerHTML = '☆';
+                            star.classList.remove('text-yellow-400');
+                            star.classList.add('text-slate-300');
+                        }
+                    });
+                };
+                stars.forEach(star => {
+                    star.addEventListener('click', () => {
+                        const val = parseInt(star.getAttribute('data-val'), 10);
+                        updateStars(val);
+                    });
+                });
+                updateStars(5);
+            },
+            preConfirm: () => {
+                const text = document.getElementById('swal-testi-msg')?.value;
+                if (!text || !text.trim()) {
+                    Swal.showValidationMessage('Pesan ulasan wajib diisi');
+                    return false;
+                }
+                return { rating: currentRating, text: text.trim() };
+            }
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                const { rating: finalRating, text: finalTesti } = result.value || {};
+                try {
+                    const payload = {
+                        name: user?.phone || user?.name || user?.email || 'Customer',
+                        text: finalTesti,
+                        product: ord.product || '',
+                        rating: finalRating,
+                        order_id: ord.id
+                    };
+                    const res = await api.createTestimonial(payload);
+                    const savedData = res.data?.data || payload;
+
+                    try {
+                        const existing = JSON.parse(localStorage.getItem('nox_recent_testimonials') || '[]');
+                        const updated = [savedData, ...existing.filter(x => x.text !== savedData.text)].slice(0, 5);
+                        localStorage.setItem('nox_recent_testimonials', JSON.stringify(updated));
+                        window.dispatchEvent(new CustomEvent('testimonial:submitted', { detail: savedData }));
+                    } catch { /* ignore */ }
+
+                    notify.success('Terima kasih atas ulasan Anda! Ulasan langsung tampil di halaman utama.');
+                } catch {
+                    notify.error('Gagal mengirim ulasan');
+                }
+            }
+        });
     };
 
     const getStatusBadge = (status) => {
@@ -547,8 +641,19 @@ const OrdersTab = () => {
                                         </span>
                                     </div>
 
-                                    {/* Status Badge */}
-                                    <div className="self-start sm:self-auto">
+                                    {/* Status Badge & Actions */}
+                                    <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+                                        {ord.status === 'COMPLETED' && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleReviewOrder(ord)}
+                                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-[11px] border border-purple-200/80 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                                                title="Beri ulasan pesanan ini"
+                                            >
+                                                <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                                                <span>Beri Ulasan</span>
+                                            </button>
+                                        )}
                                         {getStatusBadge(ord.status)}
                                     </div>
                                 </div>

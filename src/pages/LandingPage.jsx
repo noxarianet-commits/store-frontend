@@ -69,6 +69,7 @@ function computeCounts(products) {
 
 const LandingPage = () => {
     const [homeData, setHomeData] = useState(null);
+    const [testimonials, setTestimonials] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState('all');
@@ -103,13 +104,61 @@ const LandingPage = () => {
         }
     };
 
-    // Single API call to fetch all home data
+    // Helper to merge live Supabase testimonials, localStorage submissions, and homeData testimonials
+    const mergeTestimonialLists = (freshList = [], homeList = []) => {
+        let localList = [];
+        try {
+            localList = JSON.parse(localStorage.getItem('nox_recent_testimonials') || '[]');
+        } catch { /* ignore */ }
+
+        const combined = [...localList, ...freshList, ...homeList];
+        const seen = new Set();
+        const unique = [];
+
+        for (const item of combined) {
+            if (!item) continue;
+            const key = item.id ? `id_${item.id}` : `${item.name || ''}_${item.text || ''}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                unique.push(item);
+            }
+        }
+        return unique;
+    };
+
+    const fetchLiveTestimonials = async () => {
+        try {
+            const res = await api.getTestimonials();
+            if (Array.isArray(res.data) && res.data.length > 0) {
+                setTestimonials(prev => mergeTestimonialLists(res.data, prev));
+            }
+        } catch {
+            // Silently keep current testimonials on network failure
+        }
+    };
+
+    // Parallel API call to fetch home data + real-time uncached testimonials
     useEffect(() => {
         const fetchHomeData = async () => {
             setLoading(true);
             try {
-                const res = await api.get('/home');
-                setHomeData(res.data);
+                const [homeRes, testiRes] = await Promise.allSettled([
+                    api.get('/home'),
+                    api.getTestimonials()
+                ]);
+
+                if (homeRes.status === 'fulfilled' && homeRes.value?.data) {
+                    setHomeData(homeRes.value.data);
+                }
+
+                const freshTesti = (testiRes.status === 'fulfilled' && Array.isArray(testiRes.value?.data))
+                    ? testiRes.value.data
+                    : [];
+                const homeTesti = (homeRes.status === 'fulfilled' && Array.isArray(homeRes.value?.data?.testimonials))
+                    ? homeRes.value.data.testimonials
+                    : [];
+
+                setTestimonials(mergeTestimonialLists(freshTesti, homeTesti));
 
                 // Cek apakah user memilih untuk dismiss selama 24 jam
                 const dismissedUntil = localStorage.getItem('info_modal_dismissed_until');
@@ -123,7 +172,30 @@ const LandingPage = () => {
                 setLoading(false);
             }
         };
+
         fetchHomeData();
+
+        // Listen for new testimonials submitted from ProductPage, Checkout, or Modal
+        const handleNewTestimonial = (e) => {
+            if (e.detail) {
+                setTestimonials(prev => mergeTestimonialLists([e.detail], prev));
+            }
+            fetchLiveTestimonials();
+        };
+        window.addEventListener('testimonial:submitted', handleNewTestimonial);
+
+        // Auto refresh testimonials when page regains focus
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                fetchLiveTestimonials();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            window.removeEventListener('testimonial:submitted', handleNewTestimonial);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
     }, []);
 
     // All products from home data
@@ -358,7 +430,10 @@ const LandingPage = () => {
                 </section>
 
                 <TestimonialCarousel
-                    testimonials={homeData?.testimonials || []}
+                    testimonials={testimonials.length > 0 ? testimonials : (homeData?.testimonials || [])}
+                    onTestimonialAdded={(newTesti) => {
+                        setTestimonials(prev => mergeTestimonialLists([newTesti], prev));
+                    }}
                 />
 
                 <FAQSection />

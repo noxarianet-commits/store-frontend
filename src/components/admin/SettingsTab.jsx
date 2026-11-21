@@ -175,20 +175,20 @@ const SettingsTab = ({
     return (
         <div className="space-y-6">
             {/* WhatsApp CS Number */}
-            <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-6">
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs">
                 <div className="flex items-center justify-between mb-4">
                     <div>
-                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                            <Phone size={20} className="text-green-400" />
+                        <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <Phone size={20} className="text-emerald-600" />
                             Nomor WhatsApp CS (Customer Service)
                         </h3>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-slate-500 mt-1">
                             Nomor ini akan digunakan di seluruh tombol CS toko, halaman garansi, website order, dan email transaksi.
                         </p>
                     </div>
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-gray-400 mb-2">
+                    <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                         Nomor WA CS (Format Internasional tanpa tanda +, contoh: 6285199605580)
                     </label>
                     <div className="flex flex-col md:flex-row gap-3">
@@ -196,25 +196,25 @@ const SettingsTab = ({
                             type="text"
                             value={settings.whatsapp_cs !== undefined ? settings.whatsapp_cs : currentWa}
                             onChange={(e) => setSettings({ ...settings, whatsapp_cs: e.target.value })}
-                            className="flex-1 bg-white/5 border border-white/10 rounded-xl p-3.5 text-sm text-white focus:outline-none focus:border-purple-500/50 font-mono"
+                            className="flex-1 bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm text-slate-800 focus:outline-none focus:bg-white focus:border-purple-500 font-mono transition-colors"
                             placeholder="6285199605580"
                         />
                         <button
                             onClick={() => updateSetting('whatsapp_cs', settings.whatsapp_cs || currentWa)}
-                            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all shrink-0"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-xs shrink-0"
                         >
-                            <Save size={18} /> Simpan Nomor CS
+                            <Save size={16} /> Simpan Nomor CS
                         </button>
                     </div>
                     {currentWa && (
-                        <p className="text-xs text-slate-400 mt-3 flex items-center gap-2">
-                            <span>Tampilan di web: <strong className="text-green-400">{formatWaDisplay(settings.whatsapp_cs || currentWa)}</strong></span>
+                        <p className="text-xs text-slate-500 mt-3 flex items-center gap-2">
+                            <span>Tampilan di web: <strong className="text-emerald-600 font-semibold">{formatWaDisplay(settings.whatsapp_cs || currentWa)}</strong></span>
                             <span>•</span>
                             <a
                                 href={`https://wa.me/${(settings.whatsapp_cs || currentWa).replace(/\D/g, '')}`}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="text-purple-400 hover:underline"
+                                className="text-purple-600 hover:underline font-medium"
                             >
                                 Uji Link (wa.me/{ (settings.whatsapp_cs || currentWa).replace(/\D/g, '') })
                             </a>
@@ -224,20 +224,20 @@ const SettingsTab = ({
             </div>
 
             {/* WhatsApp Group Link */}
-            <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-6">
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs">
                 <div className="flex items-center justify-between mb-4">
                     <div>
-                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                            <Users size={20} className="text-green-400" />
+                        <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <Users size={20} className="text-emerald-600" />
                             Link Group WhatsApp
                         </h3>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-slate-500 mt-1">
                             Link grup ini akan digunakan pada popup Info Penting dan tombol gabung grup WA di halaman utama.
                         </p>
                     </div>
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-gray-400 mb-2">
+                    <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                         URL Join Group WhatsApp (contoh: https://chat.whatsapp.com/...)
                     </label>
                     <div className="flex flex-col md:flex-row gap-3">
@@ -245,25 +245,25 @@ const SettingsTab = ({
                             type="text"
                             value={settings.wa_group_link !== undefined ? settings.wa_group_link : currentWaGroupLink}
                             onChange={(e) => setSettings({ ...settings, wa_group_link: e.target.value })}
-                            className="flex-1 bg-white/5 border border-white/10 rounded-xl p-3.5 text-sm text-white focus:outline-none focus:border-purple-500/50 font-mono"
+                            className="flex-1 bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm text-slate-800 focus:outline-none focus:bg-white focus:border-purple-500 font-mono transition-colors"
                             placeholder="https://chat.whatsapp.com/..."
                         />
                         <button
                             onClick={() => updateSetting('wa_group_link', settings.wa_group_link || currentWaGroupLink)}
-                            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all shrink-0"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-xs shrink-0"
                         >
-                            <Save size={18} /> Simpan Link Group WA
+                            <Save size={16} /> Simpan Link Group WA
                         </button>
                     </div>
                     {currentWaGroupLink && (
-                        <p className="text-xs text-slate-400 mt-3 flex items-center gap-[#0.5rem] items-center">
-                            <span>Link aktif: <strong className="text-green-400 truncate max-w-xs inline-block align-bottom">{settings.wa_group_link || currentWaGroupLink}</strong></span>
+                        <p className="text-xs text-slate-500 mt-3 flex items-center gap-2">
+                            <span>Link aktif: <strong className="text-emerald-600 truncate max-w-xs inline-block align-bottom font-semibold">{settings.wa_group_link || currentWaGroupLink}</strong></span>
                             <span>•</span>
                             <a
                                 href={settings.wa_group_link || currentWaGroupLink}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="text-purple-400 hover:underline shrink-0"
+                                className="text-purple-600 hover:underline font-medium shrink-0"
                             >
                                 Uji Link Group WA
                             </a>
@@ -273,45 +273,77 @@ const SettingsTab = ({
             </div>
 
             {/* Shop Status */}
-            <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-6">
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs">
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h3 className="text-lg font-bold text-white">Status Toko</h3>
-                        <p className="text-xs text-gray-500">Ubah status operasional toko Anda</p>
+                        <h3 className="text-lg font-bold text-slate-900">Status Toko</h3>
+                        <p className="text-xs text-slate-500">Ubah status operasional toko Anda</p>
                     </div>
-                    <button
-                        onClick={() => updateSetting('shop_status', { ...settings.shop_status, isOpen: !settings.shop_status.isOpen })}
-                        className={`relative w-14 h-7 rounded-full transition-all flex items-center px-1 ${settings.shop_status.isOpen ? 'bg-green-600' : 'bg-gray-700'}`}
-                    >
-                        <div className={`w-5 h-5 bg-white rounded-full transition-all transform ${settings.shop_status.isOpen ? 'translate-x-7' : 'translate-x-0'}`} />
-                    </button>
+                    {(() => {
+                        const raw = settings?.shop_status;
+                        const isShopOpen = raw === undefined || raw === null
+                            ? true
+                            : typeof raw === 'object'
+                                ? raw.isOpen !== false
+                                : typeof raw === 'boolean'
+                                    ? raw
+                                    : typeof raw === 'string'
+                                        ? raw.trim().toUpperCase() === 'OPEN' || raw.trim().toUpperCase() === 'TRUE' || raw.trim() === '1'
+                                        : true;
+
+                        return (
+                            <div className="flex flex-col items-end gap-1">
+                                <button
+                                    onClick={() => {
+                                        const currentObj = typeof settings?.shop_status === 'object' && settings?.shop_status !== null
+                                            ? settings.shop_status
+                                            : { message: '' };
+                                        updateSetting('shop_status', { ...currentObj, isOpen: !isShopOpen });
+                                    }}
+                                    className={`relative w-14 h-7 rounded-full transition-all flex items-center px-1 ${
+                                        isShopOpen ? 'bg-emerald-600' : 'bg-rose-500'
+                                    }`}
+                                >
+                                    <div className={`w-5 h-5 bg-white rounded-full transition-all transform ${isShopOpen ? 'translate-x-7' : 'translate-x-0'} shadow-xs`} />
+                                </button>
+                                <span className={`text-[10px] font-bold uppercase tracking-wider ${isShopOpen ? 'text-emerald-700' : 'text-rose-600'}`}>
+                                    {isShopOpen ? 'Toko Buka' : 'Toko Tutup'}
+                                </span>
+                            </div>
+                        );
+                    })()}
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-gray-400 mb-2">Running Text (Marquee)</label>
+                    <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Running Text (Marquee)</label>
                     <textarea
-                        value={settings.shop_status.message}
-                        onChange={(e) => setSettings({ ...settings, shop_status: { ...settings.shop_status, message: e.target.value } })}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white h-24 focus:outline-none focus:border-purple-500/50"
+                        value={(typeof settings.shop_status === 'object' && settings.shop_status?.message) ? settings.shop_status.message : ''}
+                        onChange={(e) => {
+                            const currentObj = typeof settings?.shop_status === 'object' && settings?.shop_status !== null
+                                ? settings.shop_status
+                                : { isOpen: true };
+                            setSettings({ ...settings, shop_status: { ...currentObj, message: e.target.value } });
+                        }}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-900 h-24 focus:outline-none focus:bg-white focus:border-purple-500 transition-colors"
                         placeholder="Teks yang akan muncul di marquee..."
                     />
                     <button
                         onClick={() => updateSetting('shop_status', settings.shop_status)}
-                        className="bg-purple-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 mt-4"
+                        className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 mt-4 shadow-xs transition-all"
                     >
-                        <Save size={18} /> Simpan Status Toko
+                        <Save size={16} /> Simpan Status Toko
                     </button>
                 </div>
             </div>
 
             {/* Android App Version & Download */}
-            <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-6">
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs">
                 <div className="flex items-start justify-between gap-4 mb-6">
                     <div>
-                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                            <Smartphone size={20} className="text-cyan-400" />
+                        <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <Smartphone size={20} className="text-sky-600" />
                             Aplikasi Android
                         </h3>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-slate-500 mt-1">
                             Atur versi minimum, versi terbaru, link APK, dan mode maintenance aplikasi.
                             Perubahan berlaku setelah tombol simpan ditekan.
                         </p>
@@ -320,7 +352,7 @@ const SettingsTab = ({
                         href="/download"
                         target="_blank"
                         rel="noreferrer"
-                        className="shrink-0 inline-flex items-center gap-2 text-[11px] font-bold text-cyan-400 hover:text-cyan-300 border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 rounded-xl transition-all"
+                        className="shrink-0 inline-flex items-center gap-2 text-xs font-bold text-sky-700 hover:text-sky-800 border border-sky-200 bg-sky-50 px-3.5 py-2 rounded-xl transition-all shadow-xs"
                     >
                         <Download size={14} /> Halaman Download
                     </a>
@@ -328,79 +360,79 @@ const SettingsTab = ({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-xs font-medium text-gray-400 mb-2">
+                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                             Versi Minimum yang Masih Didukung
                         </label>
                         <input
                             type="text"
                             value={appConfig.min_version}
                             onChange={(e) => setAppConfig({ min_version: e.target.value })}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-sm text-white focus:outline-none focus:border-purple-500/50 font-mono"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-purple-500 font-mono transition-colors"
                             placeholder="1.0.0"
                         />
-                        <p className="text-[11px] text-gray-500 mt-1">
+                        <p className="text-[11px] text-slate-500 mt-1 font-medium">
                             Versi terpasang di bawah angka ini akan terkunci di layar “Versi sudah kadaluarsa”.
                         </p>
                     </div>
                     <div>
-                        <label className="block text-xs font-medium text-gray-400 mb-2">
+                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                             Versi Terbaru
                         </label>
                         <input
                             type="text"
                             value={appConfig.latest_version}
                             onChange={(e) => setAppConfig({ latest_version: e.target.value })}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-sm text-white focus:outline-none focus:border-purple-500/50 font-mono"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-purple-500 font-mono transition-colors"
                             placeholder="1.0.1"
                         />
-                        <p className="text-[11px] text-gray-500 mt-1">
+                        <p className="text-[11px] text-slate-500 mt-1 font-medium">
                             Ditampilkan di halaman download dan dipakai banner “update tersedia”.
                         </p>
                     </div>
                 </div>
 
                 <div className="mt-4">
-                    <label className="block text-xs font-medium text-gray-400 mb-2">
+                    <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                         Link Unduhan APK (URL Langsung)
                     </label>
                     <input
                         type="url"
                         value={appConfig.download_url}
                         onChange={(e) => setAppConfig({ download_url: e.target.value })}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-sm text-white focus:outline-none focus:border-purple-500/50 font-mono"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-purple-500 font-mono transition-colors"
                         placeholder="https://cdn.noxarianet.web.id/app/noxarianet-1.0.1.apk"
                     />
-                    <p className="text-[11px] text-gray-500 mt-1">
+                    <p className="text-[11px] text-slate-500 mt-1">
                         Tempel URL file APK langsung (Supabase Storage, GitHub Releases, CDN/VPS). Jangan isi URL
-                        halaman <code className="text-gray-400">/download</code> agar tombol tidak berputar ke halaman yang sama.
+                        halaman <code className="text-purple-700 font-mono">/download</code> agar tombol tidak berputar ke halaman yang sama.
                     </p>
                 </div>
 
                 <div className="mt-4">
-                    <label className="block text-xs font-medium text-gray-400 mb-2">
+                    <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                         Catatan Rilis (Opsional)
                     </label>
                     <textarea
                         value={appConfig.release_notes}
                         onChange={(e) => setAppConfig({ release_notes: e.target.value })}
                         maxLength={MAX_RELEASE_NOTES_LENGTH}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white h-24 focus:outline-none focus:border-purple-500/50"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-900 h-24 focus:outline-none focus:bg-white focus:border-purple-500 transition-colors"
                         placeholder="Contoh: Perbaikan bug checkout dan peningkatan performa aplikasi."
                     />
-                    <p className="text-[11px] text-gray-500 mt-1">
+                    <p className="text-[11px] text-slate-400 mt-1 font-mono">
                         {String(appConfig.release_notes || '').length}/{MAX_RELEASE_NOTES_LENGTH} karakter.
                     </p>
                 </div>
 
-                <div className="mt-5 border-t border-white/10 pt-5 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div className="mt-5 border-t border-slate-100 pt-5 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                     <div>
-                        <p className="text-sm font-bold text-white">Mode Maintenance Aplikasi</p>
-                        <p className="text-[11px] text-gray-500 mt-1">
+                        <p className="text-sm font-bold text-slate-900">Mode Maintenance Aplikasi</p>
+                        <p className="text-[11px] text-slate-500 mt-1">
                             Saat aktif, seluruh pengguna aplikasi Android melihat layar maintenance.
                             Pesan yang tampil diambil dari Running Text pada Status Toko. Website tidak terpengaruh.
                         </p>
                         {appConfig.maintenance === true && (
-                            <p className="text-[11px] text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2 mt-2 flex items-start gap-2">
+                            <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mt-2 flex items-start gap-2 font-medium">
                                 <AlertTriangle size={14} className="shrink-0 mt-0.5" />
                                 Aplikasi akan masuk mode maintenance setelah pengaturan ini disimpan.
                             </p>
@@ -409,11 +441,11 @@ const SettingsTab = ({
                     <button
                         type="button"
                         onClick={() => setAppConfig({ maintenance: !appConfig.maintenance })}
-                        className={`relative w-14 h-7 rounded-full transition-all flex items-center px-1 shrink-0 ${appConfig.maintenance ? 'bg-amber-500' : 'bg-gray-700'}`}
+                        className={`relative w-14 h-7 rounded-full transition-all flex items-center px-1 shrink-0 ${appConfig.maintenance ? 'bg-amber-500' : 'bg-slate-300'}`}
                         aria-pressed={appConfig.maintenance === true}
                         aria-label="Mode maintenance aplikasi"
                     >
-                        <div className={`w-5 h-5 bg-white rounded-full transition-all transform ${appConfig.maintenance ? 'translate-x-7' : 'translate-x-0'}`} />
+                        <div className={`w-5 h-5 bg-white rounded-full transition-all transform ${appConfig.maintenance ? 'translate-x-7' : 'translate-x-0'} shadow-xs`} />
                     </button>
                 </div>
 
@@ -421,67 +453,67 @@ const SettingsTab = ({
                     <button
                         onClick={handleSaveAppConfig}
                         disabled={savingAppConfig}
-                        className="bg-purple-600 hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all"
+                        className="bg-purple-600 hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-xs"
                     >
-                        <Save size={18} /> {savingAppConfig ? 'Menyimpan…' : 'Simpan Pengaturan Aplikasi'}
+                        <Save size={16} /> {savingAppConfig ? 'Menyimpan…' : 'Simpan Pengaturan Aplikasi'}
                     </button>
-                    <p className="text-[11px] text-gray-500">
+                    <p className="text-[11px] text-slate-500 font-medium">
                         Naikkan versi minimum hanya setelah link APK benar-benar bisa diunduh.
                     </p>
                 </div>
             </div>
 
             {/* Info Modal Text */}
-            <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-6">
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs">
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                            <MessageSquare size={20} className="text-purple-400" />
+                        <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <MessageSquare size={20} className="text-purple-600" />
                             Popup Info Penting
                         </h3>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-slate-500 mt-1">
                             Kelola teks popup yang muncul saat pengguna membuka halaman utama
                         </p>
                     </div>
                     <div className="flex flex-col items-center gap-1">
                         <button
                             onClick={() => updateSetting('info_modal_active', settings.info_modal_active === undefined ? false : !settings.info_modal_active)}
-                            className={`relative w-14 h-7 rounded-full transition-all duration-300 flex items-center px-1 ${settings.info_modal_active !== false ? 'bg-green-600' : 'bg-gray-700'}`}
+                            className={`relative w-14 h-7 rounded-full transition-all duration-300 flex items-center px-1 ${settings.info_modal_active !== false ? 'bg-emerald-600' : 'bg-slate-300'}`}
                         >
-                            <div className={`w-5 h-5 bg-white rounded-full transition-all duration-300 transform ${settings.info_modal_active !== false ? 'translate-x-7' : 'translate-x-0'}`} />
+                            <div className={`w-5 h-5 bg-white rounded-full transition-all duration-300 transform ${settings.info_modal_active !== false ? 'translate-x-7' : 'translate-x-0'} shadow-xs`} />
                         </button>
-                        <span className={`text-[10px] font-bold uppercase tracking-wider ${settings.info_modal_active !== false ? 'text-green-400' : 'text-gray-500'}`}>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${settings.info_modal_active !== false ? 'text-emerald-700' : 'text-slate-400'}`}>
                             {settings.info_modal_active !== false ? 'Aktif' : 'Nonaktif'}
                         </span>
                     </div>
                 </div>
 
                 <div>
-                    <label className="block text-xs font-medium text-gray-400 mb-2">Pesan Popup</label>
+                    <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Pesan Popup</label>
                     <textarea
                         value={settings.info_modal_text || ''}
                         onChange={(e) => setSettings({ ...settings, info_modal_text: e.target.value })}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white h-24 focus:outline-none focus:border-purple-500/50"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-900 h-24 focus:outline-none focus:bg-white focus:border-purple-500 transition-colors"
                         placeholder="Masukkan teks popup di sini (misal: Bergabunglah dengan grup WhatsApp kami...)"
                     />
                     <button
                         onClick={() => updateSetting('info_modal_text', settings.info_modal_text)}
-                        className="bg-purple-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 mt-4"
+                        className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 mt-4 shadow-xs transition-all"
                     >
-                        <Save size={18} /> Simpan Teks Popup
+                        <Save size={16} /> Simpan Teks Popup
                     </button>
                 </div>
             </div>
 
             {/* Wajib Validasi Akun */}
-            <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-6">
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs">
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                            <ShieldCheck size={20} className="text-purple-400" />
+                        <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <ShieldCheck size={20} className="text-purple-600" />
                             Wajib Validasi Akun
                         </h3>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-slate-500 mt-1">
                             Saat aktif, pembeli wajib lolos cek ID ke penyedia sebelum checkout untuk produk yang memerlukan validasi.
                             Nonaktifkan sementara jika endpoint validasi provider sedang gangguan agar transaksi tetap berjalan.
                         </p>
@@ -489,32 +521,32 @@ const SettingsTab = ({
                     <div className="flex flex-col items-center gap-1">
                         <button
                             onClick={() => updateSetting('mandatory_validation', settings.mandatory_validation === false)}
-                            className={`relative w-14 h-7 rounded-full transition-all duration-300 flex items-center px-1 ${settings.mandatory_validation !== false ? 'bg-green-600' : 'bg-gray-700'}`}
+                            className={`relative w-14 h-7 rounded-full transition-all duration-300 flex items-center px-1 ${settings.mandatory_validation !== false ? 'bg-emerald-600' : 'bg-slate-300'}`}
                         >
-                            <div className={`w-5 h-5 bg-white rounded-full transition-all duration-300 transform ${settings.mandatory_validation !== false ? 'translate-x-7' : 'translate-x-0'}`} />
+                            <div className={`w-5 h-5 bg-white rounded-full transition-all duration-300 transform ${settings.mandatory_validation !== false ? 'translate-x-7' : 'translate-x-0'} shadow-xs`} />
                         </button>
-                        <span className={`text-[10px] font-bold uppercase tracking-wider ${settings.mandatory_validation !== false ? 'text-green-400' : 'text-gray-500'}`}>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${settings.mandatory_validation !== false ? 'text-emerald-700' : 'text-slate-400'}`}>
                             {settings.mandatory_validation !== false ? 'Aktif' : 'Nonaktif'}
                         </span>
-                        <span className="text-[9px] text-gray-600 uppercase tracking-wider">Semua channel</span>
+                        <span className="text-[9px] text-slate-400 uppercase tracking-wider font-semibold">Semua channel</span>
                     </div>
                 </div>
 
-                {/* Override per channel (mis. hanya web yang dinonaktifkan) */}
-                <div className="space-y-3 border-t border-white/10 pt-5">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Per Channel</p>
+                {/* Override per channel */}
+                <div className="space-y-3 border-t border-slate-100 pt-5">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Per Channel</p>
                     {VALIDATION_CHANNEL_ROWS.map((row) => {
                         const mode = channelMode(settings, row.key);
                         return (
-                            <div key={row.key} className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 bg-white/[0.03] border border-white/5 rounded-xl px-4 py-3">
+                            <div key={row.key} className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-3">
                                 <div className="min-w-0">
-                                    <p className="text-sm font-bold text-white flex items-center gap-2">
+                                    <p className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                         {row.icon}
                                         {row.label}
                                     </p>
-                                    <p className="text-[11px] text-gray-500 mt-0.5">{row.desc}</p>
+                                    <p className="text-[11px] text-slate-500 mt-0.5">{row.desc}</p>
                                 </div>
-                                <div className="flex items-center gap-1 bg-black/40 border border-white/10 rounded-xl p-1 shrink-0">
+                                <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1 shrink-0 shadow-xs">
                                     {VALIDATION_CHANNEL_OPTIONS.map((opt) => {
                                         const active = mode === opt.id;
                                         return (
@@ -525,9 +557,9 @@ const SettingsTab = ({
                                                 className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
                                                     active
                                                         ? opt.id === 'off'
-                                                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                                            ? 'bg-amber-50 text-amber-800 border border-amber-200'
                                                             : 'bg-purple-600 text-white'
-                                                        : 'text-gray-500 hover:text-white'
+                                                        : 'text-slate-500 hover:text-slate-800'
                                                 }`}
                                             >
                                                 {opt.label}
@@ -541,26 +573,26 @@ const SettingsTab = ({
                 </div>
 
                 {settings.mandatory_validation === false && (
-                    <p className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mt-4">
+                    <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3 mt-4 font-medium">
                         Validasi akun sedang dilewati di semua channel: pesanan produk dengan cek ID akan langsung diproses tanpa verifikasi ke penyedia. Aktifkan kembali setelah endpoint validasi provider pulih.
                     </p>
                 )}
                 {settings.mandatory_validation !== false && !isMandatoryValidationForChannel(settings, 'web') && (
-                    <p className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mt-4">
+                    <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3 mt-4 font-medium">
                         Validasi akun sedang dilewati di website: pembeli web tidak perlu cek ID sebelum checkout, sementara aplikasi Android tetap mewajibkan cek ID.
                     </p>
                 )}
             </div>
 
             {/* Payment Gateway Provider */}
-            <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-6">
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs">
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                            <Save size={20} className="text-emerald-400" />
+                        <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <Save size={20} className="text-emerald-600" />
                             Provider Payment Gateway
                         </h3>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-slate-500 mt-1">
                             Pilih provider gateway aktif untuk pembuatan QRIS. Pembeli tidak dapat memilih sendiri.
                         </p>
                     </div>
@@ -575,14 +607,14 @@ const SettingsTab = ({
                         }}
                         className={`cursor-pointer p-4 rounded-xl border transition-all flex items-start gap-3.5 ${
                             (settings.payment_gateway || 'fincloud') === 'fincloud'
-                                ? 'bg-purple-600/10 border-purple-500/50 shadow-lg shadow-purple-500/10'
-                                : 'bg-white/5 border-white/10 hover:border-white/20'
+                                ? 'bg-purple-50 border-purple-300 shadow-xs'
+                                : 'bg-slate-50 border-slate-200 hover:border-purple-200'
                         }`}
                     >
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
                             (settings.payment_gateway || 'fincloud') === 'fincloud'
-                                ? 'border-purple-500 bg-purple-500'
-                                : 'border-gray-500'
+                                ? 'border-purple-600 bg-purple-600'
+                                : 'border-slate-400 bg-white'
                         }`}>
                             {(settings.payment_gateway || 'fincloud') === 'fincloud' && (
                                 <div className="w-2 h-2 rounded-full bg-white" />
@@ -590,14 +622,14 @@ const SettingsTab = ({
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h4 className="text-sm font-bold text-white">FinCloud (QRIS)</h4>
+                                <h4 className="text-sm font-bold text-slate-900">FinCloud (QRIS)</h4>
                                 {(settings.payment_gateway || 'fincloud') === 'fincloud' && (
-                                    <span className="px-2 py-0.5 text-[10px] font-bold bg-purple-500/20 text-purple-300 rounded-full border border-purple-500/30">
+                                    <span className="px-2 py-0.5 text-[10px] font-bold bg-purple-100 text-purple-700 rounded-full border border-purple-200">
                                         Aktif
                                     </span>
                                 )}
                             </div>
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-slate-500 mt-1">
                                 Gateway bawaan FinCloud API. Invoice dinamis dengan fee otomatis.
                             </p>
                         </div>
@@ -611,14 +643,14 @@ const SettingsTab = ({
                         }}
                         className={`cursor-pointer p-4 rounded-xl border transition-all flex items-start gap-3.5 ${
                             settings.payment_gateway === 'sekalipay'
-                                ? 'bg-purple-600/10 border-purple-500/50 shadow-lg shadow-purple-500/10'
-                                : 'bg-white/5 border-white/10 hover:border-white/20'
+                                ? 'bg-purple-50 border-purple-300 shadow-xs'
+                                : 'bg-slate-50 border-slate-200 hover:border-purple-200'
                         }`}
                     >
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
                             settings.payment_gateway === 'sekalipay'
-                                ? 'border-purple-500 bg-purple-500'
-                                : 'border-gray-500'
+                                ? 'border-purple-600 bg-purple-600'
+                                : 'border-slate-400 bg-white'
                         }`}>
                             {settings.payment_gateway === 'sekalipay' && (
                                 <div className="w-2 h-2 rounded-full bg-white" />
@@ -626,14 +658,14 @@ const SettingsTab = ({
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h4 className="text-sm font-bold text-white">Sekalipay (QRIS)</h4>
+                                <h4 className="text-sm font-bold text-slate-900">Sekalipay (QRIS)</h4>
                                 {settings.payment_gateway === 'sekalipay' && (
-                                    <span className="px-2 py-0.5 text-[10px] font-bold bg-purple-500/20 text-purple-300 rounded-full border border-purple-500/30">
+                                    <span className="px-2 py-0.5 text-[10px] font-bold bg-purple-100 text-purple-700 rounded-full border border-purple-200">
                                         Aktif
                                     </span>
                                 )}
                             </div>
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-slate-500 mt-1">
                                 Payment Gateway QRIS resmi Sekalipay dengan settlement otomatis H+0 & webhook instant.
                             </p>
                         </div>
@@ -647,14 +679,14 @@ const SettingsTab = ({
                         }}
                         className={`cursor-pointer p-4 rounded-xl border transition-all flex items-start gap-3.5 ${
                             settings.payment_gateway === 'dyqris'
-                                ? 'bg-purple-600/10 border-purple-500/50 shadow-lg shadow-purple-500/10'
-                                : 'bg-white/5 border-white/10 hover:border-white/20'
+                                ? 'bg-purple-50 border-purple-300 shadow-xs'
+                                : 'bg-slate-50 border-slate-200 hover:border-purple-200'
                         }`}
                     >
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
                             settings.payment_gateway === 'dyqris'
-                                ? 'border-purple-500 bg-purple-500'
-                                : 'border-gray-500'
+                                ? 'border-purple-600 bg-purple-600'
+                                : 'border-slate-400 bg-white'
                         }`}>
                             {settings.payment_gateway === 'dyqris' && (
                                 <div className="w-2 h-2 rounded-full bg-white" />
@@ -662,14 +694,14 @@ const SettingsTab = ({
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h4 className="text-sm font-bold text-white">Dyqris (Mini QRIS)</h4>
+                                <h4 className="text-sm font-bold text-slate-900">Dyqris (Mini QRIS)</h4>
                                 {settings.payment_gateway === 'dyqris' && (
-                                    <span className="px-2 py-0.5 text-[10px] font-bold bg-purple-500/20 text-purple-300 rounded-full border border-purple-500/30">
+                                    <span className="px-2 py-0.5 text-[10px] font-bold bg-purple-100 text-purple-700 rounded-full border border-purple-200">
                                         Aktif
                                     </span>
                                 )}
                             </div>
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-slate-500 mt-1">
                                 Mini QRIS Payment Gateway dengan nominal unik real-time dan notifikasi PayHook.
                             </p>
                         </div>
@@ -678,13 +710,13 @@ const SettingsTab = ({
 
                 {/* Dyqris Info Card */}
                 {settings.payment_gateway === 'dyqris' && (
-                    <div className="mt-6 pt-6 border-t border-white/10">
-                        <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-start gap-3 text-xs text-purple-300">
+                    <div className="mt-6 pt-6 border-t border-slate-100">
+                        <div className="p-4 rounded-xl bg-purple-50 border border-purple-200 flex items-start gap-3 text-xs text-purple-900">
                             <span className="text-base leading-none">ℹ️</span>
                             <div>
-                                <p className="font-semibold text-white mb-0.5">Konfigurasi Dyqris Gateway</p>
-                                <p className="text-gray-400">
-                                    Kredensial Dyqris (Merchant API Key, Webhook Secret, Base URL) dikelola secara aman melalui environment variables server (<code className="text-purple-400">.env</code>).
+                                <p className="font-bold text-purple-900 mb-0.5">Konfigurasi Dyqris Gateway</p>
+                                <p className="text-slate-600">
+                                    Kredensial Dyqris (Merchant API Key, Webhook Secret, Base URL) dikelola secara aman melalui environment variables server (<code className="text-purple-700 font-bold">.env</code>).
                                 </p>
                             </div>
                         </div>
@@ -693,19 +725,19 @@ const SettingsTab = ({
 
                 {/* Sekalipay Gateway Config */}
                 {settings.payment_gateway === 'sekalipay' && (
-                    <div className="mt-6 pt-6 border-t border-white/10 space-y-4">
-                        <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-start gap-3 text-xs text-purple-300">
+                    <div className="mt-6 pt-6 border-t border-slate-100 space-y-4">
+                        <div className="p-4 rounded-xl bg-purple-50 border border-purple-200 flex items-start gap-3 text-xs text-purple-900">
                             <span className="text-base leading-none">ℹ️</span>
                             <div>
-                                <p className="font-semibold text-white mb-0.5">Kredensial Sekalipay Gateway</p>
-                                <p className="text-gray-400">
-                                    Kredensial Sekalipay (API Key, Secret Key, Merchant Code, Base URL) dikelola secara aman melalui environment variables server (<code className="text-purple-400">.env</code>).
+                                <p className="font-bold text-purple-900 mb-0.5">Kredensial Sekalipay Gateway</p>
+                                <p className="text-slate-600">
+                                    Kredensial Sekalipay (API Key, Secret Key, Merchant Code, Base URL) dikelola secara aman melalui environment variables server (<code className="text-purple-700 font-bold">.env</code>).
                                 </p>
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-xs font-medium text-gray-300 mb-1">
+                            <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
                                 Payment Code (Ketik Manual)
                             </label>
                             <input
@@ -719,10 +751,10 @@ const SettingsTab = ({
                                     }
                                 })}
                                 placeholder="Contoh: QRIS, QRISREALTIME, QRIS_CUSTOM, dll."
-                                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-purple-500/50 font-mono"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 focus:outline-none focus:bg-white focus:border-purple-500 font-mono transition-colors"
                             />
-                            <p className="text-[11px] text-gray-500 mt-1">
-                                Masukkan kode channel pembayaran QRIS Sekalipay secara manual (default: <code className="text-purple-400">QRIS</code>). Contoh: <code className="text-gray-400">QRIS</code>, <code className="text-gray-400">QRISREALTIME</code>, <code className="text-gray-400">QRIS_CUSTOM</code>.
+                            <p className="text-[11px] text-slate-500 mt-1">
+                                Masukkan kode channel pembayaran QRIS Sekalipay secara manual (default: <code className="text-purple-700 font-mono">QRIS</code>). Contoh: <code className="text-slate-600 font-mono">QRIS</code>, <code className="text-slate-600 font-mono">QRISREALTIME</code>, <code className="text-slate-600 font-mono">QRIS_CUSTOM</code>.
                             </p>
                         </div>
 
@@ -730,22 +762,22 @@ const SettingsTab = ({
                             onClick={() => updateSetting('sekalipay_gateway_config', {
                                 payment_code: (settings.sekalipay_gateway_config?.payment_code || 'QRIS').trim()
                             })}
-                            className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all"
+                            className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-xs"
                         >
-                            <Save size={16} /> Simpan Payment Code Sekalipay
+                            <Save size={15} /> Simpan Payment Code Sekalipay
                         </button>
                     </div>
                 )}
 
                 {/* FinCloud Info Card */}
                 {(settings.payment_gateway || 'fincloud') === 'fincloud' && (
-                    <div className="mt-6 pt-6 border-t border-white/10">
-                        <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-start gap-3 text-xs text-blue-300">
+                    <div className="mt-6 pt-6 border-t border-slate-100">
+                        <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 flex items-start gap-3 text-xs text-blue-900">
                             <span className="text-base leading-none">ℹ️</span>
                             <div>
-                                <p className="font-semibold text-white mb-0.5">Konfigurasi FinCloud Gateway</p>
-                                <p className="text-gray-400">
-                                    Kredensial FinCloud dikelola secara aman melalui environment variables server (<code className="text-blue-400">.env</code>).
+                                <p className="font-bold text-blue-900 mb-0.5">Konfigurasi FinCloud Gateway</p>
+                                <p className="text-slate-600">
+                                    Kredensial FinCloud dikelola secara aman melalui environment variables server (<code className="text-blue-700 font-bold">.env</code>).
                                 </p>
                             </div>
                         </div>
@@ -754,67 +786,67 @@ const SettingsTab = ({
             </div>
 
             {/* Admin Security */}
-            <div className="bg-[#0E0E0E] border border-white/5 rounded-2xl p-6">
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs">
                 <div className="mb-6">
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                        <LogOut size={20} className="text-red-400 rotate-180" />
+                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <LogOut size={20} className="text-rose-600 rotate-180" />
                         Keamanan Admin
                     </h3>
-                    <p className="text-xs text-gray-500">Ubah password login dashboard Anda. Password lama diperlukan untuk konfirmasi.</p>
+                    <p className="text-xs text-slate-500">Ubah password login dashboard Anda. Password lama diperlukan untuk konfirmasi.</p>
                 </div>
                 <div className="grid grid-cols-1 gap-4 max-w-md">
                     <div>
-                        <label className="block text-xs font-medium text-gray-400 mb-2">Password Saat Ini</label>
+                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Password Saat Ini</label>
                         <div className="relative">
                             <input
                                 type={showCurrentPassword ? "text" : "password"}
                                 placeholder="Masukkan password saat ini"
                                 value={passwordForm.current_password}
                                 onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 pr-10 text-sm text-white focus:outline-none focus:border-purple-500/50"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 pr-10 text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-purple-500 transition-colors"
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
                             >
                                 {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                             </button>
                         </div>
                     </div>
                     <div>
-                        <label className="block text-xs font-medium text-gray-400 mb-2">Password Baru</label>
+                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Password Baru</label>
                         <div className="relative">
                             <input
                                 type={showNewPassword ? "text" : "password"}
                                 placeholder="Minimal 8 karakter"
                                 value={passwordForm.new_password}
                                 onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 pr-10 text-sm text-white focus:outline-none focus:border-purple-500/50"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 pr-10 text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-purple-500 transition-colors"
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowNewPassword(!showNewPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
                             >
                                 {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                             </button>
                         </div>
                     </div>
                     <div>
-                        <label className="block text-xs font-medium text-gray-400 mb-2">Konfirmasi Password Baru</label>
+                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Konfirmasi Password Baru</label>
                         <div className="relative">
                             <input
                                 type={showSettingsPassword ? "text" : "password"}
                                 placeholder="Ulangi password baru"
                                 value={passwordForm.confirm_password}
                                 onChange={(e) => setPasswordForm({ ...passwordForm, confirm_password: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 pr-10 text-sm text-white focus:outline-none focus:border-purple-500/50"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 pr-10 text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-purple-500 transition-colors"
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowSettingsPassword(!showSettingsPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
                             >
                                 {showSettingsPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                             </button>
@@ -823,9 +855,9 @@ const SettingsTab = ({
                 </div>
                 <button
                     onClick={handleChangePassword}
-                    className="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 mt-6 transition-all"
+                    className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-6 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 mt-6 transition-all shadow-xs"
                 >
-                    <Save size={18} /> Ubah Password
+                    <Save size={16} /> Ubah Password
                 </button>
             </div>
         </div>

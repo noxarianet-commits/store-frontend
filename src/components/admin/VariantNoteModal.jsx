@@ -59,7 +59,7 @@ const VariantNoteModal = ({ productName, variantName, initialNote, onClose, onSa
         }
     };
 
-    const toolbarButton = 'p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors';
+    const toolbarButton = 'p-1.5 rounded-lg text-slate-600 hover:text-purple-600 hover:bg-slate-200/60 transition-colors';
 
     return (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
@@ -67,39 +67,39 @@ const VariantNoteModal = ({ productName, variantName, initialNote, onClose, onSa
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-black/80"
+                className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
                 onClick={onClose}
             />
             <motion.div
                 initial={{ scale: 0.9, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                className="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0E0E0E]"
+                className="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl"
             >
-                <div className="flex shrink-0 items-start justify-between gap-4 border-b border-white/5 bg-white/2 p-6">
+                <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 bg-slate-50/50 p-5 sm:p-6">
                     <div className="flex min-w-0 items-start gap-3">
-                        <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400">
+                        <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 border border-amber-200">
                             <StickyNote size={19} />
                         </div>
                         <div className="min-w-0">
-                            <h2 className="text-lg font-bold text-white">Catatan Varian</h2>
-                            <p className="mt-0.5 truncate text-xs text-gray-500">
-                                {productName} <span className="text-gray-600">·</span> {variantName}
+                            <h2 className="text-lg font-bold text-slate-900">Catatan Varian</h2>
+                            <p className="mt-0.5 truncate text-xs text-slate-500 font-medium">
+                                {productName} <span className="text-slate-300">·</span> {variantName}
                             </p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 text-gray-400 hover:text-white">
+                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors">
                         <X size={20} />
                     </button>
                 </div>
 
-                <div className="space-y-4 overflow-y-auto p-6">
+                <div className="space-y-4 overflow-y-auto p-5 sm:p-6">
                     <div>
-                        <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                        <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">
                             Isi Catatan
                         </label>
-                        <div className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] focus-within:border-purple-500/50">
-                            <div className="flex items-center gap-1 border-b border-white/10 bg-white/[0.02] px-2 py-1.5">
+                        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 focus-within:bg-white focus-within:border-purple-500 transition-colors">
+                            <div className="flex items-center gap-1 border-b border-slate-200 bg-slate-100/60 px-2 py-1.5">
                                 <button type="button" onClick={() => applyWrap('**')} className={toolbarButton} title="Bold">
                                     <Bold size={14} />
                                 </button>
@@ -112,7 +112,7 @@ const VariantNoteModal = ({ productName, variantName, initialNote, onClose, onSa
                                 <button type="button" onClick={applyList} className={toolbarButton} title="Daftar">
                                     <List size={14} />
                                 </button>
-                                <span className="ml-auto pr-1 text-[10px] text-gray-600">Enter = baris baru</span>
+                                <span className="ml-auto pr-1 text-[10px] text-slate-400 font-medium">Enter = baris baru</span>
                             </div>
                             <textarea
                                 ref={textareaRef}
@@ -120,45 +120,45 @@ const VariantNoteModal = ({ productName, variantName, initialNote, onClose, onSa
                                 onChange={(e) => setNote(e.target.value)}
                                 maxLength={MAX_NOTE_LENGTH}
                                 rows={8}
-                                className="min-h-[180px] w-full resize-y bg-transparent p-3 text-sm leading-relaxed text-white placeholder-gray-600 focus:outline-none"
+                                className="min-h-[160px] w-full resize-y bg-transparent p-3.5 text-sm leading-relaxed text-slate-800 placeholder-slate-400 focus:outline-none"
                                 placeholder={'Contoh:\n- Max login 1 device\n- Garansi 30 hari\n\n**Penting:** jangan ganti password.'}
                             />
                         </div>
                         <div className="mt-1.5 flex items-center justify-between gap-3">
-                            <p className="text-[10px] leading-relaxed text-gray-600">
+                            <p className="text-[10px] text-slate-400 font-medium">
                                 Format: **bold**, *italic*, `code`, dan daftar diawali &quot;- &quot;. Catatan ini tampil ke publik.
                             </p>
-                            <span className={`shrink-0 text-[10px] ${note.length >= MAX_NOTE_LENGTH ? 'text-red-400' : 'text-gray-600'}`}>
+                            <span className={`shrink-0 text-[10px] font-mono ${note.length >= MAX_NOTE_LENGTH ? 'text-rose-600 font-bold' : 'text-slate-400'}`}>
                                 {note.length}/{MAX_NOTE_LENGTH}
                             </span>
                         </div>
                     </div>
 
                     <div>
-                        <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">Preview</p>
-                        <div className="min-h-[72px] rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                        <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Preview</p>
+                        <div className="min-h-[64px] rounded-2xl border border-slate-200 bg-slate-50 p-3.5">
                             {note.trim() ? (
-                                <ProductNote text={note} tone="dark" className="text-sm text-gray-200" />
+                                <ProductNote text={note} tone="light" className="text-sm text-slate-700" />
                             ) : (
-                                <p className="text-xs text-gray-600">Preview catatan akan muncul di sini.</p>
+                                <p className="text-xs text-slate-400">Preview catatan akan muncul di sini.</p>
                             )}
                         </div>
                     </div>
                 </div>
 
-                <div className="flex shrink-0 justify-end gap-3 border-t border-white/5 bg-white/2 p-6">
+                <div className="flex shrink-0 justify-end gap-2.5 border-t border-slate-100 bg-slate-50/50 p-4 sm:p-5">
                     <button
                         onClick={onClose}
-                        className="rounded-xl border border-white/10 px-6 py-3 text-sm text-gray-400 transition-all hover:border-white/20 hover:text-white"
+                        className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 transition-all hover:bg-slate-100 shadow-xs"
                     >
                         Batal
                     </button>
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="flex items-center gap-2 rounded-xl bg-purple-600 px-8 py-3 text-sm font-bold text-white transition-all hover:bg-purple-700 disabled:opacity-50"
+                        className="flex items-center gap-2 rounded-xl bg-purple-600 px-6 py-2.5 text-xs font-bold text-white transition-all hover:bg-purple-700 shadow-xs disabled:opacity-50"
                     >
-                        {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                        {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
                         Simpan
                     </button>
                 </div>

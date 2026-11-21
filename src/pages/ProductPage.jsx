@@ -295,13 +295,28 @@ const ProductPage = () => {
                         const { rating: finalRating, text: finalTesti } = result.value || {};
                         if (finalTesti && finalTesti.trim()) {
                             try {
-                                await api.post('/testimonials', {
+                                const payload = {
                                     name: formData.wa_number || 'Customer',
                                     text: finalTesti,
                                     product: product?.name || '',
                                     rating: finalRating,
                                     order_id: paymentResult?.order_id || null
-                                });
+                                };
+                                const res = await api.createTestimonial(payload);
+                                const savedData = res.data?.data || {
+                                    ...payload,
+                                    id: `order_${paymentResult?.order_id || Date.now()}`,
+                                    created_at: new Date().toISOString()
+                                };
+
+                                // Save to localStorage for instant visibility on landing page
+                                try {
+                                    const existing = JSON.parse(localStorage.getItem('nox_recent_testimonials') || '[]');
+                                    const updated = [savedData, ...existing.filter(x => x.text !== savedData.text)].slice(0, 5);
+                                    localStorage.setItem('nox_recent_testimonials', JSON.stringify(updated));
+                                    window.dispatchEvent(new CustomEvent('testimonial:submitted', { detail: savedData }));
+                                } catch { /* ignore */ }
+
                                 setTestimonialSubmitted(true);
                                 notifySuccess('Terima kasih atas testimoninya!');
                             } catch {
@@ -512,13 +527,28 @@ const ProductPage = () => {
             return;
         }
         try {
-            await api.post('/testimonials', {
+            const payload = {
                 name: formData.wa_number || 'Customer',
                 text: testimonialMsg,
                 product: product?.name || '',
                 rating,
                 order_id: paymentResult?.order_id || null
-            });
+            };
+            const res = await api.createTestimonial(payload);
+            const savedData = res.data?.data || {
+                ...payload,
+                id: `order_${paymentResult?.order_id || Date.now()}`,
+                created_at: new Date().toISOString()
+            };
+
+            // Save to localStorage for instant visibility on landing page
+            try {
+                const existing = JSON.parse(localStorage.getItem('nox_recent_testimonials') || '[]');
+                const updated = [savedData, ...existing.filter(x => x.text !== savedData.text)].slice(0, 5);
+                localStorage.setItem('nox_recent_testimonials', JSON.stringify(updated));
+                window.dispatchEvent(new CustomEvent('testimonial:submitted', { detail: savedData }));
+            } catch { /* ignore */ }
+
             setTestimonialSubmitted(true);
             notifySuccess('Terima kasih atas testimoninya!');
         } catch {
