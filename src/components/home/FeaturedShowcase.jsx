@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Crown, ChevronLeft, ChevronRight, Smartphone } from 'lucide-react';
+import { Crown, ChevronLeft, ChevronRight, Smartphone, Wallet } from 'lucide-react';
 import { iconMap, iconColorMap, isProductSoldOut } from '../../utils/iconConfig';
 
 /**
@@ -12,8 +12,16 @@ function FeaturedProductItem({ product }) {
     const isSoldOut = isProductSoldOut(product);
     const imageUrl = product.image || product.icon;
     const isUrl = imageUrl && (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('/'));
-    const FallbackIcon = iconMap[product.icon] || Smartphone;
-    const iconColor = iconColorMap[product.icon] || 'bg-purple-900/40 text-purple-200 border border-purple-300/30';
+
+    const isEwallet = product.category === 'E-Wallet' || product.category?.toLowerCase().includes('wallet') || /dana|gopay|ovo|shopee|linkaja|maxim/i.test(product.name || '');
+    const fallbackKey = product.icon || (isEwallet ? 'wallet' : 'smartphone');
+    const FallbackIcon = iconMap[fallbackKey] || (isEwallet ? Wallet : Smartphone);
+    const iconColor = iconColorMap[fallbackKey] || (isEwallet ? 'bg-emerald-950/50 text-emerald-300 border border-emerald-400/30' : 'bg-purple-900/40 text-purple-200 border border-purple-300/30');
+
+    const cleanDisplayName = (product.name || '')
+        .replace(/^Saldo\s+/i, '')
+        .replace(/\s*\(OkeConnect\)|\s*\(Sekalipay\)|\s*\(Fincloud\)/gi, '')
+        .trim();
 
     // Link destination
     const isWebsiteService = product.name?.toLowerCase().includes('pembuatan website') || product.name?.toLowerCase().includes('jasa website');
@@ -65,7 +73,7 @@ function FeaturedProductItem({ product }) {
             {/* Bottom Glass Name Bar — Slim docked design */}
             <div className="mt-1.5 w-full bg-white/15 group-hover:bg-white/25 backdrop-blur-md border border-white/20 rounded-lg py-1 px-1.5 text-center transition-all duration-150 shadow-xs">
                 <p className="text-[10px] sm:text-[11px] font-bold text-white truncate leading-tight tracking-wide">
-                    {product.name}
+                    {cleanDisplayName}
                 </p>
             </div>
         </Link>

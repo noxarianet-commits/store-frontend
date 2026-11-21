@@ -97,6 +97,8 @@ export const categoryIconMap = {
     'aplikasi-premium': 'smartphone',
     'top-up-game': 'gamepad',
     'transfer-e-wallet': 'wallet',
+    'e-wallet': 'wallet',
+    'E-Wallet': 'wallet',
     'layanan-jasa-bot': 'globe',
 };
 

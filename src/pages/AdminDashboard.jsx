@@ -24,6 +24,21 @@ import TransactionsTab from '../components/admin/TransactionsTab';
 import TicketsTab from '../components/admin/TicketsTab';
 import NotificationTab from '../components/admin/NotificationTab';
 
+const getCanonicalProductGroup = (name) => {
+    if (!name) return '';
+    return name
+        .toLowerCase()
+        .replace(/\(okeconnect\)|\(sekalipay\)|\(fincloud\)/gi, '')
+        .replace(/^top\s*up\s*(saldo)?\s*/i, '')
+        .replace(/^topup\s*(saldo)?\s*/i, '')
+        .replace(/^saldo\s+/i, '')
+        .replace(/^tpg\s+/i, '')
+        .replace(/^diamond\s+/i, '')
+        .replace(/driver|customer|promo|entitas|admin|belum admin/gi, '')
+        .replace(/[^a-z0-9]/g, '')
+        .trim();
+};
+
 const AdminDashboard = () => {
     const [isLogin, setIsLogin] = useState(false);
     const [loginData, setLoginData] = useState({ username: '', password: '' });
@@ -142,7 +157,31 @@ const AdminDashboard = () => {
         setFeaturedLoading(true);
         try {
             const res = await api.getAdminFeaturedProducts();
-            setFeaturedProducts(res.data || []);
+            const rawList = res.data || [];
+            setFeaturedProducts(rawList);
+
+            // Auto-heal: sinkronkan produk peer antar server (Server 1 Sekalipay & Server 2 OkeConnect)
+            const featuredGroups = new Set();
+            rawList.forEach(p => {
+                if (p.is_featured) {
+                    const grp = getCanonicalProductGroup(p.name);
+                    if (grp) featuredGroups.add(grp);
+                }
+            });
+
+            const desyncedPeers = rawList.filter(p => !p.is_featured && featuredGroups.has(getCanonicalProductGroup(p.name)));
+            if (desyncedPeers.length > 0) {
+                Promise.all(desyncedPeers.map(async (peer) => {
+                    await api.toggleAdminFeatured(peer.id).catch(() => {});
+                    await api.updateAdminChannels(peer.id, ['web', 'app']).catch(() => {});
+                    if (peer.is_active === false) {
+                        await api.toggleAdminProduct(peer.id).catch(() => {});
+                    }
+                })).then(async () => {
+                    const refreshed = await api.getAdminFeaturedProducts();
+                    setFeaturedProducts(refreshed.data || []);
+                }).catch(() => {});
+            }
         } catch (e) { console.error('Gagal fetch featured products:', e); }
         setFeaturedLoading(false);
     }, []);
@@ -311,9 +350,30 @@ const AdminDashboard = () => {
 
     const handleToggleFeatured = async (productId) => {
         try {
-            const res = await api.toggleAdminFeatured(productId);
+            const target = featuredProducts.find(p => p.id === productId);
+            const targetGroup = target ? getCanonicalProductGroup(target.name) : '';
+            const newFeatured = target ? !target.is_featured : true;
+
+            const peers = targetGroup 
+                ? featuredProducts.filter(p => getCanonicalProductGroup(p.name) === targetGroup)
+                : [target].filter(Boolean);
+
+            await Promise.all(peers.map(async (peer) => {
+                if (peer.is_featured !== newFeatured) {
+                    await api.toggleAdminFeatured(peer.id);
+                }
+                if (newFeatured) {
+                    await api.updateAdminChannels(peer.id, ['web', 'app']).catch(() => {});
+                    if (peer.is_active === false) {
+                        await api.toggleAdminProduct(peer.id).catch(() => {});
+                    }
+                }
+            }));
+
             await fetchFeaturedProducts();
-            notifySuccess(res.data.is_featured ? 'Produk ditandai sebagai unggulan!' : 'Produk dihapus dari unggulan.');
+            notifySuccess(newFeatured 
+                ? `${target?.name || 'Produk'} ditandai sebagai Best Seller (semua server aktif & disinkronkan)!` 
+                : `${target?.name || 'Produk'} dihapus dari Best Seller.`);
         } catch (err) {
             notifyError(err.response?.data?.error || 'Gagal mengubah status unggulan');
         }

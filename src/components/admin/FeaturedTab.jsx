@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Search, Star, Loader2, Package, Filter } from 'lucide-react';
+import { Search, Star, Loader2, Package, Filter, Wallet } from 'lucide-react';
 
 const formatRp = (n) => `Rp ${(n || 0).toLocaleString('id-ID')}`;
 
@@ -135,22 +135,42 @@ const FeaturedTab = ({
                             {prods.map(product => {
                                 const prices = (product.variants || []).map(v => v.sell_price || v.price || 0);
                                 const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+                                const isEwallet = product.category === 'E-Wallet' || /dana|gopay|ovo|shopee|linkaja/i.test(product.name || '');
+                                const isServer2 = (product.name || '').toLowerCase().includes('okeconnect');
+
                                 return (
                                     <div
                                         key={product.id}
                                         className={`flex items-center gap-4 px-5 py-3.5 transition-colors ${product.is_featured ? 'bg-yellow-500/5' : 'hover:bg-white/[0.02]'}`}
                                     >
                                         {/* Icon */}
-                                        {product.icon && (
+                                        {product.icon ? (
                                             <img
                                                 src={product.icon}
                                                 alt=""
                                                 className="w-9 h-9 rounded-lg object-cover shrink-0"
                                             />
+                                        ) : (
+                                            <div className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                                                {isEwallet ? (
+                                                    <Wallet size={18} className="text-emerald-400" />
+                                                ) : (
+                                                    <Package size={18} className="text-purple-400" />
+                                                )}
+                                            </div>
                                         )}
                                         {/* Info */}
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold text-white truncate">{product.name}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm font-semibold text-white truncate">{product.name}</p>
+                                                <span className={`text-[8.5px] px-1.5 py-0.5 rounded uppercase font-bold shrink-0 ${
+                                                    isServer2 
+                                                        ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' 
+                                                        : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                                                }`}>
+                                                    {isServer2 ? 'Server 2' : 'Server 1'}
+                                                </span>
+                                            </div>
                                             <p className="text-[10px] text-gray-500">
                                                 {(product.variants || []).length} varian • Mulai {formatRp(minPrice)}
                                             </p>
