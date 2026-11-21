@@ -120,9 +120,11 @@ function VariantNoteCallout({ note, variant, className = '' }) {
                     </div>
                 </div>
 
-                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-semibold shrink-0">
-                    <ShieldCheck size={11} className="text-emerald-600" />
-                    <span>Garansi</span>
+                <div className="relative overflow-hidden inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50/90 border border-emerald-200/90 text-emerald-700 text-[10px] font-bold shrink-0 shadow-2xs">
+                    {/* Kilapan Silver Skeleton Sweep */}
+                    <span className="shimmer-silver-sweep" />
+                    <ShieldCheck size={11} className="text-emerald-600 relative z-10 shrink-0" />
+                    <span className="relative z-10 font-extrabold silver-shimmer-text">Bergaransi</span>
                 </div>
             </div>
 
@@ -146,12 +148,6 @@ function VariantNoteCallout({ note, variant, className = '' }) {
                         {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                     </button>
                 )}
-            </div>
-
-            {/* Reassurance Footer */}
-            <div className="mt-2.5 pt-2 border-t border-purple-100/70 flex items-center gap-1.5 text-[10.5px] text-slate-500 w-full min-w-0">
-                <Sparkles size={11} className="text-purple-500 shrink-0" />
-                <span className="truncate">Detail pesanan dikirim otomatis via Email setelah transaksi berhasil.</span>
             </div>
         </div>
     );

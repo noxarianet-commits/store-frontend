@@ -5,6 +5,22 @@ import { normalizePhoneNumber } from '../../utils/phoneUtils';
 import { getTargetIdentifier, getSafeAccountName } from '../../utils/accountValidationUtils';
 import { useAuth } from '../../contexts/AuthContext';
 
+const getEwalletBrandName = (name) => {
+    if (!name) return 'E-Wallet';
+    const lower = name.toLowerCase();
+    if (lower.includes('dana')) return 'DANA';
+    if (lower.includes('gopay') || lower.includes('gojek')) return 'GoPay';
+    if (lower.includes('ovo')) return 'OVO';
+    if (lower.includes('shopee')) return 'ShopeePay';
+    if (lower.includes('linkaja')) return 'LinkAja';
+    if (lower.includes('maxim')) return 'Maxim';
+    if (lower.includes('isaku') || lower.includes('i.saku')) return 'i.saku';
+    if (lower.includes('astrapay')) return 'AstraPay';
+    if (lower.includes('kaspro')) return 'KasPro';
+    if (lower.includes('doku')) return 'DOKU';
+    return name.replace(/^top\s*up\s*/i, '').trim();
+};
+
 const BuyerDataForm = ({
     formData,
     handleFormChange,
@@ -113,11 +129,20 @@ const BuyerDataForm = ({
                     <div className="space-y-3">
                         {dynamicFields.map((field, idx) => {
                             const rawLabel = field?.label || field?.name || field?.key || `Input ${idx + 1}`;
-                            const cleanedLabel = typeof rawLabel === 'string' ? rawLabel.replace(/[:*]/g, '').trim() : String(rawLabel);
+                            let cleanedLabel = typeof rawLabel === 'string' ? rawLabel.replace(/[:*]/g, '').trim() : String(rawLabel);
                             const isTargetField = field?.key === 'customer_id' || field?.key === 'target' || field?.key === 'note' || field?.key === 'user_id' || field?.key === 'phone' || field?.key === 'no_hp';
                             const isZoneField = field?.key === 'zone_id' || field?.key === 'server_id';
 
+                            if (isEwalletProduct && isTargetField) {
+                                const ewalletName = getEwalletBrandName(product?.name);
+                                cleanedLabel = `Nomor HP Tujuan ${ewalletName}`;
+                            }
+
                             const getPlaceholderText = () => {
+                                if (isEwalletProduct && isTargetField) {
+                                    const ewalletName = getEwalletBrandName(product?.name);
+                                    return `Contoh: 081234567890 (${ewalletName})`;
+                                }
                                 const lowerLabel = cleanedLabel.toLowerCase();
                                 if (
                                     lowerLabel.includes('nomor') || 
