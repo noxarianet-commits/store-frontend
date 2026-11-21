@@ -183,6 +183,7 @@ const ProductPage = () => {
     const [validationError, setValidationError] = useState(null);
     const [isValidating, setIsValidating] = useState(false);
     const [isWaConfirmed, setIsWaConfirmed] = useState(true);
+    const [isDataConfirmed, setIsDataConfirmed] = useState(false);
 
     // Testimonial
     const [testimonialMsg, setTestimonialMsg] = useState('');
