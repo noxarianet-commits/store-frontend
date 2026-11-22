@@ -173,7 +173,6 @@ const AdminDashboard = () => {
             if (desyncedPeers.length > 0) {
                 Promise.all(desyncedPeers.map(async (peer) => {
                     await api.toggleAdminFeatured(peer.id).catch(() => {});
-                    await api.updateAdminChannels(peer.id, ['web', 'app']).catch(() => {});
                     if (peer.is_active === false) {
                         await api.toggleAdminProduct(peer.id).catch(() => {});
                     }
@@ -348,6 +347,16 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleSekalipaySetChannels = async (productId, channels) => {
+        try {
+            await api.updateAdminChannels(productId, channels);
+            await fetchSekalipay();
+            notifySuccess('Channel produk berhasil diperbarui.');
+        } catch (err) {
+            notifyError(err.response?.data?.error || 'Gagal memperbarui channel produk');
+        }
+    };
+
     const handleToggleFeatured = async (productId) => {
         try {
             const target = featuredProducts.find(p => p.id === productId);
@@ -362,11 +371,8 @@ const AdminDashboard = () => {
                 if (peer.is_featured !== newFeatured) {
                     await api.toggleAdminFeatured(peer.id);
                 }
-                if (newFeatured) {
-                    await api.updateAdminChannels(peer.id, ['web', 'app']).catch(() => {});
-                    if (peer.is_active === false) {
-                        await api.toggleAdminProduct(peer.id).catch(() => {});
-                    }
+                if (newFeatured && peer.is_active === false) {
+                    await api.toggleAdminProduct(peer.id).catch(() => {});
                 }
             }));
 
@@ -639,6 +645,7 @@ const AdminDashboard = () => {
                             sekalipaySearch={sekalipaySearch} setSekalipaySearch={setSekalipaySearch}
                             handleSync={handleSync} handleGlobalMarkup={handleGlobalMarkup}
                             handleMarkupUpdate={handleMarkupUpdate} handleToggleProduct={handleToggleProduct}
+                            handleSetChannels={handleSekalipaySetChannels}
                             syncInProgress={syncInProgress}
                             globalMarkupValue={globalMarkupValue} setGlobalMarkupValue={setGlobalMarkupValue}
                             expandedProduct={expandedProduct} setExpandedProduct={setExpandedProduct}

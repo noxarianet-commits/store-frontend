@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Search, Loader2, Package, CheckCircle2, DollarSign, Zap,
     ChevronDown, Eye, EyeOff, StickyNote, Smartphone, Globe } from 'lucide-react';
-import { notifyWarning } from '../../utils/notify';
+import ChannelToggle from './ChannelToggle';
 
 const OkeconnectTab = ({
     okeconnectProducts, okeconnectPostpaidProducts = [],
@@ -23,26 +23,6 @@ const OkeconnectTab = ({
         p.category?.toLowerCase().includes((okeconnectSearch || '').toLowerCase()) ||
         p.brand?.toLowerCase().includes((okeconnectSearch || '').toLowerCase())
     );
-
-    const productChannels = (product) => (
-        Array.isArray(product.available_channels) && product.available_channels.length > 0
-            ? product.available_channels
-            : ['web', 'app']
-    );
-
-    const toggleChannel = (product, channel) => {
-        const current = productChannels(product);
-        const next = current.includes(channel)
-            ? current.filter(c => c !== channel)
-            : [...current, channel];
-
-        if (next.length === 0) {
-            notifyWarning('Minimal satu channel harus aktif.');
-            return;
-        }
-
-        handleSetChannels?.(product.id, next);
-    };
 
     // Group by category (Game / E-Wallet)
     const grouped = {};
@@ -258,32 +238,7 @@ const OkeconnectTab = ({
                                                             App Only
                                                         </span>
                                                     ) : (
-                                                        <div
-                                                            className="flex items-center gap-1 bg-slate-100 border border-slate-200 p-1 rounded-xl"
-                                                            onClick={(e) => e.stopPropagation()}
-                                                            title="Channel tempat produk ini tampil"
-                                                        >
-                                                            <button
-                                                                onClick={() => toggleChannel(product, 'web')}
-                                                                className={`px-2 py-1 rounded-lg text-[9px] font-bold uppercase transition-all flex items-center gap-1 ${
-                                                                    productChannels(product).includes('web')
-                                                                        ? 'bg-purple-600 text-white shadow-xs'
-                                                                        : 'text-slate-500 hover:text-slate-800'
-                                                                }`}
-                                                            >
-                                                                <Globe size={10} /> Web
-                                                            </button>
-                                                            <button
-                                                                onClick={() => toggleChannel(product, 'app')}
-                                                                className={`px-2 py-1 rounded-lg text-[9px] font-bold uppercase transition-all flex items-center gap-1 ${
-                                                                    productChannels(product).includes('app')
-                                                                        ? 'bg-sky-600 text-white shadow-xs'
-                                                                        : 'text-slate-500 hover:text-slate-800'
-                                                                }`}
-                                                            >
-                                                                <Smartphone size={10} /> App
-                                                            </button>
-                                                        </div>
+                                                        <ChannelToggle product={product} onChange={handleSetChannels} />
                                                     )}
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); handleToggleProduct(product.id); }}

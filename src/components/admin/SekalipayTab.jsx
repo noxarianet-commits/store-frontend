@@ -1,10 +1,12 @@
 import { Search, Loader2, Package, CheckCircle2, DollarSign, Zap,
     ChevronDown, Eye, EyeOff, StickyNote } from 'lucide-react';
+import ChannelToggle from './ChannelToggle';
 
 const SekalipayTab = ({
     sekalipayProducts, sekalipayBalance, sekalipaySync, sekalipayLoading,
     sekalipaySearch, setSekalipaySearch,
     handleSync, handleGlobalMarkup, handleMarkupUpdate, handleToggleProduct,
+    handleSetChannels,
     syncInProgress, globalMarkupValue, setGlobalMarkupValue,
     expandedProduct, setExpandedProduct,
     handleToggleVariantHidden, onEditVariantNote
@@ -129,6 +131,9 @@ const SekalipayTab = ({
                     className="w-full bg-white border border-slate-200/80 rounded-2xl py-3.5 pl-12 pr-4 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-500 shadow-xs transition-all"
                 />
             </div>
+            <p className="text-[11px] text-slate-500 -mt-2">
+                Tombol <b>Web/App</b> mengatur channel tempat produk tampil. Ikon <b>mata</b> menyembunyikan produk dari semua channel.
+            </p>
 
             {/* Product List */}
             {sekalipayLoading ? (
@@ -180,6 +185,9 @@ const SekalipayTab = ({
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2">
+                                                    {product.product_type !== 'postpaid' && (
+                                                        <ChannelToggle product={product} onChange={handleSetChannels} />
+                                                    )}
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); handleToggleProduct(product.id); }}
                                                         className={`p-2 rounded-xl transition-all text-xs border ${

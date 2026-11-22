@@ -459,6 +459,7 @@ const LandingPage = () => {
                             <ul className="space-y-2.5 text-xs text-slate-500">
                                 <li><Link to="/garansi" className="hover:text-purple-600 transition">Klaim Garansi</Link></li>
                                 <li><Link to="/tos" className="hover:text-purple-600 transition">Syarat & Ketentuan</Link></li>
+                                <li><Link to="/privacy" className="hover:text-purple-600 transition">Kebijakan Privasi</Link></li>
                                 <li><Link to="/cara" className="hover:text-purple-600 transition">Cara Order</Link></li>
                                 <li><Link to="/download" className="hover:text-purple-600 transition">Aplikasi Android</Link></li>
                                 <li><Link to="/faq" className="hover:text-purple-600 transition">FAQ</Link></li>

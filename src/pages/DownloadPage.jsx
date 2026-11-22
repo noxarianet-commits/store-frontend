@@ -535,9 +535,10 @@ const DownloadPage = () => {
             <footer className="border-t border-purple-100/60 bg-white/60 backdrop-blur-xl mt-12 sm:mt-16">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
                     <span>© {new Date().getFullYear()} Noxarianet Store. Hak Cipta Dilindungi.</span>
-                    <div className="flex items-center gap-5">
+                    <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
                         <Link to="/" className="hover:text-purple-600 transition font-medium">Beranda</Link>
                         <Link to="/faq" className="hover:text-purple-600 transition font-medium">FAQ</Link>
+                        <Link to="/privacy" className="hover:text-purple-600 transition font-medium">Kebijakan Privasi</Link>
                         <Link to="/cs" className="hover:text-purple-600 transition font-medium">Bantuan CS</Link>
                     </div>
                 </div>
