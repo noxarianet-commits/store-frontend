@@ -16,7 +16,12 @@ import api from '../../api';
 import { formatRp } from '../../utils/currencyUtils';
 import { notifyError, notifySuccess } from '../../utils/notify';
 
-const todayUtc = () => new Date().toISOString().slice(0, 10);
+const WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const todayWib = () => new Date(Date.now() + WIB_OFFSET_MS).toISOString().slice(0, 10);
+// Laporan harian adalah laporan hari yang sudah selesai. Saat tab dibuka
+// lewat tengah malam WIB, default-nya laporan kemarin yang baru difinalkan.
+const yesterdayWib = () => new Date(Date.now() + WIB_OFFSET_MS - DAY_MS).toISOString().slice(0, 10);
 
 const formatDateLabel = (dateStr) => {
     if (!dateStr) return '-';
@@ -62,7 +67,7 @@ const REPORT_STATUS = {
 };
 
 export default function DailyReportTab() {
-    const [selectedDate, setSelectedDate] = useState(todayUtc());
+    const [selectedDate, setSelectedDate] = useState(yesterdayWib());
     const [report, setReport] = useState(null);
     const [history, setHistory] = useState([]);
     const [loadingReport, setLoadingReport] = useState(true);
@@ -106,7 +111,7 @@ export default function DailyReportTab() {
 
         const loadInitial = async () => {
             try {
-                const res = await api.getDailyReport(todayUtc());
+                const res = await api.getDailyReport(yesterdayWib());
                 if (!cancelled) {
                     setReport(res.data?.data || null);
                     setErrorMsg('');
@@ -165,6 +170,7 @@ export default function DailyReportTab() {
     const byPaymentType = breakdown.by_payment_type || {};
     const topProducts = Array.isArray(breakdown.top_products) ? breakdown.top_products : [];
     const baseCost = Number(breakdown.base_cost_estimate) || 0;
+    const refundedOrders = Number(breakdown.refunded_orders) || 0;
     const profit = Number(report?.total_profit) || 0;
 
     return (
@@ -174,7 +180,7 @@ export default function DailyReportTab() {
                 <div>
                     <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Laporan Harian</h2>
                     <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
-                        Ringkasan transaksi, omzet, dan estimasi laba per tanggal (UTC)
+                        Ringkasan transaksi, omzet, dan estimasi laba per tanggal (WIB)
                     </p>
                 </div>
                 <button
@@ -199,14 +205,14 @@ export default function DailyReportTab() {
                 <div className="flex flex-col sm:flex-row sm:items-end gap-3">
                     <div className="w-full sm:w-auto">
                         <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                            Tanggal Laporan (UTC)
+                            Tanggal Laporan (WIB)
                         </label>
                         <div className="relative">
                             <CalendarDays size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                             <input
                                 type="date"
                                 value={selectedDate}
-                                max={todayUtc()}
+                                max={todayWib()}
                                 onChange={(e) => setSelectedDate(e.target.value)}
                                 className="w-full sm:w-52 bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:bg-white focus:border-purple-500 transition-colors"
                             />
@@ -233,8 +239,8 @@ export default function DailyReportTab() {
                     </div>
                 </div>
                 <p className="text-[11px] text-slate-400 mt-2.5 italic">
-                    Laporan tanggal berjalan masih berisi data sementara. Generate ulang setelah hari berakhir
-                    untuk angka final. Laporan tanggal lain dibuat otomatis saat pertama kali dibuka.
+                    Laporan dibuat otomatis setiap 00:05 WIB dan dihitung ulang pada 01:05 WIB.
+                    Tanggal berjalan masih berisi data sementara; laporan tanggal lain dibuat otomatis saat pertama kali dibuka.
                 </p>
             </div>
 
@@ -287,7 +293,7 @@ export default function DailyReportTab() {
 
                 <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nilai Dibatalkan</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Dana Direfund</span>
                         <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center">
                             <RotateCcw size={16} />
                         </div>
@@ -296,7 +302,7 @@ export default function DailyReportTab() {
                         {loadingReport ? <span className="text-slate-400 text-sm">Memuat...</span> : formatRp(report?.refunded || 0)}
                     </div>
                     <p className="text-[11px] text-slate-500 mt-1 font-medium">
-                        {byStatus.CANCELLED || 0} order CANCELLED
+                        {refundedOrders} order direfund · {byStatus.CANCELLED || 0} dibatalkan
                     </p>
                 </div>
             </div>
